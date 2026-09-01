@@ -1,7 +1,7 @@
 const items = [
   {
     quote:
-      "I lost 1.8 BTC to a fake broker and had written it off. Blackstone Recovery traced it in 11 days and recovered 74%. I still can't quite believe it.",
+      "I lost 1.8 BTC to a fake broker and had written it off. BlackStone Recovery traced it in 11 days and recovered 74%. I still can't quite believe it.",
     name: "Parker Wilf",
     role: "Recovered client, Bitcoin case",
     company: "€92,400 RECOVERED",

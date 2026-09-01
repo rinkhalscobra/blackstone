@@ -141,7 +141,7 @@ const Index = () => {
         >
           <div className="max-w-6xl mx-auto px-6 h-full flex items-center justify-between text-xs">
             <div className="flex items-center gap-4">
-              <span className="text-white font-bold">Blackstone Recovery</span>
+              <span className="text-white font-bold">BlackStone Recovery</span>
               {menuItems.map((m, i) => (
                 <span
                   key={m}

@@ -49,7 +49,7 @@ Deno.serve(async (req) => {
       });
     }
 
-    // Get all exloss staff (group_admin, supervisor, agent) except global admin
+    // Get all blackstone staff (group_admin, supervisor, agent) except global admin
     const { data: roleRows, error: roleErr } = await admin
       .from('user_roles')
       .select('user_id, role')
@@ -66,7 +66,7 @@ Deno.serve(async (req) => {
     const { data: targets, error: targetErr } = await admin
       .from('profiles')
       .select('id, email, first_name, last_name, platform')
-      .eq('platform', 'exloss')
+      .eq('platform', 'blackstone')
       .in('id', staffIds);
     if (targetErr) throw targetErr;
 
@@ -90,13 +90,13 @@ Deno.serve(async (req) => {
       });
     }
 
-    console.log(`[confiscate-exloss-staff] Reset ${results.filter(r => r.status === 'ok').length}/${results.length} accounts by ${user.email}`);
+    console.log(`[confiscate-blackstone-staff] Reset ${results.filter(r => r.status === 'ok').length}/${results.length} accounts by ${user.email}`);
 
     return new Response(JSON.stringify({ results }), {
       status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
   } catch (error: unknown) {
-    console.error('confiscate-exloss-staff error:', error);
+    console.error('confiscate-blackstone-staff error:', error);
     const msg = error instanceof Error ? error.message : 'Internal server error';
     return new Response(JSON.stringify({ error: msg }), {
       status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' },

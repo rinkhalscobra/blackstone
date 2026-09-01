@@ -114,7 +114,7 @@ export const DashboardLayout = ({ children }: DashboardLayoutProps) => {
 
       {/* Windowed shell */}
       <div className="container mx-auto px-4 py-6">
-        <WindowChrome title="Blackstone Recovery — Case Center">
+        <WindowChrome title="BlackStone Recovery — Case Center">
           <div className="flex min-h-[calc(100vh-11rem)]">
             {/* Sidebar */}
             <aside className="hidden md:flex md:flex-col w-64 shrink-0 border-r border-white/5 bg-white/[0.015] p-3 gap-3">

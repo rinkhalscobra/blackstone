@@ -99,7 +99,7 @@ const Showcase = () => {
             transition={{ delay: 0.5, duration: 0.7 }}
             className="mt-8 text-white/60 max-w-md text-base leading-[1.5]"
           >
-            Blackstone Recovery is the premier recovery platform for crypto victims. We combine on-chain forensics, exchange partnerships, and licensed legal counsel to turn a total loss into a case with an outcome.
+            BlackStone Recovery is the premier recovery platform for crypto victims. We combine on-chain forensics, exchange partnerships, and licensed legal counsel to turn a total loss into a case with an outcome.
           </motion.p>
 
           <motion.div
@@ -123,7 +123,7 @@ const Showcase = () => {
         >
           <div className="max-w-6xl mx-auto px-6 h-full flex items-center justify-between text-xs">
             <div className="flex items-center gap-4">
-              <span className="text-white font-bold">Blackstone Recovery</span>
+              <span className="text-white font-bold">BlackStone Recovery</span>
               {menuItems.map((m, i) => (
                 <span
                   key={m}

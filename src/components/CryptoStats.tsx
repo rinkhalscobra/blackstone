@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { Card } from "@/components/ui/card";
 import { TrendingUp, TrendingDown, Loader2 } from "lucide-react";
-import { getCryptoQuotes, formatPrice, formatPercentChange } from "@/services/twelveDataApi";
+import { getCryptoQuotes, formatPrice, formatPercentChange } from "@/services/marketDataApi";
 import { useLanguage } from "@/contexts/LanguageContext";
 
 interface CoinData {

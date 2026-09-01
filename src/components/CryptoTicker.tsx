@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { TrendingUp, TrendingDown } from "lucide-react";
-import { getCryptoQuotes, formatPrice, formatPercentChange, TOP_CRYPTO_SYMBOLS, CRYPTO_NAMES } from "@/services/twelveDataApi";
+import { getCryptoQuotes, formatPrice, formatPercentChange, TOP_CRYPTO_SYMBOLS, CRYPTO_NAMES } from "@/services/marketDataApi";
 import { cn } from "@/lib/utils";
 
 interface TickerItem {

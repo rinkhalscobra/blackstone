@@ -1,18 +1,18 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" fill="none">
   <defs>
-    <linearGradient id="exlossGradient1" x1="0%" y1="0%" x2="100%" y2="100%">
+    <linearGradient id="blackstoneGradient1" x1="0%" y1="0%" x2="100%" y2="100%">
       <stop offset="0%" style="stop-color:#3b82f6"/>
       <stop offset="100%" style="stop-color:#1d4ed8"/>
     </linearGradient>
-    <linearGradient id="exlossGradient2" x1="0%" y1="0%" x2="100%" y2="100%">
+    <linearGradient id="blackstoneGradient2" x1="0%" y1="0%" x2="100%" y2="100%">
       <stop offset="0%" style="stop-color:#fbbf24"/>
       <stop offset="100%" style="stop-color:#f59e0b"/>
     </linearGradient>
   </defs>
   <!-- Shield shape -->
-  <path d="M16 2L28 7V17C28 23 22 28 16 30C10 28 4 23 4 17V7L16 2Z" fill="url(#exlossGradient1)"/>
+  <path d="M16 2L28 7V17C28 23 22 28 16 30C10 28 4 23 4 17V7L16 2Z" fill="url(#blackstoneGradient1)"/>
   <!-- Inner shield -->
-  <path d="M16 5L25 9V17C25 21.5 20 26 16 27.5C12 26 7 21.5 7 17V9L16 5Z" fill="none" stroke="url(#exlossGradient2)" stroke-width="1.5"/>
+  <path d="M16 5L25 9V17C25 21.5 20 26 16 27.5C12 26 7 21.5 7 17V9L16 5Z" fill="none" stroke="url(#blackstoneGradient2)" stroke-width="1.5"/>
   <!-- E Letter stylized -->
-  <path d="M12 11H20M12 16H18M12 21H20M12 11V21" stroke="url(#exlossGradient2)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+  <path d="M12 11H20M12 16H18M12 21H20M12 11V21" stroke="url(#blackstoneGradient2)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
 </svg>

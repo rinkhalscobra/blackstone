@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { TrendingUp, TrendingDown, Loader2, RefreshCw } from "lucide-react";
-import { getCryptoQuotes, TOP_CRYPTO_SYMBOLS, CRYPTO_NAMES, formatPrice, formatPercentChange } from "@/services/twelveDataApi";
+import { getCryptoQuotes, TOP_CRYPTO_SYMBOLS, CRYPTO_NAMES, formatPrice, formatPercentChange } from "@/services/marketDataApi";
 import { Button } from "@/components/ui/button";
 import { useLanguage } from "@/contexts/LanguageContext";
 

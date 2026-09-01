@@ -5,7 +5,7 @@ import CryptoTicker from "@/components/CryptoTicker";
 import CryptoSearch from "@/components/CryptoSearch";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Loader2 } from "lucide-react";
-import { getCryptoExchanges } from "@/services/twelveDataApi";
+import { getCryptoExchanges } from "@/services/marketDataApi";
 import { useLanguage } from "@/contexts/LanguageContext";
 
 interface Exchange {
@@ -14,7 +14,7 @@ interface Exchange {
   code: string;
 }
 
-// Additional exchange metadata (12data doesn't provide all details)
+// Additional exchange metadata (Coinbase doesn't provide all details)
 const exchangeMetadata: Record<string, { coins: number; visits: string; fiats: string }> = {
   'Binance': { coins: 541, visits: '11,307,767', fiats: 'EUR, GBP, BRL +4 more' },
   'Coinbase Pro': { coins: 313, visits: '35,816', fiats: 'USD, EUR, GBP' },

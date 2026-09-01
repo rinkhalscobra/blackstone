@@ -131,7 +131,7 @@ const callCryptoApi = async (endpoint: string, params?: Record<string, string>) 
             }
 
             // The edge function deliberately returns an empty successful payload
-            // when Twelve Data is rate limited so the UI can keep rendering.
+            // when Coinbase is rate limited so the UI can keep rendering.
             if (data?.status === 'rate_limited') return data;
             if (data?.error) throw new Error(data.error);
 
@@ -245,7 +245,7 @@ export const getAvailableCryptos = async (): Promise<any[]> => {
   }
 };
 
-// Top crypto symbols for the main table (verified working with 12data)
+// Top crypto symbols for the main table (verified working with Coinbase)
 export const TOP_CRYPTO_SYMBOLS = [
   'BTC/USD',
   'ETH/USD',

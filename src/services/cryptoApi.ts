@@ -1,4 +1,4 @@
-import { getCryptoQuotes } from "@/services/twelveDataApi";
+import { getCryptoQuotes } from "@/services/marketDataApi";
 
 export interface CryptoPrice {
   id: string;
@@ -40,7 +40,7 @@ export const getCryptoPrices = async (ids: string[]): Promise<Record<string, Cry
   if (ids.length === 0) return {};
   
   try {
-    // Convert IDs to 12data format (SYMBOL/USD) - only add /USD if not already present
+    // Convert IDs to Coinbase format (SYMBOL/USD) - only add /USD if not already present
     const symbols = ids.map(id => {
       const upper = id.toUpperCase();
       return upper.includes('/USD') ? upper : `${upper}/USD`;

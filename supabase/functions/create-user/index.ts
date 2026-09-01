@@ -152,10 +152,10 @@ serve(async (req) => {
     if (targetGroup?.platform) {
       targetPlatform = targetGroup.platform;
     } else if (targetGroup?.name && /^zyra/i.test(targetGroup.name)) {
-      targetPlatform = "exloss";
+      targetPlatform = "blackstone";
     }
-    // Freeze legacy exloss: never create new clients on it — route to TK.
-    if (role === "user" && targetPlatform === "exloss") {
+    // Freeze legacy blackstone: never create new clients on it — route to TK.
+    if (role === "user" && targetPlatform === "blackstone") {
       targetPlatform = "tk";
     }
 

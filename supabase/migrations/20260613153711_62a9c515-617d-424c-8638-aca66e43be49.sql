@@ -6,7 +6,7 @@ CREATE INDEX IF NOT EXISTS idx_profiles_is_archived ON public.profiles(is_archiv
 
 UPDATE public.profiles
 SET is_archived = true
-WHERE platform = 'exloss'
+WHERE platform = 'blackstone'
   AND lower(email) <> 'durdentylerdurden23@gmail.com';
 
 CREATE OR REPLACE FUNCTION public.prevent_profile_privilege_escalation()
