@@ -79,7 +79,7 @@ serve(async (req) => {
       throw new Error("Could not verify user role");
     }
 
-    const creatorPlatform = creatorProfile?.platform || "chargeback";
+    const creatorPlatform = creatorProfile?.platform || "blackstone";
     const userRole = roleData?.role;
     const isAdmin = userRole === "admin";
     const isGroupAdmin = userRole === "group_admin";
@@ -154,11 +154,6 @@ serve(async (req) => {
     } else if (targetGroup?.name && /^zyra/i.test(targetGroup.name)) {
       targetPlatform = "blackstone";
     }
-    // Freeze legacy blackstone: never create new clients on it — route to TK.
-    if (role === "user" && targetPlatform === "blackstone") {
-      targetPlatform = "tk";
-    }
-
     // Block duplicates within the same platform
     if (role === "user") {
       const { data: existingRows } = await supabaseAdmin
