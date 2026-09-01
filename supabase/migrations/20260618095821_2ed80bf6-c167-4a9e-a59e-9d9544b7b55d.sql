@@ -1,0 +1,1 @@
+DROP TRIGGER IF EXISTS update_balance_on_transaction_approval ON public.transaction_requests;

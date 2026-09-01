@@ -1,0 +1,151 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ============================================================
+ * Blackstone Recovery global design system — inherits the /showcase language.
+ * All colors MUST be HSL. Tokens drive shadcn + tailwind.
+ * ============================================================ */
+
+@layer base {
+  :root {
+    /* Deep navy near #08111f, matching showcase root */
+    --background: 217 55% 7%;
+    --foreground: 210 40% 98%;
+
+    --card: 220 40% 8%;
+    --card-foreground: 210 40% 98%;
+
+    --popover: 220 40% 8%;
+    --popover-foreground: 210 40% 98%;
+
+    --primary: 217 91% 60%;
+    --primary-foreground: 220 40% 4%;
+
+    --secondary: 220 30% 12%;
+    --secondary-foreground: 210 40% 98%;
+
+    --muted: 220 30% 12%;
+    --muted-foreground: 215 20% 70%;
+
+    --accent: 217 91% 60%;
+    --accent-foreground: 220 40% 4%;
+
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 210 40% 98%;
+
+    --success: 142 71% 45%;
+    --success-foreground: 210 40% 98%;
+
+    --border: 220 30% 15%;
+    --input: 220 30% 15%;
+    --ring: 217 91% 60%;
+
+    --radius: 0.75rem;
+
+    /* Brand duo */
+    --gold: 43 96% 56%;                 /* #fbbf24 */
+    --gold-foreground: 220 40% 4%;
+
+    /* Gradients / shadows */
+    --glow-primary: 217 91% 60%;
+    --gradient-hero: linear-gradient(135deg, hsl(220 40% 4%) 0%, hsl(217 50% 10%) 50%, hsl(220 40% 4%) 100%);
+    --gradient-shiny: linear-gradient(
+      to right,
+      #08111f 0%, #1e3a8a 12.5%, #fbbf24 32.5%, #3b82f6 50%,
+      #1e3a8a 67.5%, #08111f 87.5%, #08111f 100%
+    );
+    --shadow-glow: 0 0 80px hsl(217 91% 60% / 0.3);
+    --shadow-glow-gold: 0 0 60px hsl(43 96% 56% / 0.25);
+    --shadow-card: 0 4px 20px hsl(220 40% 2% / 0.5);
+    --shadow-glass: 0 8px 32px hsl(220 40% 2% / 0.45), inset 0 1px 1px hsl(0 0% 100% / 0.06);
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  html, body {
+    font-family: 'Inter', system-ui, -apple-system, sans-serif;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  body {
+    @apply bg-background text-foreground;
+    background-image:
+      radial-gradient(1200px 600px at 15% -10%, hsl(217 91% 60% / 0.08), transparent 60%),
+      radial-gradient(900px 500px at 90% 10%, hsl(43 96% 56% / 0.05), transparent 60%),
+      linear-gradient(180deg, hsl(217 55% 7%) 0%, hsl(220 40% 5%) 100%);
+    background-attachment: fixed;
+  }
+
+  ::selection {
+    background: hsl(217 91% 60% / 0.35);
+  }
+}
+
+@layer components {
+  /* Auto-glass for every shadcn Card so all dashboards inherit the look
+     without touching a single component file. */
+  .rounded-lg.border.bg-card,
+  [data-slot="card"] {
+    background: linear-gradient(135deg, hsl(220 40% 8% / 0.75), hsl(220 40% 6% / 0.55));
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    border-color: hsl(0 0% 100% / 0.06);
+    box-shadow: var(--shadow-glass);
+  }
+
+  /* Radix Dialog / Sheet / Popover surfaces — pick up the same treatment */
+  [role="dialog"] > div[class*="bg-background"],
+  [data-radix-popper-content-wrapper] > * {
+    backdrop-filter: blur(14px);
+    -webkit-backdrop-filter: blur(14px);
+  }
+}
+
+@layer utilities {
+  /* Ticker scroll */
+  @keyframes scroll {
+    0%   { transform: translateX(0); }
+    100% { transform: translateX(-50%); }
+  }
+  .animate-scroll { animation: scroll 30s linear infinite; }
+  .animate-scroll:hover { animation-play-state: paused; }
+
+  /* Shiny brand-gradient text (mirrors showcase) */
+  @keyframes shiny {
+    0%   { background-position: -200% center; }
+    100% { background-position: 200% center; }
+  }
+  .animate-shiny {
+    background-size: 200% auto;
+    animation: shiny 6s linear infinite;
+  }
+  .text-shiny {
+    background-image: var(--gradient-shiny);
+    background-size: 200% auto;
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+    -webkit-text-fill-color: transparent;
+    animation: shiny 8s linear infinite;
+  }
+
+  /* Liquid glass surface */
+  .liquid-glass {
+    background: linear-gradient(135deg, hsl(0 0% 100% / 0.04), hsl(0 0% 100% / 0.01));
+    backdrop-filter: blur(14px);
+    -webkit-backdrop-filter: blur(14px);
+    border: 1px solid hsl(0 0% 100% / 0.08);
+    box-shadow: var(--shadow-glass);
+  }
+
+  .gold-ring {
+    box-shadow: 0 0 0 1px hsl(43 96% 56% / 0.4), var(--shadow-glow-gold);
+  }
+}
