@@ -87,7 +87,7 @@ export const translations = {
       disclaimerText: "DISCLAIMER: This website is operated by BlackStone. BlackStone specializes in preparing investigation reports and cryptocurrency tracing reports. We do not engage in any financial services, funds management, or provide financial advice, investment guidance, or related services.",
       infoText: "For your information: Although the process of recovering your losses from an online scam can be very tedious and long, sometimes longer than a year, it is a process you can undertake yourself, and it does not require any official representation.",
       paymentText: "The Company cannot accept prohibited payment methods.",
-      copyright: "© 2025 BlackStone, All Rights Reserved.",
+      copyright: "© 2026 BlackStone, All Rights Reserved.",
     },
     auth: {
       backToHome: "Back to home",
@@ -1052,7 +1052,7 @@ export const translations = {
       disclaimerText: "AVERTISSEMENT : Ce site est exploité par BlackStone. BlackStone se spécialise dans la préparation de rapports d'enquête et de traçage de cryptomonnaies. Nous n'offrons aucun service financier, gestion de fonds ou conseils en investissement.",
       infoText: "Pour information : Bien que le processus de récupération de vos pertes suite à une arnaque en ligne puisse être long et fastidieux, parfois plus d'un an, c'est un processus que vous pouvez entreprendre vous-même.",
       paymentText: "La société ne peut pas accepter les méthodes de paiement interdites.",
-      copyright: "© 2025 BlackStone, Tous droits réservés.",
+      copyright: "© 2026 BlackStone, Tous droits réservés.",
     },
     auth: {
       backToHome: "Retour à l'accueil",
@@ -2007,7 +2007,7 @@ export const translations = {
       disclaimerText: "HAFTUNGSAUSSCHLUSS: Diese Website wird von BlackStone betrieben. BlackStone ist auf Ermittlungsberichte und Kryptowährungs-Verfolgungsberichte spezialisiert. Wir bieten keine Finanzdienstleistungen, Fondsverwaltung oder Anlageberatung an.",
       infoText: "Zur Information: Der Prozess der Rückforderung Ihrer Verluste kann sehr langwierig sein, manchmal länger als ein Jahr. Es ist jedoch ein Prozess, den Sie selbst durchführen können.",
       paymentText: "Das Unternehmen kann keine verbotenen Zahlungsmethoden akzeptieren.",
-      copyright: "© 2025 BlackStone, Alle Rechte vorbehalten.",
+      copyright: "© 2026 BlackStone, Alle Rechte vorbehalten.",
     },
     auth: {
       backToHome: "Zurück zur Startseite",
@@ -2962,7 +2962,7 @@ export const translations = {
       disclaimerText: "DISCLAIMER: Questo sito è gestito da BlackStone. BlackStone è specializzata nella preparazione di rapporti investigativi e tracciamento criptovalute. Non forniamo servizi finanziari, gestione fondi o consulenza finanziaria.",
       infoText: "Per tua informazione: Il processo di recupero delle perdite da una truffa online può essere lungo, a volte più di un anno. È un processo che puoi intraprendere tu stesso.",
       paymentText: "La società non può accettare metodi di pagamento proibiti.",
-      copyright: "© 2025 BlackStone, Tutti i diritti riservati.",
+      copyright: "© 2026 BlackStone, Tutti i diritti riservati.",
     },
     auth: {
       backToHome: "Torna alla home",
