@@ -31,7 +31,7 @@ const buckets = [
 ];
 
 const FraudPanel = () => (
-  <section className="max-w-6xl mx-auto px-6 py-20 md:py-28 relative z-10">
+  <section id="cases" className="showcase-anchor max-w-6xl mx-auto px-6 py-20 md:py-28 relative z-10">
     <div className="grid md:grid-cols-2 gap-10 md:gap-16 items-start">
       <motion.div
         initial={{ opacity: 0, y: 20 }}

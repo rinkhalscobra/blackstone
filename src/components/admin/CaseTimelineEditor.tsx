@@ -63,7 +63,7 @@ const getEventIcon = (eventType: string) => {
 const getEventColor = (eventType: string) => {
   switch (eventType) {
     case 'case_opened':
-      return 'bg-blue-500/20 text-blue-400 border-blue-500/30';
+      return 'bg-white/10 text-neutral-300 border-white/20';
     case 'investigation_started':
       return 'bg-yellow-500/20 text-yellow-400 border-yellow-500/30';
     case 'funds_recovered':

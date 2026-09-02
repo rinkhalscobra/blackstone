@@ -21,16 +21,16 @@ interface PortfolioItem {
 }
 
 const CHART_COLORS = [
-  "#3b82f6", // Blue
-  "#f59e0b", // Amber
-  "#10b981", // Emerald
-  "#8b5cf6", // Violet
-  "#ec4899", // Pink
-  "#06b6d4", // Cyan
-  "#f97316", // Orange
-  "#84cc16", // Lime
-  "#6366f1", // Indigo
-  "#14b8a6", // Teal
+  "#fafafa",
+  "#e5e5e5",
+  "#d4d4d4",
+  "#bdbdbd",
+  "#a3a3a3",
+  "#8a8a8a",
+  "#737373",
+  "#666666",
+  "#525252",
+  "#404040",
 ];
 
 const PortfolioNew = () => {

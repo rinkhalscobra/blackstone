@@ -37,7 +37,7 @@ const roleConfig = {
     label: 'Supervisor',
   },
   agent: {
-    color: 'bg-blue-500/20 text-blue-400 border-blue-500/30',
+    color: 'bg-white/10 text-neutral-300 border-white/20',
     label: 'Agent',
   },
 };

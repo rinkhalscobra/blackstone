@@ -9,7 +9,7 @@ const ease = [0.22, 1, 0.36, 1] as const;
 
 const Panel = ({ children, className = "" }: { children: React.ReactNode; className?: string }) => (
   <div
-    className={`rounded-3xl border border-white/10 bg-white/[0.03] backdrop-blur-xl shadow-[0_8px_32px_hsl(220_40%_2%/0.45),inset_0_1px_0_hsl(0_0%_100%/0.06)] overflow-hidden ${className}`}
+    className={`rounded-3xl border border-white/10 bg-white/[0.03] backdrop-blur-xl shadow-[0_8px_32px_hsl(0_0%_0%/0.5),inset_0_1px_0_hsl(0_0%_100%/0.06)] overflow-hidden ${className}`}
   >
     {children}
   </div>

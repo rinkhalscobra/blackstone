@@ -112,7 +112,7 @@ const CreateNotificationDialog = ({
   };
 
   const typeOptions = [
-    { value: 'info', label: t('notification.typeInfo'), color: 'text-blue-400' },
+    { value: 'info', label: t('notification.typeInfo'), color: 'text-neutral-300' },
     { value: 'success', label: t('notification.typeSuccess'), color: 'text-green-400' },
     { value: 'warning', label: t('notification.typeWarning'), color: 'text-yellow-400' },
     { value: 'error', label: t('notification.typeError'), color: 'text-red-400' },

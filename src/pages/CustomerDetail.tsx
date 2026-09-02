@@ -477,7 +477,7 @@ const CustomerDetail = (): JSX.Element => {
       case 'success': return <CheckCircle className="h-5 w-5 text-green-400" />;
       case 'warning': return <AlertTriangle className="h-5 w-5 text-yellow-400" />;
       case 'error': return <AlertCircle className="h-5 w-5 text-red-400" />;
-      default: return <Info className="h-5 w-5 text-blue-400" />;
+      default: return <Info className="h-5 w-5 text-neutral-300" />;
     }
   };
 
@@ -509,7 +509,7 @@ const CustomerDetail = (): JSX.Element => {
     pending: 'bg-yellow-500/20 text-yellow-400',
     approved: 'bg-green-500/20 text-green-400',
     rejected: 'bg-red-500/20 text-red-400',
-    processing: 'bg-blue-500/20 text-blue-400'
+    processing: 'bg-white/10 text-neutral-300'
   };
 
   // Calculate portfolio totals with live prices
@@ -895,7 +895,7 @@ const CustomerDetail = (): JSX.Element => {
                 </CardTitle>
               </CardHeader>
               <CardContent className="p-4">
-                <Button variant="default" size="sm" className="bg-blue-500 hover:bg-blue-600">
+                <Button variant="default" size="sm" className="bg-white text-black hover:bg-neutral-200">
                   <Plus className="h-4 w-4 mr-2" /> {t('common.add').toUpperCase()} / {t('common.update').toUpperCase()}
                 </Button>
               </CardContent>

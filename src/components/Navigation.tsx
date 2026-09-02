@@ -18,7 +18,11 @@ import Logo from "./Logo";
 import LanguageSelector from "./LanguageSelector";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 
-const Navigation = () => {
+interface NavigationProps {
+  landing?: boolean;
+}
+
+const Navigation = ({ landing = false }: NavigationProps) => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const { user, signOut } = useAuth();
   const { userRole, loading: roleLoading } = useAdmin();
@@ -50,6 +54,14 @@ const Navigation = () => {
     { to: "/legal", label: t('nav.legal') },
     { to: "/faq", label: t('nav.faq') },
     { to: "/contact", label: t('nav.contact') },
+  ];
+
+  const landingLinks = [
+    { target: "recovery", label: "Recovery" },
+    { target: "portfolio", label: "Portfolio" },
+    { target: "cases", label: "Cases" },
+    { target: "pricing", label: "Pricing" },
+    { target: "contact", label: "Contact" },
   ];
 
   // Authenticated user links
@@ -88,8 +100,22 @@ const Navigation = () => {
         <div className="flex h-16 items-center justify-between">
           <Logo size="md" />
 
+          {landing && (
+            <div className="hidden md:flex items-center gap-6">
+              {landingLinks.map(link => (
+                <a
+                  key={link.target}
+                  href={`#${link.target}`}
+                  className="text-sm text-foreground hover:text-primary transition-colors"
+                >
+                  {link.label}
+                </a>
+              ))}
+            </div>
+          )}
+
           {/* Public Navigation (Unauthenticated or basic browsing) - Desktop */}
-          {!user && (
+          {!landing && !user && (
             <div className="hidden md:flex items-center gap-6">
               {publicLinks.map(link => (
                 <Link key={link.to} to={link.to} className="text-sm text-foreground hover:text-primary transition-colors">
@@ -113,7 +139,7 @@ const Navigation = () => {
           )}
 
           {/* Authenticated User Navigation - Desktop */}
-          {user && !isStaff && (
+          {!landing && user && !isStaff && (
             <div className="hidden md:flex items-center gap-6">
               {userLinks.map(link => (
                 <Link key={link.to} to={link.to} className="text-sm text-foreground hover:text-primary transition-colors flex items-center gap-1 relative">
@@ -130,7 +156,7 @@ const Navigation = () => {
           )}
 
           {/* Staff Navigation - Desktop */}
-          {user && isStaff && (
+          {!landing && user && isStaff && (
             <div className="hidden md:flex items-center gap-6">
               {getStaffLinks().map(link => (
                 <Link key={link.to} to={link.to} className="text-sm text-foreground hover:text-primary transition-colors flex items-center gap-1">
@@ -262,7 +288,18 @@ const Navigation = () => {
 
                   {/* Navigation Links */}
                   <div className="flex flex-col gap-1">
-                    {!user && (
+                    {landing && landingLinks.map(link => (
+                      <a
+                        key={link.target}
+                        href={`#${link.target}`}
+                        onClick={closeMobileMenu}
+                        className="flex items-center gap-3 px-3 py-3 rounded-lg text-foreground hover:bg-secondary transition-colors"
+                      >
+                        {link.label}
+                      </a>
+                    ))}
+
+                    {!landing && !user && (
                       <>
                         {publicLinks.map(link => (
                           <Link
@@ -290,7 +327,7 @@ const Navigation = () => {
                       </>
                     )}
 
-                    {user && !isStaff && userLinks.map(link => (
+                    {!landing && user && !isStaff && userLinks.map(link => (
                       <Link
                         key={link.to}
                         to={link.to}
@@ -302,7 +339,7 @@ const Navigation = () => {
                       </Link>
                     ))}
 
-                    {user && isStaff && getStaffLinks().map(link => (
+                    {!landing && user && isStaff && getStaffLinks().map(link => (
                       <Link
                         key={link.to}
                         to={link.to}

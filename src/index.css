@@ -11,56 +11,56 @@
 
 @layer base {
   :root {
-    /* Deep navy near #08111f, matching showcase root */
-    --background: 217 55% 7%;
-    --foreground: 210 40% 98%;
+    /* BlackStone monochrome palette */
+    --background: 0 0% 4%;
+    --foreground: 0 0% 96%;
 
-    --card: 220 40% 8%;
-    --card-foreground: 210 40% 98%;
+    --card: 0 0% 7%;
+    --card-foreground: 0 0% 96%;
 
-    --popover: 220 40% 8%;
-    --popover-foreground: 210 40% 98%;
+    --popover: 0 0% 7%;
+    --popover-foreground: 0 0% 96%;
 
-    --primary: 217 91% 60%;
-    --primary-foreground: 220 40% 4%;
+    --primary: 0 0% 94%;
+    --primary-foreground: 0 0% 5%;
 
-    --secondary: 220 30% 12%;
-    --secondary-foreground: 210 40% 98%;
+    --secondary: 0 0% 12%;
+    --secondary-foreground: 0 0% 96%;
 
-    --muted: 220 30% 12%;
-    --muted-foreground: 215 20% 70%;
+    --muted: 0 0% 12%;
+    --muted-foreground: 0 0% 66%;
 
-    --accent: 217 91% 60%;
-    --accent-foreground: 220 40% 4%;
+    --accent: 0 0% 88%;
+    --accent-foreground: 0 0% 5%;
 
     --destructive: 0 84% 60%;
-    --destructive-foreground: 210 40% 98%;
+    --destructive-foreground: 0 0% 98%;
 
     --success: 142 71% 45%;
-    --success-foreground: 210 40% 98%;
+    --success-foreground: 0 0% 98%;
 
-    --border: 220 30% 15%;
-    --input: 220 30% 15%;
-    --ring: 217 91% 60%;
+    --border: 0 0% 18%;
+    --input: 0 0% 18%;
+    --ring: 0 0% 82%;
 
     --radius: 0.75rem;
 
-    /* Brand duo */
-    --gold: 43 96% 56%;                 /* #fbbf24 */
-    --gold-foreground: 220 40% 4%;
+    /* Legacy accent token, now mapped to silver */
+    --gold: 0 0% 76%;
+    --gold-foreground: 0 0% 5%;
 
     /* Gradients / shadows */
-    --glow-primary: 217 91% 60%;
-    --gradient-hero: linear-gradient(135deg, hsl(220 40% 4%) 0%, hsl(217 50% 10%) 50%, hsl(220 40% 4%) 100%);
+    --glow-primary: 0 0% 100%;
+    --gradient-hero: linear-gradient(135deg, hsl(0 0% 2%) 0%, hsl(0 0% 9%) 50%, hsl(0 0% 2%) 100%);
     --gradient-shiny: linear-gradient(
       to right,
-      #08111f 0%, #1e3a8a 12.5%, #fbbf24 32.5%, #3b82f6 50%,
-      #1e3a8a 67.5%, #08111f 87.5%, #08111f 100%
+      #737373 0%, #d4d4d4 15%, #ffffff 35%, #a3a3a3 50%,
+      #ffffff 65%, #d4d4d4 85%, #737373 100%
     );
-    --shadow-glow: 0 0 80px hsl(217 91% 60% / 0.3);
-    --shadow-glow-gold: 0 0 60px hsl(43 96% 56% / 0.25);
-    --shadow-card: 0 4px 20px hsl(220 40% 2% / 0.5);
-    --shadow-glass: 0 8px 32px hsl(220 40% 2% / 0.45), inset 0 1px 1px hsl(0 0% 100% / 0.06);
+    --shadow-glow: 0 0 80px hsl(0 0% 100% / 0.12);
+    --shadow-glow-gold: 0 0 60px hsl(0 0% 100% / 0.1);
+    --shadow-card: 0 4px 20px hsl(0 0% 0% / 0.55);
+    --shadow-glass: 0 8px 32px hsl(0 0% 0% / 0.5), inset 0 1px 1px hsl(0 0% 100% / 0.06);
   }
 }
 
@@ -74,17 +74,17 @@
     -webkit-font-smoothing: antialiased;
   }
 
-  body {
+    body {
     @apply bg-background text-foreground;
     background-image:
-      radial-gradient(1200px 600px at 15% -10%, hsl(217 91% 60% / 0.08), transparent 60%),
-      radial-gradient(900px 500px at 90% 10%, hsl(43 96% 56% / 0.05), transparent 60%),
-      linear-gradient(180deg, hsl(217 55% 7%) 0%, hsl(220 40% 5%) 100%);
+      radial-gradient(1200px 600px at 15% -10%, hsl(0 0% 100% / 0.045), transparent 60%),
+      radial-gradient(900px 500px at 90% 10%, hsl(0 0% 100% / 0.025), transparent 60%),
+      linear-gradient(180deg, hsl(0 0% 4%) 0%, hsl(0 0% 2%) 100%);
     background-attachment: fixed;
   }
 
   ::selection {
-    background: hsl(217 91% 60% / 0.35);
+    background: hsl(0 0% 100% / 0.3);
   }
 }
 
@@ -93,7 +93,7 @@
      without touching a single component file. */
   .rounded-lg.border.bg-card,
   [data-slot="card"] {
-    background: linear-gradient(135deg, hsl(220 40% 8% / 0.75), hsl(220 40% 6% / 0.55));
+    background: linear-gradient(135deg, hsl(0 0% 8% / 0.78), hsl(0 0% 5% / 0.62));
     backdrop-filter: blur(10px);
     -webkit-backdrop-filter: blur(10px);
     border-color: hsl(0 0% 100% / 0.06);
@@ -146,6 +146,6 @@
   }
 
   .gold-ring {
-    box-shadow: 0 0 0 1px hsl(43 96% 56% / 0.4), var(--shadow-glow-gold);
+    box-shadow: 0 0 0 1px hsl(0 0% 100% / 0.28), var(--shadow-glow-gold);
   }
 }

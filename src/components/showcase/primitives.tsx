@@ -4,22 +4,22 @@ export const LogoMark = ({ className = "w-8 h-8" }: { className?: string }) => (
   <svg viewBox="0 0 40 40" className={className} aria-hidden="true">
     <defs>
       <linearGradient id="scLogoFill" x1="0%" y1="0%" x2="100%" y2="100%">
-        <stop offset="0%" stopColor="#1e3a8a" />
-        <stop offset="55%" stopColor="#2563eb" />
-        <stop offset="100%" stopColor="#0b1220" />
+        <stop offset="0%" stopColor="#262626" />
+        <stop offset="55%" stopColor="#525252" />
+        <stop offset="100%" stopColor="#000000" />
       </linearGradient>
       <linearGradient id="scLogoStroke" x1="0%" y1="0%" x2="100%" y2="100%">
-        <stop offset="0%" stopColor="#fde68a" />
-        <stop offset="50%" stopColor="#fbbf24" />
-        <stop offset="100%" stopColor="#b45309" />
+        <stop offset="0%" stopColor="#ffffff" />
+        <stop offset="50%" stopColor="#d4d4d4" />
+        <stop offset="100%" stopColor="#737373" />
       </linearGradient>
       <linearGradient id="scLogoGloss" x1="0%" y1="0%" x2="0%" y2="100%">
         <stop offset="0%" stopColor="#ffffff" stopOpacity="0.35" />
         <stop offset="60%" stopColor="#ffffff" stopOpacity="0" />
       </linearGradient>
       <radialGradient id="scLogoGlow" cx="50%" cy="35%" r="60%">
-        <stop offset="0%" stopColor="#60a5fa" stopOpacity="0.55" />
-        <stop offset="100%" stopColor="#60a5fa" stopOpacity="0" />
+        <stop offset="0%" stopColor="#ffffff" stopOpacity="0.32" />
+        <stop offset="100%" stopColor="#ffffff" stopOpacity="0" />
       </radialGradient>
     </defs>
     {/* Rounded square base */}
@@ -54,7 +54,7 @@ export const AppleButton = ({ label = "Start your case", full = false }: { label
 
 export const SectionEyebrow = ({ label, tag }: { label: string; tag?: string }) => (
   <div className="inline-flex items-center gap-3 text-xs uppercase tracking-widest text-white/50">
-    <span className="w-1.5 h-1.5 rounded-full bg-[#fbbf24]" />
+    <span className="w-1.5 h-1.5 rounded-full bg-white/70" />
     <span>{label}</span>
     {tag && (
       <span className="px-2 py-0.5 rounded-full border border-white/10 text-white/50 normal-case tracking-normal">
@@ -66,7 +66,7 @@ export const SectionEyebrow = ({ label, tag }: { label: string; tag?: string }) 
 
 export const gradientStyle: React.CSSProperties = {
   backgroundImage:
-    "linear-gradient(to right, #08111f 0%, #1e3a8a 12.5%, #fbbf24 32.5%, #3b82f6 50%, #1e3a8a 67.5%, #08111f 87.5%, #08111f 100%)",
+    "linear-gradient(to right, #737373 0%, #d4d4d4 15%, #ffffff 35%, #a3a3a3 50%, #ffffff 65%, #d4d4d4 85%, #737373 100%)",
   backgroundSize: "200% auto",
   WebkitBackgroundClip: "text",
   backgroundClip: "text",

@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom';
-import { LogoMark } from '@/components/showcase/primitives';
+import BrandMark from '@/components/BrandMark';
 
 interface LogoProps {
   size?: 'sm' | 'md' | 'lg';
@@ -18,12 +18,12 @@ export const Logo = ({ size = 'md', showText = true, linkTo = '/' }: LogoProps) 
 
   const content = (
     <div className="flex items-center gap-2.5">
-      <LogoMark className={`${config.icon} shrink-0`} />
+      <BrandMark className={`${config.icon} shrink-0`} />
       {showText && (
         <span
           className={`font-bold tracking-tight ${config.text}`}
           style={{
-            backgroundImage: 'linear-gradient(90deg, #ffffff 0%, #ffffff 55%, #fbbf24 100%)',
+            backgroundImage: 'linear-gradient(90deg, #ffffff 0%, #ffffff 100%)',
             WebkitBackgroundClip: 'text',
             backgroundClip: 'text',
             color: 'transparent',

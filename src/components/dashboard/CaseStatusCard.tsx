@@ -45,10 +45,10 @@ export const CaseStatusCard = ({ caseNumber, status, casePhase }: CaseStatusCard
   const progressPercent = Math.max(0, Math.min(100, ((currentStage + 1) / stages.length) * 100));
 
   return (
-    <Card className="overflow-hidden">
+    <Card className="h-full min-w-0 overflow-hidden">
       <CardHeader className="pb-4">
         <div className="flex items-start justify-between">
-          <div>
+          <div className="min-w-0 pr-3">
             <CardTitle className="text-lg font-semibold text-foreground">
               {t('caseStatus.caseProgress')}
             </CardTitle>
@@ -77,9 +77,9 @@ export const CaseStatusCard = ({ caseNumber, status, casePhase }: CaseStatusCard
           <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center">
             <FileText className="h-5 w-5 text-primary" />
           </div>
-          <div>
+          <div className="min-w-0">
             <div className="text-xs text-muted-foreground">{t('caseStatus.yourCaseNumber')}</div>
-            <div className="font-mono font-bold text-foreground text-lg">
+            <div className="font-mono font-bold text-foreground text-base sm:text-lg break-words">
               {caseNumber || t('caseStatus.pendingAssignment')}
             </div>
           </div>
@@ -97,13 +97,13 @@ export const CaseStatusCard = ({ caseNumber, status, casePhase }: CaseStatusCard
         {/* Progress Steps */}
         <div className="relative pt-2">
           {/* Connection line */}
-          <div className="absolute top-[26px] left-0 right-0 h-1 bg-muted rounded-full" />
+          <div className="absolute top-[26px] left-[10%] right-[10%] h-1 bg-muted rounded-full" />
           <div 
-            className="absolute top-[26px] left-0 h-1 bg-gradient-to-r from-primary to-primary/70 rounded-full transition-all duration-700 ease-out"
-            style={{ width: `${Math.max(0, (currentStage / (stages.length - 1)) * 100)}%` }}
+            className="absolute top-[26px] left-[10%] h-1 bg-gradient-to-r from-primary to-primary/70 rounded-full transition-all duration-700 ease-out"
+            style={{ width: `${Math.max(0, (currentStage / (stages.length - 1)) * 80)}%` }}
           />
           
-          <div className="relative flex justify-between">
+          <div className="relative grid grid-cols-5 gap-1">
             {stages.map((stage, index) => {
               const StageIcon = stage.icon;
               const isCompleted = index < currentStage;
@@ -113,7 +113,7 @@ export const CaseStatusCard = ({ caseNumber, status, casePhase }: CaseStatusCard
               return (
                 <div 
                   key={stage.id} 
-                  className="flex flex-col items-center relative group"
+                  className="min-w-0 flex flex-col items-center relative group"
                 >
                   {/* Tooltip on hover */}
                   <div className={cn(
@@ -138,7 +138,7 @@ export const CaseStatusCard = ({ caseNumber, status, casePhase }: CaseStatusCard
                     )}
                   </div>
                   <span className={cn(
-                    "text-[10px] sm:text-xs mt-2 text-center max-w-[50px] sm:max-w-[70px] leading-tight transition-colors truncate",
+                    "hidden sm:block w-full px-1 text-[10px] lg:text-xs mt-2 text-center leading-tight transition-colors truncate",
                     isCurrent 
                       ? "text-primary font-semibold" 
                       : isCompleted 

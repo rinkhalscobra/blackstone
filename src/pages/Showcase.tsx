@@ -6,14 +6,11 @@ import AppMockup from "@/components/showcase/AppMockup";
 import FraudPanel from "@/components/showcase/FraudPanel";
 import LogoCloud from "@/components/showcase/LogoCloud";
 import Testimonials from "@/components/showcase/Testimonials";
-
+import PricingBlock from "@/components/showcase/PricingBlock";
 import FinalCTA from "@/components/showcase/FinalCTA";
 import TrustpilotBadge from "@/components/showcase/TrustpilotBadge";
 import { AppleButton, gradientStyle } from "@/components/showcase/primitives";
 import "@/styles/showcase.css";
-
-const VIDEO_URL =
-  "https://d8j0ntlcm91z4.cloudfront.net/user_38xzZboKViGWJOttwIXH07lWA1P/hf_20260508_064122_c4750c0e-7476-4b44-94a2-a85a65c63bf2.mp4";
 
 const menuItems = ["File", "Edit", "View", "Go", "Window", "Help"];
 
@@ -41,7 +38,7 @@ const Showcase = () => {
   const now = useNowLondon();
 
   return (
-    <div className="showcase-root relative min-h-screen overflow-x-hidden bg-[#08111f] text-white">
+    <div className="showcase-root relative min-h-screen overflow-x-hidden bg-black text-white">
       {/* Global noise filter */}
       <svg width="0" height="0" style={{ position: "absolute" }} aria-hidden="true">
         <filter id="c3-noise-root">
@@ -58,17 +55,11 @@ const Showcase = () => {
         </filter>
       </svg>
 
-      {/* Fullscreen background video */}
-      <div className="fixed inset-0 z-0 pointer-events-none">
-        <video
-          src={VIDEO_URL}
-          autoPlay
-          muted
-          loop
-          playsInline
-          className="w-full h-full object-cover opacity-60"
-        />
-        <div className="absolute inset-0 bg-gradient-to-b from-[#08111f]/70 via-[#08111f]/60 to-[#08111f]" />
+      {/* Lightweight animated background */}
+      <div className="showcase-background fixed inset-0 z-0 pointer-events-none" aria-hidden="true">
+        {Array.from({ length: 8 }, (_, index) => (
+          <span key={index} className="showcase-particle" />
+        ))}
       </div>
 
       {/* Guide lines */}
@@ -80,7 +71,7 @@ const Showcase = () => {
         <ShowcaseNav />
 
         {/* Hero */}
-        <section className="pt-16 md:pt-28 pb-20 text-center flex flex-col items-center px-6">
+        <section id="recovery" className="showcase-anchor pt-16 md:pt-28 pb-20 text-center flex flex-col items-center px-6">
           <motion.h1
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
@@ -144,7 +135,7 @@ const Showcase = () => {
         <FraudPanel />
         <LogoCloud />
         <Testimonials />
-        
+        <PricingBlock />
         <FinalCTA />
       </div>
     </div>

@@ -35,7 +35,7 @@ interface DashboardLayoutProps {
 
 const LABELS: { code: string; color: string }[] = [
   { code: 'BTC', color: 'bg-amber-400' },
-  { code: 'ETH', color: 'bg-blue-400' },
+  { code: 'ETH', color: 'bg-neutral-300' },
   { code: 'USDT', color: 'bg-emerald-400' },
   { code: 'SOL', color: 'bg-violet-400' },
 ];
@@ -84,7 +84,7 @@ export const DashboardLayout = ({ children }: DashboardLayoutProps) => {
               <Button
                 variant="ghost"
                 size="icon"
-                className="md:hidden"
+                className="lg:hidden"
                 onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
               >
                 {mobileMenuOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
@@ -113,11 +113,11 @@ export const DashboardLayout = ({ children }: DashboardLayoutProps) => {
       </header>
 
       {/* Windowed shell */}
-      <div className="container mx-auto px-4 py-6">
+      <div className="w-full max-w-[1600px] mx-auto px-3 sm:px-4 py-4 sm:py-6">
         <WindowChrome title="BlackStone Recovery — Case Center">
           <div className="flex min-h-[calc(100vh-11rem)]">
             {/* Sidebar */}
-            <aside className="hidden md:flex md:flex-col w-64 shrink-0 border-r border-white/5 bg-white/[0.015] p-3 gap-3">
+            <aside className="hidden lg:flex lg:flex-col w-56 xl:w-64 shrink-0 border-r border-white/5 bg-white/[0.015] p-3 gap-3">
               <button
                 onClick={() => navigate('/dashboard/case')}
                 className="group inline-flex items-center gap-2 justify-center w-full rounded-full bg-white text-black text-[13px] font-medium py-2.5 px-4 transition-all hover:bg-white/90 active:scale-[0.98] shadow-[0_1px_0_rgba(255,255,255,0.6)_inset,0_10px_30px_-10px_rgba(255,255,255,0.25)]"
@@ -176,7 +176,7 @@ export const DashboardLayout = ({ children }: DashboardLayoutProps) => {
 
             {/* Mobile menu */}
             {mobileMenuOpen && (
-              <div className="fixed inset-0 z-40 md:hidden">
+              <div className="fixed inset-0 z-40 lg:hidden">
                 <div
                   className="fixed inset-0 bg-background/80 backdrop-blur"
                   onClick={() => setMobileMenuOpen(false)}
@@ -258,7 +258,7 @@ export const DashboardLayout = ({ children }: DashboardLayoutProps) => {
                 </div>
               </div>
 
-              <main className="flex-1 p-6">{children}</main>
+              <main className="flex-1 min-w-0 p-4 sm:p-5 xl:p-6 overflow-x-hidden">{children}</main>
             </div>
           </div>
         </WindowChrome>

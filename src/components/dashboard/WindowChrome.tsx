@@ -24,12 +24,12 @@ export const WindowChrome = ({ title = 'BlackStone Recovery', children, classNam
       {/* Title bar */}
       <div className="relative flex items-center h-9 px-4 border-b border-white/5 bg-white/[0.02]">
         <div className="flex items-center gap-1.5">
-          <span className="h-3 w-3 rounded-full bg-[#ff5f57] shadow-[inset_0_0_0_0.5px_rgba(0,0,0,0.2)]" />
-          <span className="h-3 w-3 rounded-full bg-[#febc2e] shadow-[inset_0_0_0_0.5px_rgba(0,0,0,0.2)]" />
-          <span className="h-3 w-3 rounded-full bg-[#28c840] shadow-[inset_0_0_0_0.5px_rgba(0,0,0,0.2)]" />
+          <span className="h-3 w-3 rounded-full bg-white/55 shadow-[inset_0_0_0_0.5px_rgba(0,0,0,0.2)]" />
+          <span className="h-3 w-3 rounded-full bg-white/35 shadow-[inset_0_0_0_0.5px_rgba(0,0,0,0.2)]" />
+          <span className="h-3 w-3 rounded-full bg-white/20 shadow-[inset_0_0_0_0.5px_rgba(0,0,0,0.2)]" />
         </div>
         <div className="absolute inset-x-0 flex justify-center pointer-events-none">
-          <span className="text-[12px] font-medium text-muted-foreground tracking-tight">{title}</span>
+          <span className="max-w-[60%] truncate text-[12px] font-medium text-muted-foreground tracking-tight">{title}</span>
         </div>
       </div>
       {children}

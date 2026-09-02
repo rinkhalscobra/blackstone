@@ -48,7 +48,7 @@ const PricingBlock = () => {
   const [yearly, setYearly] = useState(false);
 
   return (
-    <section className="c3-pricing-section">
+    <section id="pricing" className="showcase-anchor c3-pricing-section">
       <svg width="0" height="0" style={{ position: "absolute" }} aria-hidden="true">
         <filter id="c3-noise">
           <feTurbulence type="fractalNoise" baseFrequency="0.85" numOctaves="2" stitchTiles="stitch" />

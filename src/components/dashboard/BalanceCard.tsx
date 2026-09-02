@@ -18,7 +18,7 @@ export const BalanceCard = ({ balance }: BalanceCardProps) => {
   }).format(balance);
 
   return (
-    <Card className="bg-gradient-to-br from-primary/20 via-card to-card border-primary/30">
+    <Card className="h-full bg-gradient-to-br from-primary/20 via-card to-card border-primary/30">
       <CardHeader className="flex flex-row items-center justify-between pb-2">
         <CardTitle className="text-sm font-medium text-muted-foreground">
           {t('balance.accountBalance')}
@@ -29,7 +29,7 @@ export const BalanceCard = ({ balance }: BalanceCardProps) => {
         <div className="text-3xl font-bold text-foreground mb-4">
           {formattedBalance}
         </div>
-        <div className="flex gap-2">
+        <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-1 2xl:grid-cols-2 gap-2">
           <Button asChild size="sm" className="flex-1">
             <Link to="/dashboard/deposit">
               <ArrowDownRight className="mr-2 h-4 w-4" />
