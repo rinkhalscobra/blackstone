@@ -6,22 +6,21 @@ import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { TrendingUp, TrendingDown, Wallet, DollarSign, PieChart as PieChartIcon, Coins } from "lucide-react";
 import { useLanguage } from "@/contexts/LanguageContext";
-import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip, Legend } from "recharts";
+import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from "recharts";
 import { formatCurrency } from "@/lib/utils";
 import { useAccountValuation } from "@/hooks/useAccountValuation";
 
-const CHART_COLORS = [
-  "#fafafa",
-  "#e5e5e5",
-  "#d4d4d4",
-  "#bdbdbd",
-  "#a3a3a3",
-  "#8a8a8a",
-  "#737373",
-  "#666666",
-  "#525252",
-  "#404040",
-];
+const CHART_COLORS = ["#f59e0b", "#a78bfa", "#34d399", "#38bdf8", "#f472b6", "#fb7185"];
+const ASSET_COLORS: Record<string, string> = {
+  BTC: "#f59e0b",
+  ETH: "#d4d4d8",
+  USDT: "#34d399",
+  SOL: "#a78bfa",
+  XRP: "#38bdf8",
+};
+
+const getAssetColor = (symbol: string, index: number) =>
+  ASSET_COLORS[symbol.toUpperCase()] || CHART_COLORS[index % CHART_COLORS.length];
 
 interface AllocationDatum {
   name: string;
@@ -33,12 +32,6 @@ interface AllocationDatum {
 
 interface TooltipEntry {
   payload: AllocationDatum;
-}
-
-interface LegendEntry {
-  color?: string;
-  value?: string | number;
-  payload?: AllocationDatum;
 }
 
 const PortfolioNew = () => {
@@ -89,7 +82,7 @@ const PortfolioNew = () => {
         fullName: item.crypto_name,
         value: value,
         percentage: percentage,
-        color: CHART_COLORS[index % CHART_COLORS.length],
+        color: getAssetColor(item.crypto_symbol, index),
       };
     }).filter(item => item.value > 0).sort((a, b) => b.value - a.value);
   };
@@ -110,24 +103,6 @@ const PortfolioNew = () => {
       );
     }
     return null;
-  };
-
-  const CustomLegend = ({ payload }: { payload?: LegendEntry[] }) => {
-    return (
-      <div className="flex flex-wrap justify-center gap-3 mt-4">
-        {payload?.map((entry, index: number) => (
-          <div key={index} className="flex items-center gap-2">
-            <div 
-              className="w-3 h-3 rounded-full" 
-              style={{ backgroundColor: entry.color }}
-            />
-            <span className="text-sm text-muted-foreground">
-              {entry.value} ({entry.payload?.percentage.toFixed(1) || '0.0'}%)
-            </span>
-          </div>
-        ))}
-      </div>
-    );
   };
 
   if (!user) {
@@ -234,43 +209,121 @@ const PortfolioNew = () => {
             </Card>
           ) : (
             <>
-              {/* Portfolio Allocation Pie Chart */}
-              <Card className="bg-secondary/50 border-border p-6 mb-8">
-                <div className="flex items-center gap-3 mb-6">
-                  <div className="p-2 bg-primary/10 rounded-lg">
-                    <PieChartIcon className="h-5 w-5 text-primary" />
+              {/* Portfolio allocation */}
+              <Card className="mb-8 overflow-hidden border-border bg-gradient-to-br from-secondary/55 via-card to-card">
+                <div className="flex flex-col gap-3 border-b border-border px-5 py-5 sm:flex-row sm:items-center sm:justify-between sm:px-6">
+                  <div className="flex items-center gap-3">
+                    <div className="rounded-xl border border-border bg-background/60 p-2.5 shadow-sm">
+                      <PieChartIcon className="h-5 w-5 text-foreground" />
+                    </div>
+                    <div>
+                      <h3 className="text-lg font-semibold">{t('crypto.portfolioAllocation')}</h3>
+                      <p className="text-sm text-muted-foreground">{t('crypto.allocationDescription')}</p>
+                    </div>
                   </div>
-                  <h3 className="text-xl font-semibold">{t('crypto.portfolioAllocation')}</h3>
-                </div>
-                
-                <div className="h-[300px] lg:h-[350px]">
-                  <ResponsiveContainer width="100%" height="100%">
-                    <PieChart>
-                      <Pie
-                        data={pieChartData}
-                        cx="50%"
-                        cy="50%"
-                        innerRadius={60}
-                        outerRadius={100}
-                        paddingAngle={2}
-                        dataKey="value"
-                        animationBegin={0}
-                        animationDuration={800}
-                      >
-                        {pieChartData.map((entry, index) => (
-                          <Cell key={`cell-${index}`} fill={entry.color} stroke="none" />
-                        ))}
-                      </Pie>
-                      <Tooltip content={<CustomTooltip />} />
-                      <Legend content={<CustomLegend />} />
-                    </PieChart>
-                  </ResponsiveContainer>
+                  <div className="w-fit rounded-full border border-border bg-background/50 px-3 py-1 text-xs font-medium text-muted-foreground">
+                    {portfolioItems.length} {t('crypto.numberOfAssets').toLowerCase()}
+                  </div>
                 </div>
 
-                {/* Center label for total value */}
-                <div className="text-center -mt-[190px] lg:-mt-[210px] mb-[120px] lg:mb-[140px] pointer-events-none">
-                  <p className="text-sm text-muted-foreground">{t('crypto.totalPortfolioValue')}</p>
-                  <p className="text-xl font-bold">{formatCurrency(totalValue, displayCurrency)}</p>
+                <div className="grid lg:grid-cols-[minmax(300px,0.8fr)_minmax(0,1.2fr)]">
+                  <div className="border-b border-border p-5 sm:p-7 lg:border-b-0 lg:border-r">
+                    <div className="relative mx-auto h-[260px] w-full max-w-[340px]">
+                      <ResponsiveContainer width="100%" height="100%">
+                        <PieChart>
+                          <Pie
+                            data={[{ value: totalValue || 1 }]}
+                            dataKey="value"
+                            cx="50%"
+                            cy="50%"
+                            innerRadius={82}
+                            outerRadius={108}
+                            fill="hsl(var(--muted))"
+                            stroke="none"
+                            isAnimationActive={false}
+                          />
+                          <Pie
+                            data={pieChartData}
+                            dataKey="value"
+                            cx="50%"
+                            cy="50%"
+                            innerRadius={82}
+                            outerRadius={108}
+                            paddingAngle={pieChartData.length > 1 ? 3 : 0}
+                            cornerRadius={pieChartData.length > 1 ? 5 : 0}
+                            stroke="hsl(var(--card))"
+                            strokeWidth={3}
+                            animationBegin={100}
+                            animationDuration={750}
+                          >
+                            {pieChartData.map((entry) => (
+                              <Cell key={entry.name} fill={entry.color} />
+                            ))}
+                          </Pie>
+                          <Tooltip content={<CustomTooltip />} />
+                        </PieChart>
+                      </ResponsiveContainer>
+
+                      <div className="pointer-events-none absolute inset-0 flex flex-col items-center justify-center px-12 text-center">
+                        <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">
+                          {t('crypto.totalPortfolioValue')}
+                        </p>
+                        <p className="mt-1 max-w-[155px] whitespace-nowrap text-lg font-bold tracking-tight sm:text-xl">
+                          {formatCurrency(totalValue, displayCurrency)}
+                        </p>
+                        <p className={`mt-1 text-xs font-medium ${profitLoss >= 0 ? 'text-success' : 'text-destructive'}`}>
+                          {profitLossPercentage >= 0 ? '+' : ''}{profitLossPercentage.toFixed(2)}%
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="p-5 sm:p-7">
+                    <div className="mb-5">
+                      <h4 className="font-semibold text-foreground">{t('crypto.allocationBreakdown')}</h4>
+                      <p className="mt-1 text-sm text-muted-foreground">{t('crypto.allocationShare')}</p>
+                    </div>
+
+                    <div className="space-y-3">
+                      {pieChartData.map((asset) => (
+                        <div key={asset.name} className="rounded-xl border border-border/80 bg-background/35 p-3.5">
+                          <div className="flex items-center justify-between gap-4">
+                            <div className="flex min-w-0 items-center gap-3">
+                              <span
+                                className="h-9 w-1 shrink-0 rounded-full"
+                                style={{ backgroundColor: asset.color }}
+                              />
+                              <div className="min-w-0">
+                                <p className="font-semibold text-foreground">{asset.name}</p>
+                                <p className="truncate text-xs text-muted-foreground">{asset.fullName}</p>
+                              </div>
+                            </div>
+                            <div className="shrink-0 text-right">
+                              <p className="font-semibold text-foreground">{formatCurrency(asset.value, displayCurrency)}</p>
+                              <p className="text-xs text-muted-foreground">{asset.percentage.toFixed(1)}%</p>
+                            </div>
+                          </div>
+                          <div className="mt-3 h-1.5 overflow-hidden rounded-full bg-muted">
+                            <div
+                              className="h-full rounded-full transition-all duration-700"
+                              style={{ width: `${Math.max(asset.percentage, 1)}%`, backgroundColor: asset.color }}
+                            />
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+
+                    <div className="mt-5 grid grid-cols-2 gap-3 border-t border-border pt-5">
+                      <div>
+                        <p className="text-xs text-muted-foreground">{t('crypto.largestPosition')}</p>
+                        <p className="mt-1 font-semibold">{pieChartData[0]?.name || '—'}</p>
+                      </div>
+                      <div className="text-right">
+                        <p className="text-xs text-muted-foreground">{t('crypto.portfolioCurrency')}</p>
+                        <p className="mt-1 font-semibold">{displayCurrency}</p>
+                      </div>
+                    </div>
+                  </div>
                 </div>
               </Card>
 
@@ -283,7 +336,7 @@ const PortfolioNew = () => {
                   const itemProfit = currentValue - invested;
                   const itemProfitPercentage = invested > 0 ? (itemProfit / invested) * 100 : 0;
                   const allocationPercentage = totalValue > 0 ? (currentValue / totalValue) * 100 : 0;
-                  const color = CHART_COLORS[index % CHART_COLORS.length];
+                  const color = getAssetColor(item.crypto_symbol, index);
 
                   return (
                     <Card key={item.id} className="bg-secondary/50 border-border p-6">
