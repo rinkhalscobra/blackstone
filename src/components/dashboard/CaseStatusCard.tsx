@@ -1,37 +1,46 @@
-import { FileText, CheckCircle, Clock, Search, Landmark, Building2, AlertCircle } from 'lucide-react';
+import { FileText, CheckCircle, Clock, Search, AlertCircle } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { cn } from '@/lib/utils';
 import { Progress } from '@/components/ui/progress';
 import { useLanguage } from '@/contexts/LanguageContext';
+import { RecoveryInvestigationPanel, type RecoveryInvestigationData } from './RecoveryInvestigationPanel';
 
-interface CaseStatusCardProps {
+interface CaseStatusCardProps extends RecoveryInvestigationData {
   caseNumber: string | null;
   status: string | null;
   casePhase?: string | null;
 }
-
-const stageIcons = [FileText, Landmark, Building2, Search, CheckCircle];
 
 const getStageIndex = (casePhase: string | null): number => {
   if (!casePhase) return 0;
   const phaseMap: Record<string, number> = {
     submitted: 0,
     bank_verification: 1,
-    exchange_commission: 2,
-    review: 3,
-    completed: 4,
+    exchange_commission: 1,
+    investigation: 1,
+    recovery: 1,
+    review: 1,
+    completed: 2,
   };
   return phaseMap[casePhase] ?? 0;
 };
 
-export const CaseStatusCard = ({ caseNumber, status, casePhase }: CaseStatusCardProps) => {
+export const CaseStatusCard = ({
+  caseNumber,
+  status,
+  casePhase,
+  searchStartedAt,
+  searchDurationMinutes,
+  searchScope,
+  resultType,
+  resultDetails,
+  completedAt,
+}: CaseStatusCardProps) => {
   const { t } = useLanguage();
   const currentStage = getStageIndex(casePhase);
   
   const stages = [
     { id: 'submitted', label: t('caseStatus.caseFiled'), icon: FileText, description: t('caseStatus.caseSubmitted') },
-    { id: 'bank_verification', label: t('caseStatus.bankVerification'), icon: Landmark, description: t('caseStatus.bankVerificationDesc') },
-    { id: 'exchange_commission', label: t('caseStatus.exchangeCommission'), icon: Building2, description: t('caseStatus.exchangeCommissionDesc') },
     { id: 'review', label: t('caseStatus.underReview'), icon: Search, description: t('caseStatus.reviewingDocs') },
     { id: 'completed', label: t('caseStatus.completed'), icon: CheckCircle, description: t('caseStatus.fundsRecovered') },
   ];
@@ -97,13 +106,13 @@ export const CaseStatusCard = ({ caseNumber, status, casePhase }: CaseStatusCard
         {/* Progress Steps */}
         <div className="relative pt-2">
           {/* Connection line */}
-          <div className="absolute top-[26px] left-[10%] right-[10%] h-1 bg-muted rounded-full" />
+          <div className="absolute top-[26px] left-[16.67%] right-[16.67%] h-1 bg-muted rounded-full" />
           <div 
-            className="absolute top-[26px] left-[10%] h-1 bg-gradient-to-r from-primary to-primary/70 rounded-full transition-all duration-700 ease-out"
-            style={{ width: `${Math.max(0, (currentStage / (stages.length - 1)) * 80)}%` }}
+            className="absolute top-[26px] left-[16.67%] h-1 bg-gradient-to-r from-primary to-primary/70 rounded-full transition-all duration-700 ease-out"
+            style={{ width: `${Math.max(0, (currentStage / (stages.length - 1)) * 66.66)}%` }}
           />
           
-          <div className="relative grid grid-cols-5 gap-1">
+          <div className="relative grid grid-cols-3 gap-1">
             {stages.map((stage, index) => {
               const StageIcon = stage.icon;
               const isCompleted = index < currentStage;
@@ -152,6 +161,16 @@ export const CaseStatusCard = ({ caseNumber, status, casePhase }: CaseStatusCard
             })}
           </div>
         </div>
+
+        <RecoveryInvestigationPanel
+          phase={casePhase}
+          searchStartedAt={searchStartedAt}
+          searchDurationMinutes={searchDurationMinutes}
+          searchScope={searchScope}
+          resultType={resultType}
+          resultDetails={resultDetails}
+          completedAt={completedAt}
+        />
       </CardContent>
     </Card>
   );

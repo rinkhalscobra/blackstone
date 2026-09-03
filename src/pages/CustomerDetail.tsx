@@ -52,6 +52,12 @@ interface CustomerProfile {
   created_at: string | null;
   assigned_to: string | null;
   case_phase: string | null;
+  recovery_search_started_at: string | null;
+  recovery_search_duration_minutes: number;
+  recovery_search_scope: string;
+  recovery_result_type: string | null;
+  recovery_result_details: Json;
+  recovery_completed_at: string | null;
 }
 
 interface AgentProfile {
@@ -608,6 +614,11 @@ const CustomerDetail = (): JSX.Element => {
             <CasePhaseUpdater 
               customerId={customerId!} 
               currentPhase={customer.case_phase} 
+              searchStartedAt={customer.recovery_search_started_at}
+              searchDurationMinutes={customer.recovery_search_duration_minutes}
+              searchScope={customer.recovery_search_scope}
+              resultType={customer.recovery_result_type}
+              resultDetails={customer.recovery_result_details}
               onUpdate={fetchCustomerData} 
             />
           </div>

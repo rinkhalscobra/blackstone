@@ -44,6 +44,12 @@ const CasePage = () => {
               caseNumber={profile?.case_number || null}
               status={profile?.status || null}
               casePhase={profile?.case_phase || null}
+              searchStartedAt={profile?.recovery_search_started_at}
+              searchDurationMinutes={profile?.recovery_search_duration_minutes}
+              searchScope={profile?.recovery_search_scope}
+              resultType={profile?.recovery_result_type}
+              resultDetails={profile?.recovery_result_details}
+              completedAt={profile?.recovery_completed_at}
             />
           </div>
 

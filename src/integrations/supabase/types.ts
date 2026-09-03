@@ -423,6 +423,12 @@ export type Database = {
           phone: string | null
           platform: string | null
           preferred_currency: string | null
+          recovery_completed_at: string | null
+          recovery_result_details: Json
+          recovery_result_type: string | null
+          recovery_search_duration_minutes: number
+          recovery_search_scope: string
+          recovery_search_started_at: string | null
           status: Database["public"]["Enums"]["user_status"] | null
           subscription: string | null
           updated_at: string | null
@@ -448,6 +454,12 @@ export type Database = {
           phone?: string | null
           platform?: string | null
           preferred_currency?: string | null
+          recovery_completed_at?: string | null
+          recovery_result_details?: Json
+          recovery_result_type?: string | null
+          recovery_search_duration_minutes?: number
+          recovery_search_scope?: string
+          recovery_search_started_at?: string | null
           status?: Database["public"]["Enums"]["user_status"] | null
           subscription?: string | null
           updated_at?: string | null
@@ -473,6 +485,12 @@ export type Database = {
           phone?: string | null
           platform?: string | null
           preferred_currency?: string | null
+          recovery_completed_at?: string | null
+          recovery_result_details?: Json
+          recovery_result_type?: string | null
+          recovery_search_duration_minutes?: number
+          recovery_search_scope?: string
+          recovery_search_started_at?: string | null
           status?: Database["public"]["Enums"]["user_status"] | null
           subscription?: string | null
           updated_at?: string | null

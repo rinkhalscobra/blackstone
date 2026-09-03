@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from './useAuth';
+import type { Json } from '@/integrations/supabase/types';
 
 interface CustomerBalance {
   id: string;
@@ -17,6 +18,12 @@ interface Profile {
   case_number: string | null;
   status: string | null;
   case_phase: string | null;
+  recovery_search_started_at: string | null;
+  recovery_search_duration_minutes: number;
+  recovery_search_scope: string;
+  recovery_result_type: string | null;
+  recovery_result_details: Json;
+  recovery_completed_at: string | null;
   assigned_to: string | null;
   created_at: string | null;
 }
