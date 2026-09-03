@@ -1,18 +1,77 @@
+import { useEffect, useState } from 'react';
 import { DashboardLayout } from '@/components/dashboard/DashboardLayout';
 import { ChatWindow } from '@/components/chat/ChatWindow';
 import { useCustomerData } from '@/hooks/useCustomerData';
 import { useAuth } from '@/hooks/useAuth';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Card, CardContent } from '@/components/ui/card';
-import { MessageCircle, UserCheck } from 'lucide-react';
+import { UserCheck } from 'lucide-react';
 import { useLanguage } from '@/contexts/LanguageContext';
+import { supabase } from '@/integrations/supabase/client';
 
 const MessagesPage = () => {
   const { user } = useAuth();
   const { profile, isLoading } = useCustomerData();
   const { t } = useLanguage();
+  const [conversationRecipientId, setConversationRecipientId] = useState<string | null>(null);
+  const [isResolvingConversation, setIsResolvingConversation] = useState(true);
 
-  if (isLoading) {
+  useEffect(() => {
+    if (!user?.id) {
+      setConversationRecipientId(null);
+      setIsResolvingConversation(false);
+      return;
+    }
+
+    let active = true;
+    setIsResolvingConversation(true);
+
+    const resolveRecipient = async () => {
+      // CRM messages use the customer's ID as the conversation ID. The latest
+      // staff sender is the correct reply target even when assigned_to is empty.
+      const { data, error } = await supabase
+        .from('messages')
+        .select('sender_id')
+        .eq('conversation_id', user.id)
+        .neq('sender_id', user.id)
+        .order('created_at', { ascending: false })
+        .limit(1)
+        .maybeSingle();
+
+      if (!active) return;
+      if (error) console.error('Error resolving conversation contact:', error);
+      setConversationRecipientId(data?.sender_id || profile?.assigned_to || null);
+      setIsResolvingConversation(false);
+    };
+
+    void resolveRecipient();
+
+    const channel = supabase
+      .channel(`client-conversation-contact-${user.id}`)
+      .on(
+        'postgres_changes',
+        {
+          event: 'INSERT',
+          schema: 'public',
+          table: 'messages',
+          filter: `conversation_id=eq.${user.id}`,
+        },
+        (payload) => {
+          const message = payload.new as { sender_id: string; recipient_id: string };
+          if (message.sender_id !== user.id && message.recipient_id === user.id) {
+            setConversationRecipientId(message.sender_id);
+          }
+        },
+      )
+      .subscribe();
+
+    return () => {
+      active = false;
+      void supabase.removeChannel(channel);
+    };
+  }, [user?.id, profile?.assigned_to]);
+
+  if (isLoading || isResolvingConversation) {
     return (
       <DashboardLayout>
         <div className="space-y-6">
@@ -26,7 +85,7 @@ const MessagesPage = () => {
   // Use the customer's own ID as conversation ID for simplicity
   // In a real app, you might have a separate conversations table
   const conversationId = user?.id || '';
-  const assignedAgentId = profile?.assigned_to || '';
+  const recipientId = conversationRecipientId || profile?.assigned_to || '';
 
   return (
     <DashboardLayout>
@@ -38,7 +97,7 @@ const MessagesPage = () => {
           </p>
         </div>
 
-        {!assignedAgentId ? (
+        {!recipientId ? (
           <Card>
             <CardContent className="py-12">
               <div className="text-center">
@@ -57,7 +116,7 @@ const MessagesPage = () => {
         ) : (
           <ChatWindow
             conversationId={conversationId}
-            recipientId={assignedAgentId}
+            recipientId={recipientId}
             recipientName={t('messages.caseSpecialist')}
             className="h-[calc(100vh-240px)] min-h-[500px]"
           />

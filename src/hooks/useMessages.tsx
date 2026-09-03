@@ -76,7 +76,10 @@ export const useMessages = (conversationId: string | null, recipientId: string |
 
   const playNotificationSound = useCallback(() => {
     if (audioRef.current) {
-      const audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
+      const AudioContextConstructor = window.AudioContext ||
+        (window as Window & { webkitAudioContext?: typeof AudioContext }).webkitAudioContext;
+      if (!AudioContextConstructor) return;
+      const audioContext = new AudioContextConstructor();
       const oscillator = audioContext.createOscillator();
       const gainNode = audioContext.createGain();
       
