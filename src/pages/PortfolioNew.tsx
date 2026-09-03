@@ -265,10 +265,10 @@ const PortfolioNew = () => {
                       </ResponsiveContainer>
 
                       <div className="pointer-events-none absolute inset-0 flex flex-col items-center justify-center px-12 text-center">
-                        <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">
-                          {t('crypto.totalPortfolioValue')}
+                        <p className="max-w-[112px] text-[9px] font-semibold uppercase leading-[1.35] tracking-[0.12em] text-muted-foreground sm:text-[10px]">
+                          {t('crypto.portfolioValue')}
                         </p>
-                        <p className="mt-1 max-w-[155px] whitespace-nowrap text-lg font-bold tracking-tight sm:text-xl">
+                        <p className="mt-1 max-w-[148px] whitespace-nowrap text-base font-bold tracking-tight min-[380px]:text-lg sm:text-xl">
                           {formatCurrency(totalValue, displayCurrency)}
                         </p>
                         <p className={`mt-1 text-xs font-medium ${profitLoss >= 0 ? 'text-success' : 'text-destructive'}`}>
