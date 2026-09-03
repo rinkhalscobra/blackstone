@@ -11,6 +11,7 @@ const DATA_URL = "https://api.coinbase.com/v2";
 const CACHE_TTL_MS = 2 * 60 * 1000;
 const STALE_TTL_MS = 60 * 60 * 1000;
 const MAX_SYMBOLS = 10;
+const MAX_RATE_SYMBOLS = 30;
 
 const cryptoNames: Record<string, string> = {
   BTC: "Bitcoin",
@@ -18,6 +19,12 @@ const cryptoNames: Record<string, string> = {
   XRP: "XRP",
   USDT: "Tether",
   SOL: "Solana",
+  ADA: "Cardano",
+  DOGE: "Dogecoin",
+  AVAX: "Avalanche",
+  LTC: "Litecoin",
+  BCH: "Bitcoin Cash",
+  LINK: "Chainlink",
 };
 
 const allowedProducts = new Map(
@@ -33,6 +40,7 @@ const RequestSchema = z.object({
     "price",
     "time_series",
     "exchange_rate",
+    "exchange_rates",
     "crypto_exchanges",
     "eod",
   ]),
@@ -184,6 +192,29 @@ const handleRequest = async (endpoint: string, params: Record<string, string>) =
       const rate = data.data?.rates?.[currencies.quote];
       if (!rate) throw new Error(`No exchange rate for ${currencies.base}/${currencies.quote}`);
       return { symbol: `${currencies.base}/${currencies.quote}`, rate };
+    }
+
+    case "exchange_rates": {
+      const base = (params.base ?? "USD").trim().toUpperCase();
+      const quotes = [...new Set((params.quotes ?? "")
+        .split(",")
+        .map((value) => value.trim().toUpperCase())
+        .filter(Boolean))]
+        .slice(0, MAX_RATE_SYMBOLS);
+      if (!/^[A-Z0-9]{2,10}$/.test(base) || quotes.length === 0 || quotes.some((quote) => !/^[A-Z0-9]{2,10}$/.test(quote))) {
+        throw new Error("Invalid exchange-rate currencies");
+      }
+
+      const data = await fetchJson(`${DATA_URL}/exchange-rates?currency=${encodeURIComponent(base)}`);
+      const providerRates = data.data?.rates ?? {};
+      return {
+        base,
+        rates: Object.fromEntries(
+          quotes
+            .filter((quote) => providerRates[quote])
+            .map((quote) => [quote, Number(providerRates[quote])]),
+        ),
+      };
     }
 
     case "cryptocurrencies": {

@@ -28,6 +28,7 @@ import CryptoTicker from '@/components/CryptoTicker';
 import Logo from '@/components/Logo';
 import { Backdrop } from '@/components/design/Backdrop';
 import { WindowChrome } from '@/components/dashboard/WindowChrome';
+import SidebarMarketRates from '@/components/dashboard/SidebarMarketRates';
 
 interface DashboardLayoutProps {
   children: ReactNode;
@@ -172,6 +173,8 @@ export const DashboardLayout = ({ children }: DashboardLayoutProps) => {
                   ))}
                 </div>
               </div>
+
+              <SidebarMarketRates />
             </aside>
 
             {/* Mobile menu */}
@@ -181,7 +184,7 @@ export const DashboardLayout = ({ children }: DashboardLayoutProps) => {
                   className="fixed inset-0 bg-background/80 backdrop-blur"
                   onClick={() => setMobileMenuOpen(false)}
                 />
-                <aside className="fixed left-0 top-16 bottom-0 w-64 border-r border-border bg-card p-3">
+                <aside className="fixed left-0 top-16 bottom-0 w-64 overflow-y-auto border-r border-border bg-card p-3">
                   <button
                     onClick={() => {
                       navigate('/dashboard/case');
@@ -210,6 +213,7 @@ export const DashboardLayout = ({ children }: DashboardLayoutProps) => {
                       </Link>
                     ))}
                   </nav>
+                  <SidebarMarketRates />
                 </aside>
               </div>
             )}

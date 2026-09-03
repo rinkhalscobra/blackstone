@@ -42,8 +42,8 @@ const DashboardIndex = () => {
       <DashboardLayout>
         <div className="space-y-6">
           <Skeleton className="h-8 w-64" />
-          <div className="grid grid-cols-1 xl:grid-cols-[minmax(280px,0.75fr)_minmax(0,1.35fr)] gap-5 xl:gap-6">
-            <Skeleton className="h-56" />
+          <div className="space-y-5 xl:space-y-6">
+            <Skeleton className="h-48" />
             <Skeleton className="h-80" />
           </div>
         </div>
@@ -67,7 +67,7 @@ const DashboardIndex = () => {
         </div>
 
         {/* Main Grid */}
-        <div className="grid grid-cols-1 xl:grid-cols-[minmax(280px,0.75fr)_minmax(0,1.35fr)] gap-5 xl:gap-6 items-stretch">
+        <div className="space-y-5 xl:space-y-6">
           <div className="min-w-0">
             <BalanceCard balance={balance?.balance || 0} currency={balance?.currency || 'EUR'} />
           </div>
@@ -87,13 +87,13 @@ const DashboardIndex = () => {
         </div>
 
         {/* Activity and account tools */}
-        <div className="grid grid-cols-1 xl:grid-cols-[minmax(0,1.35fr)_minmax(320px,0.65fr)] gap-5 xl:gap-6 items-start">
+        <div className="space-y-5 xl:space-y-6">
           <div className="min-w-0">
             <RecentActivityCard transactions={transactions} />
           </div>
-          <div className="min-w-0 space-y-5 xl:space-y-6">
-            <QuickActionsCard />
-            <PortfolioSummaryCard />
+          <div className="grid min-w-0 grid-cols-1 gap-5 md:grid-cols-2 xl:gap-6">
+            <div className="min-w-0"><QuickActionsCard /></div>
+            <div className="min-w-0"><PortfolioSummaryCard /></div>
           </div>
         </div>
         

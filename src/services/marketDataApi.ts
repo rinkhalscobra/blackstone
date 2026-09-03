@@ -223,6 +223,26 @@ export const getExchangeRate = async (fromSymbol: string, toSymbol: string = 'US
   }
 };
 
+// Fetch several fiat rates from a single provider response.
+export const getExchangeRates = async (base: string, quotes: string[]): Promise<Record<string, number>> => {
+  try {
+    const normalizedQuotes = [...new Set(quotes.map((quote) => quote.trim().toUpperCase()).filter(Boolean))].sort();
+    const data = await callCryptoApi('exchange_rates', {
+      base: base.trim().toUpperCase(),
+      quotes: normalizedQuotes.join(','),
+    });
+    if (!data?.rates || typeof data.rates !== 'object') return {};
+    return Object.fromEntries(
+      Object.entries(data.rates)
+        .map(([symbol, rate]) => [symbol, Number(rate)])
+        .filter(([, rate]) => Number.isFinite(rate) && rate > 0),
+    );
+  } catch (error) {
+    console.error('Error fetching exchange rates:', error);
+    return {};
+  }
+};
+
 // Get list of cryptocurrency exchanges
 export const getCryptoExchanges = async (): Promise<CryptoExchange[]> => {
   try {
@@ -250,8 +270,13 @@ export const TOP_CRYPTO_SYMBOLS = [
   'BTC/USD',
   'ETH/USD',
   'XRP/USD',
-  'USDT/USD',
-  'SOL/USD'
+  'SOL/USD',
+  'ADA/USD',
+  'DOGE/USD',
+  'AVAX/USD',
+  'LTC/USD',
+  'BCH/USD',
+  'LINK/USD',
 ];
 
 // Crypto name mapping
@@ -268,6 +293,7 @@ export const CRYPTO_NAMES: Record<string, string> = {
   'AVAX': 'Avalanche',
   'LTC': 'Litecoin',
   'BCH': 'Bitcoin Cash',
+  'LINK': 'Chainlink',
   'XLM': 'Stellar',
   'ETC': 'Ethereum Classic'
 };

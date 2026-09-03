@@ -19,8 +19,8 @@ const CryptoTicker = ({ className }: CryptoTickerProps) => {
 
   useEffect(() => {
     fetchTickerData();
-    // Reduce refresh frequency to avoid API rate limits (120 seconds)
-    const refreshInterval = window.setInterval(fetchTickerData, 120000);
+    // Keep all market widgets on the same lightweight ten-minute schedule.
+    const refreshInterval = window.setInterval(fetchTickerData, 10 * 60 * 1000);
     return () => window.clearInterval(refreshInterval);
   }, []);
 

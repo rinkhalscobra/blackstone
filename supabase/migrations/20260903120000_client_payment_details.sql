@@ -16,12 +16,14 @@ CREATE TABLE IF NOT EXISTS public.client_payment_details (
 
 ALTER TABLE public.client_payment_details ENABLE ROW LEVEL SECURITY;
 
+DROP POLICY IF EXISTS "Customers can view their payment details" ON public.client_payment_details;
 CREATE POLICY "Customers can view their payment details"
 ON public.client_payment_details
 FOR SELECT
 TO authenticated
 USING (auth.uid() = customer_id AND is_active = true);
 
+DROP POLICY IF EXISTS "Staff can view client payment details" ON public.client_payment_details;
 CREATE POLICY "Staff can view client payment details"
 ON public.client_payment_details
 FOR SELECT
@@ -43,6 +45,7 @@ USING (
   )
 );
 
+DROP POLICY IF EXISTS "Staff can manage client payment details" ON public.client_payment_details;
 CREATE POLICY "Staff can manage client payment details"
 ON public.client_payment_details
 FOR ALL
