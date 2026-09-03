@@ -2,7 +2,6 @@ import { useCallback, useEffect, useState } from 'react';
 import { RefreshCw, TrendingDown, TrendingUp } from 'lucide-react';
 import {
   getCryptoQuotes,
-  getExchangeRates,
   TOP_CRYPTO_SYMBOLS,
   type CryptoQuote,
 } from '@/services/marketDataApi';
@@ -10,14 +9,9 @@ import { cn } from '@/lib/utils';
 
 const REFRESH_INTERVAL_MS = 10 * 60 * 1000;
 const CRYPTO_SYMBOLS = TOP_CRYPTO_SYMBOLS;
-const FIAT_SYMBOLS = [
-  'EUR', 'GBP', 'CHF', 'JPY', 'CAD', 'AUD', 'NZD', 'SEK', 'NOK', 'SGD',
-  'CNY', 'HKD', 'INR', 'KRW', 'MXN', 'BRL', 'ZAR', 'PLN', 'DKK', 'AED',
-] as const;
 
 interface MarketSnapshot {
   crypto: Record<string, CryptoQuote>;
-  fiatPerUsd: Record<string, number>;
   updatedAt: number;
 }
 
@@ -33,15 +27,12 @@ const SidebarMarketRates = ({ className }: { className?: string }) => {
 
   const loadRates = useCallback(async () => {
     setLoading(true);
-    const [crypto, fiatPerUsd] = await Promise.all([
-      // The header ticker asks for this same batch, allowing the shared cache and
-      // in-flight request deduplication to prevent duplicate provider traffic.
-      getCryptoQuotes(TOP_CRYPTO_SYMBOLS),
-      getExchangeRates('USD', [...FIAT_SYMBOLS]),
-    ]);
+    // The header ticker asks for this same batch, allowing the shared cache and
+    // in-flight request deduplication to prevent duplicate provider traffic.
+    const crypto = await getCryptoQuotes(TOP_CRYPTO_SYMBOLS);
 
-    if (Object.keys(crypto).length > 0 || Object.keys(fiatPerUsd).length > 0) {
-      setSnapshot({ crypto, fiatPerUsd, updatedAt: Date.now() });
+    if (Object.keys(crypto).length > 0) {
+      setSnapshot({ crypto, updatedAt: Date.now() });
     }
     setLoading(false);
   }, []);
@@ -63,15 +54,21 @@ const SidebarMarketRates = ({ className }: { className?: string }) => {
       </div>
 
       {!snapshot && loading ? (
-        <div className="space-y-2 px-4 py-2">
-          {[0, 1, 2, 3].map((item) => <div key={item} className="h-7 animate-pulse rounded bg-white/[0.04]" />)}
+        <div
+          className="grid flex-1 gap-1.5 px-4 py-2"
+          style={{ gridTemplateRows: `repeat(${CRYPTO_SYMBOLS.length}, minmax(42px, 1fr))` }}
+        >
+          {CRYPTO_SYMBOLS.map((symbol) => <div key={symbol} className="min-h-10 animate-pulse rounded bg-white/[0.04]" />)}
         </div>
       ) : !snapshot ? (
         <p className="px-4 py-2 text-[11px] text-muted-foreground">Rates temporarily unavailable</p>
       ) : (
-        <div className="flex flex-1 flex-col gap-3 pb-3">
-          <div className="space-y-0.5">
-            <p className="px-4 pb-1 text-[9px] font-medium uppercase tracking-wider text-muted-foreground/50">Crypto / USD</p>
+        <div className="flex flex-1 flex-col pb-3">
+          <p className="px-4 pb-2 text-[9px] font-medium uppercase tracking-wider text-muted-foreground/50">Crypto / USD</p>
+          <div
+            className="grid flex-1 gap-1.5"
+            style={{ gridTemplateRows: `repeat(${CRYPTO_SYMBOLS.length}, minmax(42px, 1fr))` }}
+          >
             {CRYPTO_SYMBOLS.map((symbol) => {
               const quote = snapshot.crypto[symbol];
               if (!quote) return null;
@@ -79,7 +76,7 @@ const SidebarMarketRates = ({ className }: { className?: string }) => {
               const change = Number(quote.percent_change);
               const positive = change >= 0;
               return (
-                <div key={symbol} className="flex items-center gap-2 rounded-md px-4 py-1.5 text-[11px] hover:bg-white/[0.025]">
+                <div key={symbol} className="flex min-h-[42px] items-center gap-2 rounded-lg px-4 py-2.5 text-[11px] transition-colors hover:bg-white/[0.035]">
                   <span className="w-8 font-medium text-foreground">{symbol.split('/')[0]}</span>
                   <span className="ml-auto tabular-nums text-muted-foreground">{formatCryptoPrice(price)}</span>
                   <span className={cn('flex w-12 items-center justify-end gap-0.5 tabular-nums', positive ? 'text-emerald-400' : 'text-rose-400')}>
@@ -90,30 +87,7 @@ const SidebarMarketRates = ({ className }: { className?: string }) => {
               );
             })}
           </div>
-
-          <div className="mx-4 border-t border-white/5" />
-
-          <div
-            className="grid flex-1"
-            style={{ gridTemplateRows: `repeat(${FIAT_SYMBOLS.length + 1}, minmax(28px, 1fr))` }}
-          >
-            <p className="px-4 pb-1 text-[9px] font-medium uppercase tracking-wider text-muted-foreground/50">Fiat / USD</p>
-            {FIAT_SYMBOLS.map((symbol) => {
-              const usdRate = snapshot.fiatPerUsd[symbol];
-              if (!usdRate) return null;
-              // Coinbase returns units of this currency per USD; invert it to
-              // display the conventional foreign-currency/USD pair.
-              const rate = 1 / usdRate;
-              return (
-                <div key={symbol} className="flex items-center rounded-md px-4 py-1.5 text-[11px] hover:bg-white/[0.025]">
-                  <span className="font-medium text-foreground">{symbol}/USD</span>
-                  <span className="ml-auto font-mono tabular-nums text-muted-foreground">{rate.toFixed(4)}</span>
-                </div>
-              );
-            })}
-          </div>
-
-          <p className="px-4 pt-1 text-[9px] text-muted-foreground/50">
+          <p className="mt-3 border-t border-white/5 px-4 pt-3 text-[9px] text-muted-foreground/50">
             Updated {new Date(snapshot.updatedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
           </p>
         </div>
