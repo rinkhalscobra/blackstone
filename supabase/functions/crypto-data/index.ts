@@ -10,7 +10,7 @@ const EXCHANGE_URL = "https://api.exchange.coinbase.com";
 const DATA_URL = "https://api.coinbase.com/v2";
 const CACHE_TTL_MS = 2 * 60 * 1000;
 const STALE_TTL_MS = 60 * 60 * 1000;
-const MAX_SYMBOLS = 10;
+const MAX_SYMBOLS = 16;
 const MAX_RATE_SYMBOLS = 30;
 
 const cryptoNames: Record<string, string> = {
@@ -25,6 +25,12 @@ const cryptoNames: Record<string, string> = {
   LTC: "Litecoin",
   BCH: "Bitcoin Cash",
   LINK: "Chainlink",
+  XLM: "Stellar",
+  DOT: "Polkadot",
+  UNI: "Uniswap",
+  AAVE: "Aave",
+  SHIB: "Shiba Inu",
+  HBAR: "Hedera",
 };
 
 const allowedProducts = new Map(
