@@ -56,7 +56,9 @@ export const WithdrawForm = () => {
   const availableBalance = balance?.balance || 0;
   const balanceCurrency = (balance?.currency || 'EUR').toUpperCase();
   const requestedAmount = parseFloat(amount) || 0;
-  const insufficientFunds = requestedAmount > availableBalance;
+  // Crypto withdrawals are validated against the selected holding quantity;
+  // they do not consume the separate fiat cash balance.
+  const insufficientFunds = method !== 'crypto_wallet' && requestedAmount > availableBalance;
   const heldQty = holdings.find(h => h.crypto_id === cryptoId)?.quantity || 0;
   const requestedQty = parseFloat(quantity) || 0;
   const insufficientCrypto = method === 'crypto_wallet' && requestedQty > heldQty;

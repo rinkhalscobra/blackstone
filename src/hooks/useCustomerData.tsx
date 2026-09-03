@@ -15,6 +15,8 @@ interface Profile {
   last_name: string | null;
   email: string | null;
   phone: string | null;
+  preferred_currency: string | null;
+  display_currency: string;
   case_number: string | null;
   status: string | null;
   case_phase: string | null;

@@ -9,7 +9,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { getCryptoPrices } from "@/services/cryptoApi";
-import { formatEuro } from "@/lib/utils";
+import { getExchangeRate } from "@/services/marketDataApi";
+import { formatCurrency } from "@/lib/utils";
 
 // Only allow these 5 cryptos for portfolios
 const ALLOWED_CRYPTOS = [
@@ -35,10 +36,32 @@ export const AddPortfolioForClientDialog = ({ customerId, onSuccess, children }:
   const [loading, setLoading] = useState(false);
   const [fetchingPrice, setFetchingPrice] = useState(false);
   const [livePrice, setLivePrice] = useState<number | null>(null);
+  const [displayCurrency, setDisplayCurrency] = useState('USD');
+  const [usdToDisplay, setUsdToDisplay] = useState<number | null>(1);
   const { toast } = useToast();
   const { t } = useLanguage();
 
   const selectedCrypto = ALLOWED_CRYPTOS.find(c => c.id === selectedCryptoId);
+
+  useEffect(() => {
+    void supabase
+      .from('profiles')
+      .select('preferred_currency, display_currency')
+      .eq('id', customerId)
+      .single()
+      .then(({ data }) => {
+        setDisplayCurrency((data?.preferred_currency || data?.display_currency || 'USD').toUpperCase());
+      });
+  }, [customerId]);
+
+  useEffect(() => {
+    if (displayCurrency === 'USD') {
+      setUsdToDisplay(1);
+      return;
+    }
+    setUsdToDisplay(null);
+    void getExchangeRate('USD', displayCurrency).then(setUsdToDisplay);
+  }, [displayCurrency]);
 
   // Fetch live price when crypto is selected
   useEffect(() => {
@@ -64,9 +87,9 @@ export const AddPortfolioForClientDialog = ({ customerId, onSuccess, children }:
     fetchPrice();
   }, [selectedCryptoId]);
 
-  // Calculate quantity based on EUR amount and live price
-  const calculatedQuantity = amountEUR && livePrice 
-    ? parseFloat(amountEUR) / livePrice 
+  // Live prices are USD; convert them before applying the customer's amount.
+  const calculatedQuantity = amountEUR && livePrice && usdToDisplay
+    ? parseFloat(amountEUR) / (livePrice * usdToDisplay)
     : null;
 
   const handleContinue = (e: React.FormEvent) => {
@@ -156,7 +179,7 @@ export const AddPortfolioForClientDialog = ({ customerId, onSuccess, children }:
             </div>
 
             <div className="space-y-2">
-              <Label>{t('portfolio.amountToDisplay')} (EUR)</Label>
+              <Label>{t('portfolio.amountToDisplay')} ({displayCurrency})</Label>
               <Input
                 type="number"
                 step="0.01"
@@ -180,7 +203,11 @@ export const AddPortfolioForClientDialog = ({ customerId, onSuccess, children }:
                   <>
                     <div className="flex justify-between text-sm">
                       <span className="text-muted-foreground">{t('portfolio.livePrice')}:</span>
-                      <span className="font-medium">{formatEuro(livePrice)} / {selectedCrypto?.symbol}</span>
+                      <span className="font-medium">
+                        {usdToDisplay
+                          ? `${formatCurrency(livePrice * usdToDisplay, displayCurrency)} / ${selectedCrypto?.symbol}`
+                          : t('portfolio.priceUnavailable')}
+                      </span>
                     </div>
                     {calculatedQuantity && calculatedQuantity > 0 && (
                       <div className="flex justify-between text-sm">
@@ -236,9 +263,9 @@ export const AddPortfolioForClientDialog = ({ customerId, onSuccess, children }:
               <p className="text-sm font-medium text-center mb-3">{t('portfolio.confirmCalculation')}</p>
               
               <div className="flex items-center justify-center gap-2 text-lg font-mono">
-                <span>{formatEuro(parseFloat(amountEUR))}</span>
+                <span>{formatCurrency(parseFloat(amountEUR), displayCurrency)}</span>
                 <span className="text-muted-foreground">÷</span>
-                <span>{formatEuro(livePrice!)}/{selectedCrypto?.symbol}</span>
+                <span>{formatCurrency(livePrice! * usdToDisplay!, displayCurrency)}/{selectedCrypto?.symbol}</span>
               </div>
               
               <div className="flex items-center justify-center gap-2 text-xl font-bold text-primary">

@@ -1,94 +1,38 @@
-import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { PieChart, TrendingUp, TrendingDown, ArrowRight } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
-import { supabase } from '@/integrations/supabase/client';
-import { getCryptoPrices, CryptoPrice } from '@/services/cryptoApi';
-import { useAuth } from '@/hooks/useAuth';
 import { useLanguage } from '@/contexts/LanguageContext';
-import { formatEuro } from '@/lib/utils';
+import { formatCurrency } from '@/lib/utils';
+import type { PortfolioHolding } from '@/hooks/useAccountValuation';
 
-interface PortfolioItem {
-  id: string;
-  crypto_id: string;
-  crypto_name: string;
-  crypto_symbol: string;
-  quantity: number;
-  purchase_price: number;
+interface ValuedHolding extends PortfolioHolding {
+  currentValue: number | null;
 }
 
-const PortfolioSummaryCard = () => {
-  const { user } = useAuth();
+interface PortfolioSummaryCardProps {
+  items: ValuedHolding[];
+  totalValue: number | null;
+  totalInvested: number | null;
+  displayCurrency: string;
+  isLoading?: boolean;
+}
+
+const PortfolioSummaryCard = ({
+  items,
+  totalValue,
+  totalInvested,
+  displayCurrency,
+  isLoading = false,
+}: PortfolioSummaryCardProps) => {
   const { t } = useLanguage();
   const navigate = useNavigate();
-  const [items, setItems] = useState<PortfolioItem[]>([]);
-  const [prices, setPrices] = useState<Record<string, CryptoPrice>>({});
-  const [isLoading, setIsLoading] = useState(true);
-
-  useEffect(() => {
-    const fetchPortfolio = async () => {
-      if (!user) return;
-      
-      try {
-        const { data, error } = await supabase
-          .from('portfolio_items')
-          .select('*')
-          .eq('user_id', user.id);
-
-        if (error) throw error;
-        
-        const portfolioItems = data || [];
-        setItems(portfolioItems);
-
-        if (portfolioItems.length > 0) {
-          const cryptoIds = [...new Set(portfolioItems.map(item => item.crypto_id))];
-          const priceData = await getCryptoPrices(cryptoIds);
-          setPrices(priceData);
-        }
-      } catch (error) {
-        console.error('Error fetching portfolio:', error);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    fetchPortfolio();
-  }, [user]);
-
-  const calculateTotals = () => {
-    let totalValue = 0;
-    let totalInvested = 0;
-
-    items.forEach(item => {
-      const priceKey = Object.keys(prices).find(k => 
-        k.toLowerCase().includes(item.crypto_id.toLowerCase().replace('/usd', ''))
-      );
-      const currentPrice = priceKey ? prices[priceKey]?.current_price : item.purchase_price;
-      totalValue += item.quantity * (currentPrice || item.purchase_price);
-      totalInvested += item.quantity * item.purchase_price;
-    });
-
-    const profitLoss = totalValue - totalInvested;
-    const profitLossPercent = totalInvested > 0 ? (profitLoss / totalInvested) * 100 : 0;
-
-    return { totalValue, totalInvested, profitLoss, profitLossPercent };
-  };
 
   const getTopHoldings = () => {
     return items
-      .map(item => {
-        const priceKey = Object.keys(prices).find(k => 
-          k.toLowerCase().includes(item.crypto_id.toLowerCase().replace('/usd', ''))
-        );
-        const currentPrice = priceKey ? prices[priceKey]?.current_price : item.purchase_price;
-        return {
-          ...item,
-          currentValue: item.quantity * (currentPrice || item.purchase_price)
-        };
-      })
-      .sort((a, b) => b.currentValue - a.currentValue)
+      .filter((item) => item.currentValue !== null)
+      .sort((a, b) => (b.currentValue || 0) - (a.currentValue || 0))
       .slice(0, 3);
   };
 
@@ -131,9 +75,12 @@ const PortfolioSummaryCard = () => {
     );
   }
 
-  const { totalValue, profitLoss, profitLossPercent } = calculateTotals();
+  const profitLoss = totalValue !== null && totalInvested !== null ? totalValue - totalInvested : null;
+  const profitLossPercent = profitLoss !== null && totalInvested && totalInvested > 0
+    ? (profitLoss / totalInvested) * 100
+    : 0;
   const topHoldings = getTopHoldings();
-  const isPositive = profitLoss >= 0;
+  const isPositive = (profitLoss || 0) >= 0;
 
   return (
     <Card>
@@ -159,7 +106,7 @@ const PortfolioSummaryCard = () => {
         <div className="flex items-center justify-between">
           <div>
             <p className="text-2xl font-bold text-foreground">
-              {formatEuro(totalValue)}
+              {totalValue === null ? t('balance.rateUnavailable') : formatCurrency(totalValue, displayCurrency)}
             </p>
             <div className={`flex items-center gap-1 text-sm ${isPositive ? 'text-success' : 'text-destructive'}`}>
               {isPositive ? <TrendingUp className="h-4 w-4" /> : <TrendingDown className="h-4 w-4" />}
@@ -167,7 +114,7 @@ const PortfolioSummaryCard = () => {
                 {isPositive ? '+' : ''}{profitLossPercent.toFixed(2)}%
               </span>
               <span className="text-muted-foreground ml-1">
-                ({isPositive ? '+' : ''}{formatEuro(profitLoss)})
+                ({profitLoss === null ? '—' : `${isPositive ? '+' : ''}${formatCurrency(profitLoss, displayCurrency)}`})
               </span>
             </div>
           </div>
@@ -185,7 +132,7 @@ const PortfolioSummaryCard = () => {
                 <span className="text-xs text-muted-foreground">{item.crypto_name}</span>
               </div>
               <span className="text-sm font-medium">
-                {formatEuro(item.currentValue)}
+                {item.currentValue === null ? '—' : formatCurrency(item.currentValue, displayCurrency)}
               </span>
             </div>
           ))}

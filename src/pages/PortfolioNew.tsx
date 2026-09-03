@@ -4,21 +4,11 @@ import Footer from "@/components/Footer";
 import { Card } from "@/components/ui/card";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
-import { getCryptoPrices, CryptoPrice } from "@/services/cryptoApi";
 import { TrendingUp, TrendingDown, Wallet, DollarSign, PieChart as PieChartIcon, Coins } from "lucide-react";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip, Legend } from "recharts";
-import { formatEuro } from "@/lib/utils";
-
-interface PortfolioItem {
-  id: string;
-  crypto_id: string;
-  crypto_name: string;
-  crypto_symbol: string;
-  quantity: number;
-  purchase_price: number;
-  wallet_address?: string | null;
-}
+import { formatCurrency } from "@/lib/utils";
+import { useAccountValuation } from "@/hooks/useAccountValuation";
 
 const CHART_COLORS = [
   "#fafafa",
@@ -33,78 +23,53 @@ const CHART_COLORS = [
   "#404040",
 ];
 
+interface AllocationDatum {
+  name: string;
+  fullName: string;
+  value: number;
+  percentage: number;
+  color: string;
+}
+
+interface TooltipEntry {
+  payload: AllocationDatum;
+}
+
+interface LegendEntry {
+  color?: string;
+  value?: string | number;
+  payload?: AllocationDatum;
+}
+
 const PortfolioNew = () => {
   const { t } = useLanguage();
   const { user, loading: authLoading } = useAuth();
-  const [portfolioItems, setPortfolioItems] = useState<PortfolioItem[]>([]);
-  const [cryptoPrices, setCryptoPrices] = useState<Record<string, CryptoPrice>>({});
-  const [loading, setLoading] = useState(true);
-
-  const fetchPortfolio = async () => {
-    if (!user) return;
-
-    setLoading(true);
-    const { data, error } = await supabase
-      .from("portfolio_items")
-      .select("*")
-      .eq("user_id", user.id);
-
-    if (error) {
-      console.error("Error fetching portfolio:", error);
-    } else {
-      setPortfolioItems(data || []);
-      
-      const cryptoIds = [...new Set(data?.map(item => item.crypto_id) || [])];
-      if (cryptoIds.length > 0) {
-        const prices = await getCryptoPrices(cryptoIds);
-        setCryptoPrices(prices);
-      }
-    }
-    setLoading(false);
-  };
-
-  useEffect(() => {
-    if (!authLoading) {
-      fetchPortfolio();
-    }
-  }, [user, authLoading]);
+  const [displayCurrency, setDisplayCurrency] = useState('USD');
 
   useEffect(() => {
     if (!user) return;
-    const channel = supabase
-      .channel(`portfolio_items_${user.id}_${Math.random().toString(36).slice(2)}`)
-      .on(
-        'postgres_changes',
-        { event: '*', schema: 'public', table: 'portfolio_items', filter: `user_id=eq.${user.id}` },
-        () => { fetchPortfolio(); }
-      )
-      .subscribe();
-    return () => { supabase.removeChannel(channel); };
+    void supabase
+      .from('profiles')
+      .select('preferred_currency, display_currency')
+      .eq('id', user.id)
+      .single()
+      .then(({ data }) => {
+        setDisplayCurrency((data?.preferred_currency || data?.display_currency || 'USD').toUpperCase());
+      });
   }, [user]);
 
-  useEffect(() => {
-    if (portfolioItems.length === 0) return;
-
-    const interval = setInterval(async () => {
-      const cryptoIds = [...new Set(portfolioItems.map(item => item.crypto_id))];
-      const prices = await getCryptoPrices(cryptoIds);
-      setCryptoPrices(prices);
-    }, 30000);
-
-    return () => clearInterval(interval);
-  }, [portfolioItems]);
+  const account = useAccountValuation({
+    userId: user?.id,
+    cashBalance: 0,
+    cashCurrency: displayCurrency,
+    displayCurrency,
+  });
+  const portfolioItems = account.holdings;
+  const loading = authLoading || account.isLoading;
 
   const calculateTotals = () => {
-    let totalValue = 0;
-    let totalInvested = 0;
-
-    portfolioItems.forEach((item) => {
-      const price = cryptoPrices[item.crypto_id];
-      if (price) {
-        totalValue += price.current_price * item.quantity;
-        totalInvested += item.purchase_price * item.quantity;
-      }
-    });
+    const totalValue = account.portfolioValue || 0;
+    const totalInvested = account.totalInvested || 0;
 
     const profitLoss = totalValue - totalInvested;
     const profitLossPercentage = totalInvested > 0 ? (profitLoss / totalInvested) * 100 : 0;
@@ -116,8 +81,7 @@ const PortfolioNew = () => {
     const { totalValue } = calculateTotals();
     
     return portfolioItems.map((item, index) => {
-      const price = cryptoPrices[item.crypto_id];
-      const value = price ? price.current_price * item.quantity : 0;
+      const value = item.currentValue || 0;
       const percentage = totalValue > 0 ? (value / totalValue) * 100 : 0;
       
       return {
@@ -133,14 +97,14 @@ const PortfolioNew = () => {
   const { totalValue, totalInvested, profitLoss, profitLossPercentage } = calculateTotals();
   const pieChartData = getPieChartData();
 
-  const CustomTooltip = ({ active, payload }: any) => {
+  const CustomTooltip = ({ active, payload }: { active?: boolean; payload?: TooltipEntry[] }) => {
     if (active && payload && payload.length) {
       const data = payload[0].payload;
       return (
         <div className="bg-popover border border-border rounded-lg p-3 shadow-lg">
           <p className="font-semibold text-foreground">{data.fullName}</p>
           <p className="text-sm text-muted-foreground">{data.name}</p>
-          <p className="text-sm font-medium text-foreground">{formatEuro(data.value)}</p>
+          <p className="text-sm font-medium text-foreground">{formatCurrency(data.value, displayCurrency)}</p>
           <p className="text-sm text-muted-foreground">{data.percentage.toFixed(1)}%</p>
         </div>
       );
@@ -148,17 +112,17 @@ const PortfolioNew = () => {
     return null;
   };
 
-  const CustomLegend = ({ payload }: any) => {
+  const CustomLegend = ({ payload }: { payload?: LegendEntry[] }) => {
     return (
       <div className="flex flex-wrap justify-center gap-3 mt-4">
-        {payload?.map((entry: any, index: number) => (
+        {payload?.map((entry, index: number) => (
           <div key={index} className="flex items-center gap-2">
             <div 
               className="w-3 h-3 rounded-full" 
               style={{ backgroundColor: entry.color }}
             />
             <span className="text-sm text-muted-foreground">
-              {entry.value} ({entry.payload.percentage.toFixed(1)}%)
+              {entry.value} ({entry.payload?.percentage.toFixed(1) || '0.0'}%)
             </span>
           </div>
         ))}
@@ -216,7 +180,7 @@ const PortfolioNew = () => {
                 </div>
                 <p className="text-sm text-muted-foreground">{t('crypto.totalPortfolioValue')}</p>
               </div>
-              <h2 className="text-2xl lg:text-3xl font-bold">{formatEuro(totalValue)}</h2>
+              <h2 className="text-2xl lg:text-3xl font-bold">{formatCurrency(totalValue, displayCurrency)}</h2>
             </Card>
 
             {/* Total Invested Card */}
@@ -227,7 +191,7 @@ const PortfolioNew = () => {
                 </div>
                 <p className="text-sm text-muted-foreground">{t('crypto.totalInvested')}</p>
               </div>
-              <h2 className="text-2xl lg:text-3xl font-bold">{formatEuro(totalInvested)}</h2>
+              <h2 className="text-2xl lg:text-3xl font-bold">{formatCurrency(totalInvested, displayCurrency)}</h2>
             </Card>
 
             {/* Profit/Loss Card */}
@@ -243,7 +207,7 @@ const PortfolioNew = () => {
                 <p className="text-sm text-muted-foreground">{t('crypto.profitLoss')}</p>
               </div>
               <h2 className={`text-2xl lg:text-3xl font-bold ${profitLoss >= 0 ? 'text-success' : 'text-destructive'}`}>
-                {profitLoss >= 0 ? '+' : ''}{formatEuro(profitLoss)}
+                {profitLoss >= 0 ? '+' : ''}{formatCurrency(profitLoss, displayCurrency)}
               </h2>
               <p className={`text-sm ${profitLoss >= 0 ? 'text-success' : 'text-destructive'}`}>
                 ({profitLossPercentage >= 0 ? '+' : ''}{profitLossPercentage.toFixed(2)}%)
@@ -306,7 +270,7 @@ const PortfolioNew = () => {
                 {/* Center label for total value */}
                 <div className="text-center -mt-[190px] lg:-mt-[210px] mb-[120px] lg:mb-[140px] pointer-events-none">
                   <p className="text-sm text-muted-foreground">{t('crypto.totalPortfolioValue')}</p>
-                  <p className="text-xl font-bold">{formatEuro(totalValue)}</p>
+                  <p className="text-xl font-bold">{formatCurrency(totalValue, displayCurrency)}</p>
                 </div>
               </Card>
 
@@ -314,9 +278,8 @@ const PortfolioNew = () => {
               <div className="space-y-4">
                 <h3 className="text-xl font-semibold mb-4">{t('crypto.yourAssets')}</h3>
                 {portfolioItems.map((item, index) => {
-                  const price = cryptoPrices[item.crypto_id];
-                  const currentValue = price ? price.current_price * item.quantity : 0;
-                  const invested = item.purchase_price * item.quantity;
+                  const currentValue = item.currentValue || 0;
+                  const invested = item.investedValue || 0;
                   const itemProfit = currentValue - invested;
                   const itemProfitPercentage = invested > 0 ? (itemProfit / invested) * 100 : 0;
                   const allocationPercentage = totalValue > 0 ? (currentValue / totalValue) * 100 : 0;
@@ -331,9 +294,6 @@ const PortfolioNew = () => {
                             className="w-3 h-12 rounded-full hidden lg:block"
                             style={{ backgroundColor: color }}
                           />
-                          {price?.image && (
-                            <img src={price.image} alt={item.crypto_name} className="w-12 h-12" />
-                          )}
                           <div className="flex-1">
                             <div className="flex items-center gap-2">
                               <h3 className="text-xl font-bold">{item.crypto_name}</h3>
@@ -361,18 +321,18 @@ const PortfolioNew = () => {
 
                           <div className="text-left lg:text-right">
                             <p className="text-sm text-muted-foreground">{t('crypto.currentPrice')}</p>
-                            <p className="font-medium">{formatEuro(price?.current_price || 0)}</p>
+                            <p className="font-medium">{formatCurrency(item.currentPrice || 0, displayCurrency)}</p>
                           </div>
 
                           <div className="text-left lg:text-right">
                             <p className="text-sm text-muted-foreground">{t('crypto.value')}</p>
-                            <p className="font-medium">{formatEuro(currentValue)}</p>
+                            <p className="font-medium">{formatCurrency(currentValue, displayCurrency)}</p>
                           </div>
 
                           <div className="text-left lg:text-right">
                             <p className="text-sm text-muted-foreground">{t('crypto.profitLoss')}</p>
                             <p className={`font-medium ${itemProfit >= 0 ? 'text-success' : 'text-destructive'}`}>
-                              {itemProfit >= 0 ? '+' : ''}{formatEuro(itemProfit)} ({itemProfitPercentage >= 0 ? '+' : ''}{itemProfitPercentage.toFixed(2)}%)
+                              {itemProfit >= 0 ? '+' : ''}{formatCurrency(itemProfit, displayCurrency)} ({itemProfitPercentage >= 0 ? '+' : ''}{itemProfitPercentage.toFixed(2)}%)
                             </p>
                           </div>
                         </div>

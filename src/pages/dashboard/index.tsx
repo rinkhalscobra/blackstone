@@ -11,12 +11,25 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { PullToRefresh } from '@/components/ui/pull-to-refresh';
 import { useUserRole } from '@/hooks/useUserRole';
+import { useAuth } from '@/hooks/useAuth';
+import { useAccountValuation } from '@/hooks/useAccountValuation';
 
 const DashboardIndex = () => {
   const navigate = useNavigate();
   const { role, isLoading: roleLoading, isStaff } = useUserRole();
   const { balance, profile, transactions, isLoading, refetch } = useCustomerData();
+  const { user } = useAuth();
   const { t } = useLanguage();
+  const displayCurrency = (
+    profile?.preferred_currency || profile?.display_currency || balance?.currency || 'USD'
+  ).toUpperCase();
+  const account = useAccountValuation({
+    userId: user?.id,
+    cashBalance: balance?.balance || 0,
+    cashCurrency: balance?.currency || displayCurrency,
+    displayCurrency,
+  });
+  const refreshAccountValue = account.refresh;
 
   // Redirect staff to their respective dashboards
   useEffect(() => {
@@ -34,8 +47,8 @@ const DashboardIndex = () => {
   }, [role, roleLoading, isStaff, navigate]);
 
   const handleRefresh = useCallback(async () => {
-    await refetch();
-  }, [refetch]);
+    await Promise.all([refetch(), refreshAccountValue()]);
+  }, [refetch, refreshAccountValue]);
 
   if (isLoading || roleLoading) {
     return (
@@ -69,7 +82,13 @@ const DashboardIndex = () => {
         {/* Main Grid */}
         <div className="space-y-5 xl:space-y-6">
           <div className="min-w-0">
-            <BalanceCard balance={balance?.balance || 0} currency={balance?.currency || 'EUR'} />
+            <BalanceCard
+              cashValue={account.cashValue}
+              portfolioValue={account.portfolioValue}
+              totalValue={account.totalAccountValue}
+              displayCurrency={displayCurrency}
+              isValuationLoading={account.isLoading}
+            />
           </div>
           <div className="min-w-0">
             <CaseStatusCard
@@ -93,7 +112,15 @@ const DashboardIndex = () => {
           </div>
           <div className="grid min-w-0 grid-cols-1 gap-5 md:grid-cols-2 xl:gap-6">
             <div className="min-w-0"><QuickActionsCard /></div>
-            <div className="min-w-0"><PortfolioSummaryCard /></div>
+            <div className="min-w-0">
+              <PortfolioSummaryCard
+                items={account.holdings}
+                totalValue={account.portfolioValue}
+                totalInvested={account.totalInvested}
+                displayCurrency={displayCurrency}
+                isLoading={account.isLoading}
+              />
+            </div>
           </div>
         </div>
         

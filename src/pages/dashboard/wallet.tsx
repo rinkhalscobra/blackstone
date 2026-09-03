@@ -7,10 +7,24 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { TrendingUp, TrendingDown, Clock } from 'lucide-react';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { formatCurrency } from '@/lib/utils';
+import { useAuth } from '@/hooks/useAuth';
+import { useAccountValuation } from '@/hooks/useAccountValuation';
 
 const WalletPage = () => {
-  const { balance, transactions, isLoading } = useCustomerData();
+  const { balance, profile, transactions, isLoading } = useCustomerData();
+  const { user } = useAuth();
   const { t } = useLanguage();
+
+  const balanceCurrency = (balance?.currency || 'USD').toUpperCase();
+  const displayCurrency = (
+    profile?.preferred_currency || profile?.display_currency || balanceCurrency
+  ).toUpperCase();
+  const account = useAccountValuation({
+    userId: user?.id,
+    cashBalance: balance?.balance || 0,
+    cashCurrency: balanceCurrency,
+    displayCurrency,
+  });
 
   if (isLoading) {
     return (
@@ -29,7 +43,6 @@ const WalletPage = () => {
   }
 
   // Calculate stats
-  const balanceCurrency = (balance?.currency || 'EUR').toUpperCase();
   const totalDeposits = transactions
     .filter(t => t.type === 'deposit' && t.status === 'approved' && t.currency.toUpperCase() === balanceCurrency)
     .reduce((sum, t) => sum + t.amount, 0);
@@ -50,7 +63,13 @@ const WalletPage = () => {
 
         {/* Stats Grid */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          <BalanceCard balance={balance?.balance || 0} currency={balanceCurrency} />
+          <BalanceCard
+            cashValue={account.cashValue}
+            portfolioValue={account.portfolioValue}
+            totalValue={account.totalAccountValue}
+            displayCurrency={displayCurrency}
+            isValuationLoading={account.isLoading}
+          />
 
           <Card>
             <CardHeader className="flex flex-row items-center justify-between pb-2">
