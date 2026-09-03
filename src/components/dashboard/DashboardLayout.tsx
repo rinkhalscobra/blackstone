@@ -118,9 +118,9 @@ export const DashboardLayout = ({ children }: DashboardLayoutProps) => {
       {/* Windowed shell */}
       <div className="w-full max-w-[1600px] mx-auto px-3 sm:px-4 py-4 sm:py-6">
         <WindowChrome title="BlackStone Recovery — Case Center">
-          <div className="flex min-h-[calc(100vh-11rem)]">
+          <div className="flex min-h-[calc(100vh-11rem)] lg:h-[calc(100dvh-12.25rem)] lg:min-h-[36rem]">
             {/* Sidebar */}
-            <aside className="hidden lg:flex lg:flex-col w-56 xl:w-64 shrink-0 border-r border-white/5 bg-white/[0.015] p-3 gap-3">
+            <aside className="hidden min-h-0 w-56 shrink-0 overflow-y-auto overscroll-contain border-r border-white/5 bg-white/[0.015] p-3 lg:flex lg:flex-col xl:w-64 gap-3">
               <button
                 onClick={() => navigate('/dashboard/case')}
                 className="group inline-flex items-center gap-2 justify-center w-full rounded-full bg-white text-black text-[13px] font-medium py-2.5 px-4 transition-all hover:bg-white/90 active:scale-[0.98] shadow-[0_1px_0_rgba(255,255,255,0.6)_inset,0_10px_30px_-10px_rgba(255,255,255,0.25)]"
@@ -221,9 +221,9 @@ export const DashboardLayout = ({ children }: DashboardLayoutProps) => {
             )}
 
             {/* Main column */}
-            <div className="flex-1 min-w-0 flex flex-col">
+            <div className="flex min-h-0 min-w-0 flex-1 flex-col">
               {/* Toolbar */}
-              <div className="flex items-center justify-between px-4 h-11 border-b border-white/5 bg-white/[0.01]">
+              <div className="flex h-11 shrink-0 items-center justify-between border-b border-white/5 bg-white/[0.01] px-4">
                 <div className="flex items-center gap-1 text-muted-foreground">
                   <button
                     onClick={() => window.history.back()}
@@ -264,7 +264,9 @@ export const DashboardLayout = ({ children }: DashboardLayoutProps) => {
                 </div>
               </div>
 
-              <main className="flex-1 min-w-0 p-4 sm:p-5 xl:p-6 overflow-x-hidden">{children}</main>
+              <main className="min-h-0 min-w-0 flex-1 overflow-y-auto overflow-x-hidden overscroll-contain p-4 sm:p-5 xl:p-6">
+                {children}
+              </main>
             </div>
           </div>
         </WindowChrome>
