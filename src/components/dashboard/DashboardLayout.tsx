@@ -29,6 +29,7 @@ import Logo from '@/components/Logo';
 import { Backdrop } from '@/components/design/Backdrop';
 import { WindowChrome } from '@/components/dashboard/WindowChrome';
 import SidebarMarketRates from '@/components/dashboard/SidebarMarketRates';
+import { useUnreadCounts } from '@/hooks/useUnreadCounts';
 
 interface DashboardLayoutProps {
   children: ReactNode;
@@ -43,7 +44,8 @@ const LABELS: { code: string; color: string }[] = [
 
 export const DashboardLayout = ({ children }: DashboardLayoutProps) => {
   const { user, signOut } = useAuth();
-  const { unreadCount, profile } = useCustomerData();
+  const { profile } = useCustomerData();
+  const { messages: unreadMessages, notifications: unreadNotifications } = useUnreadCounts();
   const { t } = useLanguage();
   const location = useLocation();
   const navigate = useNavigate();
@@ -55,7 +57,7 @@ export const DashboardLayout = ({ children }: DashboardLayoutProps) => {
     { path: '/dashboard/wallet', label: t('nav.wallet'), icon: Wallet, count: undefined },
     { path: '/dashboard/transactions', label: t('nav.transactions'), icon: ArrowDownUp, count: undefined },
     { path: '/dashboard/case', label: t('nav.myCase'), icon: FileText, count: undefined },
-    { path: '/dashboard/messages', label: t('nav.messages'), icon: MessageCircle, count: unreadCount || undefined },
+    { path: '/dashboard/messages', label: t('nav.messages'), icon: MessageCircle, count: unreadMessages || undefined },
   ];
 
   useEffect(() => {
@@ -97,9 +99,9 @@ export const DashboardLayout = ({ children }: DashboardLayoutProps) => {
               <Link to="/dashboard/notifications" className="relative">
                 <Button variant="ghost" size="icon">
                   <Bell className="h-5 w-5" />
-                  {unreadCount > 0 && (
+                  {unreadNotifications > 0 && (
                     <span className="absolute -top-1 -right-1 h-5 w-5 rounded-full bg-destructive text-xs flex items-center justify-center text-destructive-foreground">
-                      {unreadCount}
+                      {unreadNotifications}
                     </span>
                   )}
                 </Button>
