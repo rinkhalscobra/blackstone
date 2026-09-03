@@ -6,14 +6,15 @@ import { useLanguage } from '@/contexts/LanguageContext';
 
 interface BalanceCardProps {
   balance: number;
+  currency: string;
 }
 
-export const BalanceCard = ({ balance }: BalanceCardProps) => {
+export const BalanceCard = ({ balance, currency }: BalanceCardProps) => {
   const { t } = useLanguage();
   
   const formattedBalance = new Intl.NumberFormat('de-DE', {
     style: 'currency',
-    currency: 'EUR',
+    currency: currency.toUpperCase(),
     minimumFractionDigits: 2,
   }).format(balance);
 

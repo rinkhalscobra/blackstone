@@ -8,7 +8,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { Loader2, Euro, Plus, Minus } from 'lucide-react';
-import { formatEuro } from '@/lib/utils';
+import { formatCurrency } from '@/lib/utils';
 
 interface AdjustBalanceDialogProps {
   customerId: string;
@@ -68,15 +68,19 @@ const AdjustBalanceDialog = ({
 
       toast({ 
         title: t('dialogs.balanceUpdated'), 
-        description: `${adjustmentType === 'credit' ? t('dialogs.added') : t('dialogs.deducted')} ${formatEuro(numAmount)}` 
+        description: `${adjustmentType === 'credit' ? t('dialogs.added') : t('dialogs.deducted')} ${formatCurrency(numAmount, currency)}`
       });
       
       setOpen(false);
       setAmount('');
       setReason('');
       onSuccess();
-    } catch (error: any) {
-      toast({ title: t('common.error'), description: error.message, variant: "destructive" });
+    } catch (error: unknown) {
+      toast({
+        title: t('common.error'),
+        description: error instanceof Error ? error.message : t('common.error'),
+        variant: "destructive",
+      });
     } finally {
       setLoading(false);
     }
@@ -99,7 +103,7 @@ const AdjustBalanceDialog = ({
           <div className="p-4 bg-secondary rounded-lg">
             <p className="text-sm text-muted-foreground">{t('dialogs.currentBalance')}</p>
             <p className="text-2xl font-bold text-primary">
-              {formatEuro(currentBalance)}
+              {formatCurrency(currentBalance, currency)}
             </p>
           </div>
 
@@ -123,7 +127,7 @@ const AdjustBalanceDialog = ({
           </div>
 
           <div>
-            <Label htmlFor="amount">{t('dialogs.amount')} (EUR)</Label>
+            <Label htmlFor="amount">{t('dialogs.amount')} ({currency.toUpperCase()})</Label>
             <Input
               id="amount"
               type="number"
@@ -151,7 +155,7 @@ const AdjustBalanceDialog = ({
             <div className="p-3 bg-secondary/50 rounded-lg">
               <p className="text-sm text-muted-foreground">{t('dialogs.newBalance')}</p>
               <p className={`text-xl font-bold ${adjustmentType === 'credit' ? 'text-success' : 'text-destructive'}`}>
-                {formatEuro(currentBalance + (adjustmentType === 'credit' ? parseFloat(amount) || 0 : -(parseFloat(amount) || 0)))}
+                {formatCurrency(currentBalance + (adjustmentType === 'credit' ? parseFloat(amount) || 0 : -(parseFloat(amount) || 0)), currency)}
               </p>
             </div>
           )}

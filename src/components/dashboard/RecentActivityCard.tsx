@@ -85,9 +85,9 @@ export const RecentActivityCard = ({ transactions }: RecentActivityCardProps) =>
                     tx.type === 'deposit' ? 'text-success' : 'text-destructive'
                   )}>
                     {tx.type === 'deposit' ? '+' : '-'}
-                    {new Intl.NumberFormat('de-DE', {
+                    {new Intl.NumberFormat(undefined, {
                       style: 'currency',
-                      currency: 'EUR',
+                      currency: tx.currency || 'EUR',
                     }).format(tx.amount)}
                   </div>
                   <div className="flex items-center gap-1 justify-end">

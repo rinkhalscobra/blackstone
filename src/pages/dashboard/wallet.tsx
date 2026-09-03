@@ -6,6 +6,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { TrendingUp, TrendingDown, Clock } from 'lucide-react';
 import { useLanguage } from '@/contexts/LanguageContext';
+import { formatCurrency } from '@/lib/utils';
 
 const WalletPage = () => {
   const { balance, transactions, isLoading } = useCustomerData();
@@ -28,12 +29,13 @@ const WalletPage = () => {
   }
 
   // Calculate stats
+  const balanceCurrency = (balance?.currency || 'EUR').toUpperCase();
   const totalDeposits = transactions
-    .filter(t => t.type === 'deposit' && t.status === 'approved')
+    .filter(t => t.type === 'deposit' && t.status === 'approved' && t.currency.toUpperCase() === balanceCurrency)
     .reduce((sum, t) => sum + t.amount, 0);
 
   const totalWithdrawals = transactions
-    .filter(t => t.type === 'withdraw' && t.status === 'approved')
+    .filter(t => t.type === 'withdraw' && t.status === 'approved' && t.currency.toUpperCase() === balanceCurrency)
     .reduce((sum, t) => sum + t.amount, 0);
 
   const pendingTransactions = transactions.filter(t => t.status === 'pending').length;
@@ -48,7 +50,7 @@ const WalletPage = () => {
 
         {/* Stats Grid */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          <BalanceCard balance={balance?.balance || 0} />
+          <BalanceCard balance={balance?.balance || 0} currency={balanceCurrency} />
 
           <Card>
             <CardHeader className="flex flex-row items-center justify-between pb-2">
@@ -59,10 +61,7 @@ const WalletPage = () => {
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold text-success">
-                +{new Intl.NumberFormat('de-DE', {
-                  style: 'currency',
-                  currency: 'EUR',
-                }).format(totalDeposits)}
+                +{formatCurrency(totalDeposits, balanceCurrency)}
               </div>
               <p className="text-xs text-muted-foreground mt-1">
                 {t('wallet.approvedDeposits')}
@@ -79,10 +78,7 @@ const WalletPage = () => {
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold text-destructive">
-                -{new Intl.NumberFormat('de-DE', {
-                  style: 'currency',
-                  currency: 'EUR',
-                }).format(totalWithdrawals)}
+                -{formatCurrency(totalWithdrawals, balanceCurrency)}
               </div>
               <p className="text-xs text-muted-foreground mt-1">
                 {t('wallet.approvedWithdrawals')}

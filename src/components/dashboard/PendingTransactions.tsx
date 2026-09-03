@@ -8,7 +8,9 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Check, X, Loader2, ArrowUpRight, ArrowDownLeft, Eye } from 'lucide-react';
-import { formatEuro } from '@/lib/utils';
+
+const formatTransactionAmount = (amount: number, currency: string) =>
+  new Intl.NumberFormat(undefined, { style: 'currency', currency: currency || 'EUR' }).format(amount);
 
 interface Transaction {
   id: string;
@@ -28,6 +30,10 @@ interface Transaction {
   };
 }
 
+interface EnrichedTransaction extends Transaction {
+  _customerGroupId?: string | null;
+  _assignedTo?: string | null;
+}
 
 interface PendingTransactionsProps {
   groupId?: string | null;
@@ -52,7 +58,7 @@ export const PendingTransactions = ({
     if (!user) return;
     
     try {
-      let query = supabase
+      const query = supabase
         .from('transaction_requests')
         .select('*')
         .eq('status', 'pending')
@@ -71,7 +77,7 @@ export const PendingTransactions = ({
           .in('id', customerIds);
 
         // Filter based on access and map customer data
-        let filteredTransactions = data.map(t => {
+        let filteredTransactions: EnrichedTransaction[] = data.map(t => {
           const customer = customers?.find(c => c.id === t.customer_id);
           return {
             ...t,
@@ -91,11 +97,11 @@ export const PendingTransactions = ({
         // Apply filtering based on role
         if (assignedOnly) {
           filteredTransactions = filteredTransactions.filter(t => 
-            (t as any)._assignedTo === user.id
+            t._assignedTo === user.id
           );
         } else if (groupId) {
           filteredTransactions = filteredTransactions.filter(t => 
-            (t as any)._customerGroupId === groupId
+            t._customerGroupId === groupId
           );
         }
 
@@ -103,7 +109,7 @@ export const PendingTransactions = ({
       } else {
         setTransactions([]);
       }
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Error fetching transactions:', error);
     } finally {
       setLoading(false);
@@ -167,16 +173,16 @@ export const PendingTransactions = ({
             ? `${transaction.type === 'deposit' ? 'Deposit' : 'Withdrawal'} Approved`
             : `${transaction.type === 'deposit' ? 'Deposit' : 'Withdrawal'} Rejected`,
           message: action === 'approved'
-            ? `Your ${transaction.type} of ${formatEuro(transaction.amount)} has been approved.`
+            ? `Your ${transaction.type} of ${formatTransactionAmount(transaction.amount, transaction.currency)} has been approved.`
             : `Your ${transaction.type} request has been rejected. Please contact support for more information.`,
         });
       }
 
       fetchTransactions();
-    } catch (error: any) {
+    } catch (error: unknown) {
       toast({
         title: t('common.error'),
-        description: error.message,
+        description: error instanceof Error ? error.message : 'Unable to update this transaction.',
         variant: 'destructive',
       });
     } finally {
@@ -248,7 +254,7 @@ export const PendingTransactions = ({
                 <div className="flex items-center gap-2 flex-wrap">
                   <span className="font-medium capitalize">{tx.type}</span>
                   <span className="font-bold text-primary">
-                    {formatEuro(tx.amount)}
+                    {formatTransactionAmount(tx.amount, tx.currency)}
                   </span>
                   <Badge variant="outline" className="text-xs">
                     {tx.method.replace('_', ' ')}

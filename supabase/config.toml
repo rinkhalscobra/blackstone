@@ -1,1 +1,10 @@
 project_id = "gbbnsecjzppffphmduca"
+
+[auth]
+enable_signup = true
+
+[auth.email]
+enable_signup = true
+# New email/password accounts receive a session immediately and do not need
+# to follow a confirmation link before signing in.
+enable_confirmations = false

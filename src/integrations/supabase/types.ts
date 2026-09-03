@@ -44,6 +44,39 @@ export type Database = {
         }
         Relationships: []
       }
+      client_payment_details: {
+        Row: {
+          created_at: string
+          customer_id: string
+          details: Json
+          id: string
+          is_active: boolean
+          method: Database["public"]["Enums"]["payment_method"]
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          created_at?: string
+          customer_id: string
+          details?: Json
+          id?: string
+          is_active?: boolean
+          method: Database["public"]["Enums"]["payment_method"]
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          created_at?: string
+          customer_id?: string
+          details?: Json
+          id?: string
+          is_active?: boolean
+          method?: Database["public"]["Enums"]["payment_method"]
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: []
+      }
       customer_balances: {
         Row: {
           balance: number
@@ -505,6 +538,7 @@ export type Database = {
       transaction_requests: {
         Row: {
           amount: number
+          balance_applied_at: string | null
           created_at: string | null
           crypto_id: string | null
           crypto_name: string | null
@@ -514,6 +548,8 @@ export type Database = {
           id: string
           method: Database["public"]["Enums"]["payment_method"]
           notes: string | null
+          payment_details: Json | null
+          payment_instructions_snapshot: Json | null
           processed_at: string | null
           processed_by: string | null
           quantity: number | null
@@ -523,6 +559,7 @@ export type Database = {
         }
         Insert: {
           amount: number
+          balance_applied_at?: string | null
           created_at?: string | null
           crypto_id?: string | null
           crypto_name?: string | null
@@ -532,6 +569,8 @@ export type Database = {
           id?: string
           method: Database["public"]["Enums"]["payment_method"]
           notes?: string | null
+          payment_details?: Json | null
+          payment_instructions_snapshot?: Json | null
           processed_at?: string | null
           processed_by?: string | null
           quantity?: number | null
@@ -541,6 +580,7 @@ export type Database = {
         }
         Update: {
           amount?: number
+          balance_applied_at?: string | null
           created_at?: string | null
           crypto_id?: string | null
           crypto_name?: string | null
@@ -550,6 +590,8 @@ export type Database = {
           id?: string
           method?: Database["public"]["Enums"]["payment_method"]
           notes?: string | null
+          payment_details?: Json | null
+          payment_instructions_snapshot?: Json | null
           processed_at?: string | null
           processed_by?: string | null
           quantity?: number | null

@@ -85,9 +85,6 @@ export const TransactionList = ({ transactions, showAll = false }: TransactionLi
                     </div>
                     <div className="text-sm text-muted-foreground">
                       {formatMethod(tx.method)}
-                    </div>
-                    <div className="text-sm text-muted-foreground">
-                      {formatMethod(tx.method)}
                       {tx.crypto_symbol && tx.quantity ? ` • ${tx.quantity} ${tx.crypto_symbol}` : ''}
                     </div>
                     <div className="text-xs text-muted-foreground">
@@ -102,9 +99,9 @@ export const TransactionList = ({ transactions, showAll = false }: TransactionLi
                     tx.type === 'deposit' ? 'text-success' : 'text-destructive'
                   )}>
                     {tx.type === 'deposit' ? '+' : '-'}
-                    {new Intl.NumberFormat('de-DE', {
+                    {new Intl.NumberFormat(undefined, {
                       style: 'currency',
-                      currency: 'EUR',
+                      currency: tx.currency || 'EUR',
                     }).format(tx.amount)}
                   </div>
                   <div className="mt-1">

@@ -1,70 +1,90 @@
-import { useState, useEffect } from "react";
+import { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
+import { ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { MFAVerificationDialog } from "@/components/auth/MFAVerificationDialog";
+import Logo from "@/components/Logo";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
 import { useLanguage } from "@/contexts/LanguageContext";
-import { ArrowLeft, Lock } from "lucide-react";
-import Logo from "@/components/Logo";
-import { MFAVerificationDialog } from "@/components/auth/MFAVerificationDialog";
 import { supabase } from "@/integrations/supabase/client";
 
 const Auth = () => {
-  const { signIn, user } = useAuth();
+  const { signIn, signUp, user } = useAuth();
   const { toast } = useToast();
   const { t } = useLanguage();
   const navigate = useNavigate();
-  
+
+  const [mode, setMode] = useState<"login" | "signup">(() =>
+    new URLSearchParams(window.location.search).get("mode") === "signup" ? "signup" : "login",
+  );
   const [isLoading, setIsLoading] = useState(false);
   const [showMfaDialog, setShowMfaDialog] = useState(false);
   const [pendingCredentials, setPendingCredentials] = useState<{ email: string; password: string } | null>(null);
-  
-  // Login form
   const [loginEmail, setLoginEmail] = useState("");
   const [loginPassword, setLoginPassword] = useState("");
+  const [firstName, setFirstName] = useState("");
+  const [lastName, setLastName] = useState("");
+  const [signupEmail, setSignupEmail] = useState("");
+  const [signupPassword, setSignupPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
 
-  // Helper to get role-based redirect path
   const getRoleRedirect = async (userId: string): Promise<string> => {
     try {
       const { data } = await supabase
-        .from('user_roles')
-        .select('role')
-        .eq('user_id', userId)
+        .from("user_roles")
+        .select("role")
+        .eq("user_id", userId)
         .maybeSingle();
-      
-      if (data?.role === 'admin') return '/admin';
-      if (data?.role === 'group_admin') return '/group-admin';
-      if (data?.role === 'supervisor') return '/supervisor';
-      if (data?.role === 'agent') return '/agent';
-    } catch {}
-    return '/dashboard';
+
+      if (data?.role === "admin") return "/admin";
+      if (data?.role === "group_admin") return "/group-admin";
+      if (data?.role === "supervisor") return "/supervisor";
+      if (data?.role === "agent") return "/agent";
+    } catch {
+      // Accounts without a staff role are customers.
+    }
+    return "/dashboard";
   };
 
-  // Redirect if already logged in
   useEffect(() => {
-    if (user) {
-      getRoleRedirect(user.id).then(path => navigate(path));
-    }
+    if (user) getRoleRedirect(user.id).then((path) => navigate(path));
   }, [user, navigate]);
 
   const checkMfaRequired = async (email: string): Promise<boolean> => {
     try {
-      const { data, error } = await supabase.functions.invoke('mfa-check', {
-        body: { email },
-      });
-      
+      const { data, error } = await supabase.functions.invoke("mfa-check", { body: { email } });
       if (error) {
-        console.error('MFA check error:', error);
+        console.error("MFA check error:", error);
         return false;
       }
-      
       return data.mfaRequired === true;
     } catch (error) {
-      console.error('MFA check failed:', error);
+      console.error("MFA check failed:", error);
       return false;
+    }
+  };
+
+  const performLogin = async (email: string, password: string) => {
+    try {
+      const { error } = await signIn(email, password);
+      if (error) {
+        toast({
+          title: t("auth.loginFailed"),
+          description: error.message || t("auth.invalidCredentials"),
+          variant: "destructive",
+        });
+      } else {
+        const { data: { user: currentUser } } = await supabase.auth.getUser();
+        navigate(currentUser ? await getRoleRedirect(currentUser.id) : "/dashboard");
+      }
+    } catch {
+      toast({ title: t("auth.error"), description: t("auth.unexpectedError"), variant: "destructive" });
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -73,59 +93,51 @@ const Auth = () => {
     setIsLoading(true);
 
     try {
-      // First check if MFA is required for this user
-      const mfaRequired = await checkMfaRequired(loginEmail);
-      
-      if (mfaRequired) {
-        // Store credentials and show MFA dialog
-        setPendingCredentials({ email: loginEmail, password: loginPassword });
+      const email = loginEmail.trim();
+      if (await checkMfaRequired(email)) {
+        setPendingCredentials({ email, password: loginPassword });
         setShowMfaDialog(true);
         setIsLoading(false);
         return;
       }
-
-      // No MFA required, proceed with normal login
-      await performLogin(loginEmail, loginPassword);
-    } catch (error: any) {
-      toast({
-        title: t('auth.error'),
-        description: t('auth.unexpectedError'),
-        variant: "destructive",
-      });
+      await performLogin(email, loginPassword);
+    } catch {
+      toast({ title: t("auth.error"), description: t("auth.unexpectedError"), variant: "destructive" });
       setIsLoading(false);
     }
   };
 
-  const performLogin = async (email: string, password: string) => {
-    try {
-      const { error } = await signIn(email, password);
-      
-      if (error) {
-        toast({
-          title: t('auth.loginFailed'),
-          description: error.message || t('auth.invalidCredentials'),
-          variant: "destructive",
-        });
-      } else {
-        toast({
-          title: t('auth.welcomeBack'),
-          description: t('auth.loggedInSuccess'),
-        });
-        // Get the current user to determine role-based redirect
-        const { data: { user: currentUser } } = await supabase.auth.getUser();
-        if (currentUser) {
-          const path = await getRoleRedirect(currentUser.id);
-          navigate(path);
-        } else {
-          navigate("/dashboard");
-        }
-      }
-    } catch (error: any) {
+  const handleSignup = async (e: React.FormEvent) => {
+    e.preventDefault();
+
+    if (signupPassword !== confirmPassword) {
       toast({
-        title: t('auth.error'),
-        description: t('auth.unexpectedError'),
+        title: t("auth.signupFailed"),
+        description: t("auth.passwordsDoNotMatch"),
         variant: "destructive",
       });
+      return;
+    }
+
+    setIsLoading(true);
+    try {
+      const email = signupEmail.trim();
+      const { error, session } = await signUp(
+        email,
+        signupPassword,
+        firstName.trim(),
+        lastName.trim(),
+      );
+      if (error) return;
+
+      if (session?.user) {
+        navigate(await getRoleRedirect(session.user.id));
+      } else {
+        setMode("login");
+        setLoginEmail(email);
+      }
+    } catch {
+      toast({ title: t("auth.error"), description: t("auth.unexpectedError"), variant: "destructive" });
     } finally {
       setIsLoading(false);
     }
@@ -145,16 +157,17 @@ const Auth = () => {
     setShowMfaDialog(false);
   };
 
+  const modeButtonClass = (selected: boolean) =>
+    `rounded-md px-3 py-2 text-sm font-medium transition-colors ${
+      selected ? "bg-background text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground"
+    }`;
+
   return (
     <div className="min-h-screen bg-background flex items-center justify-center p-4">
       <div className="w-full max-w-md">
-        {/* Back to home */}
-        <Link 
-          to="/" 
-          className="inline-flex items-center gap-2 text-muted-foreground hover:text-foreground mb-8 transition-colors"
-        >
+        <Link to="/" className="inline-flex items-center gap-2 text-muted-foreground hover:text-foreground mb-8 transition-colors">
           <ArrowLeft className="h-4 w-4" />
-          {t('auth.backToHome')}
+          {t("auth.backToHome")}
         </Link>
 
         <Card className="border-border">
@@ -163,62 +176,76 @@ const Auth = () => {
               <Logo size="lg" showText={false} linkTo={undefined} />
             </div>
             <CardTitle className="text-2xl">BlackStone Recovery</CardTitle>
-            <CardDescription>
-              {t('auth.accessAccount')}
-            </CardDescription>
+            <CardDescription>{t("auth.accessAccount")}</CardDescription>
           </CardHeader>
           <CardContent>
-            <form onSubmit={handleLogin} className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="login-email">{t('auth.email')}</Label>
-                <Input
-                  id="login-email"
-                  type="email"
-                  placeholder="you@example.com"
-                  value={loginEmail}
-                  onChange={(e) => setLoginEmail(e.target.value)}
-                  required
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="login-password">{t('auth.password')}</Label>
-                <Input
-                  id="login-password"
-                  type="password"
-                  placeholder="••••••••"
-                  value={loginPassword}
-                  onChange={(e) => setLoginPassword(e.target.value)}
-                  required
-                />
-              </div>
-              <Button type="submit" className="w-full" disabled={isLoading}>
-                {isLoading ? t('auth.loggingIn') : t('auth.login')}
-              </Button>
-            </form>
-
-            {/* Info message about account creation */}
-            <div className="mt-6 p-4 bg-muted/50 rounded-lg border border-border">
-              <div className="flex items-start gap-3">
-                <Lock className="h-5 w-5 text-muted-foreground mt-0.5 flex-shrink-0" />
-                <div className="text-sm text-muted-foreground">
-                  <p className="font-medium text-foreground mb-1">
-                    {t('auth.needAccount') || 'Need an account?'}
-                  </p>
-                  <p>
-                    {t('auth.contactSpecialist') || 'Contact your case specialist to get your account credentials. Client accounts are created by our team for security purposes.'}
-                  </p>
-                </div>
-              </div>
+            <div className="mb-6 grid grid-cols-2 rounded-lg bg-muted p-1" role="tablist" aria-label="Authentication mode">
+              <button type="button" role="tab" aria-selected={mode === "login"} onClick={() => setMode("login")} className={modeButtonClass(mode === "login")}>
+                {t("auth.login")}
+              </button>
+              <button type="button" role="tab" aria-selected={mode === "signup"} onClick={() => setMode("signup")} className={modeButtonClass(mode === "signup")}>
+                {t("auth.signUp")}
+              </button>
             </div>
+
+            {mode === "login" ? (
+              <form onSubmit={handleLogin} className="space-y-4">
+                <div className="space-y-2">
+                  <Label htmlFor="login-email">{t("auth.email")}</Label>
+                  <Input id="login-email" type="email" autoComplete="email" placeholder="you@example.com" value={loginEmail} onChange={(e) => setLoginEmail(e.target.value)} required />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="login-password">{t("auth.password")}</Label>
+                  <Input id="login-password" type="password" autoComplete="current-password" placeholder="••••••••" value={loginPassword} onChange={(e) => setLoginPassword(e.target.value)} required />
+                </div>
+                <Button type="submit" className="w-full" disabled={isLoading}>
+                  {isLoading ? t("auth.loggingIn") : t("auth.login")}
+                </Button>
+              </form>
+            ) : (
+              <form onSubmit={handleSignup} className="space-y-4">
+                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                  <div className="space-y-2">
+                    <Label htmlFor="first-name">{t("auth.firstName")}</Label>
+                    <Input id="first-name" autoComplete="given-name" value={firstName} onChange={(e) => setFirstName(e.target.value)} required />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="last-name">{t("auth.lastName")}</Label>
+                    <Input id="last-name" autoComplete="family-name" value={lastName} onChange={(e) => setLastName(e.target.value)} required />
+                  </div>
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="signup-email">{t("auth.email")}</Label>
+                  <Input id="signup-email" type="email" autoComplete="email" placeholder="you@example.com" value={signupEmail} onChange={(e) => setSignupEmail(e.target.value)} required />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="signup-password">{t("auth.password")}</Label>
+                  <Input id="signup-password" type="password" autoComplete="new-password" placeholder="••••••••" minLength={6} value={signupPassword} onChange={(e) => setSignupPassword(e.target.value)} required />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="confirm-password">{t("auth.confirmPassword")}</Label>
+                  <Input id="confirm-password" type="password" autoComplete="new-password" placeholder="••••••••" minLength={6} value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} required />
+                </div>
+                <Button type="submit" className="w-full" disabled={isLoading}>
+                  {isLoading ? t("auth.creatingAccount") : t("auth.createAccount")}
+                </Button>
+              </form>
+            )}
+
+            <p className="mt-6 text-center text-sm text-muted-foreground">
+              {mode === "login" ? t("auth.needAccount") : t("auth.alreadyHaveAccount")}{" "}
+              <button type="button" className="font-medium text-foreground underline-offset-4 hover:underline" onClick={() => setMode(mode === "login" ? "signup" : "login")}>
+                {mode === "login" ? t("auth.signUp") : t("auth.login")}
+              </button>
+            </p>
           </CardContent>
         </Card>
       </div>
 
-      {/* MFA Verification Dialog */}
       <MFAVerificationDialog
         open={showMfaDialog}
         onOpenChange={setShowMfaDialog}
-        email={pendingCredentials?.email || ''}
+        email={pendingCredentials?.email || ""}
         onVerified={handleMfaVerified}
         onCancel={handleMfaCancelled}
       />

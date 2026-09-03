@@ -26,6 +26,7 @@ export const translations = {
       overview: "Overview",
       messages: "Messages",
       portfolio: "Portfolio",
+      newCase: "New recovery case",
     },
     hero: {
       badge: "Trusted by 10,000+ Fraud Victims Worldwide",
@@ -96,6 +97,7 @@ export const translations = {
       signUp: "Sign Up",
       email: "Email",
       password: "Password",
+      confirmPassword: "Confirm Password",
       firstName: "First Name",
       lastName: "Last Name",
       promoCode: "Promo Code (Optional)",
@@ -107,9 +109,10 @@ export const translations = {
       welcomeBack: "Welcome back!",
       loggedInSuccess: "You have been logged in successfully.",
       signupFailed: "Signup failed",
+      passwordsDoNotMatch: "Passwords do not match",
       couldNotCreate: "Could not create account",
       accountCreated: "Account created!",
-      checkEmail: "Please check your email to verify your account.",
+      checkEmail: "Your account is ready to use.",
       error: "Error",
       unexpectedError: "An unexpected error occurred. Please try again.",
       // MFA translations
@@ -135,6 +138,7 @@ export const translations = {
       copySecret: "Copy secret key",
       copyBackupCodes: "Copy backup codes",
       needAccount: "Need an account?",
+      alreadyHaveAccount: "Already have an account?",
       contactSpecialist: "Contact your case specialist to get your account credentials. Client accounts are created by our team for security purposes.",
     },
     common: {
@@ -253,7 +257,7 @@ export const translations = {
       service5Desc: "Provision of digital wallets to securely store, manage, and transact virtual currencies for users.",
     },
     dashboard: {
-      welcomeBack: "Welcome back",
+      welcomeBack: "Welcome",
       overview: "Here's an overview of your account and case status",
       needHelp: "Need Help?",
       needHelpDesc: "Our team of crypto fraud specialists is here to help you recover your assets. If you have questions about your case or need to provide additional information, don't hesitate to reach out.",
@@ -991,6 +995,7 @@ export const translations = {
       overview: "Aperçu",
       messages: "Messages",
       portfolio: "Portefeuille",
+      newCase: "Nouveau dossier de récupération",
     },
     hero: {
       badge: "Plus de 10 000 victimes de fraude nous font confiance",
@@ -1061,6 +1066,7 @@ export const translations = {
       signUp: "Inscription",
       email: "Email",
       password: "Mot de passe",
+      confirmPassword: "Confirmer le mot de passe",
       firstName: "Prénom",
       lastName: "Nom",
       promoCode: "Code promo (Optionnel)",
@@ -1072,9 +1078,10 @@ export const translations = {
       welcomeBack: "Bienvenue !",
       loggedInSuccess: "Vous êtes connecté avec succès.",
       signupFailed: "Échec de l'inscription",
+      passwordsDoNotMatch: "Les mots de passe ne correspondent pas",
       couldNotCreate: "Impossible de créer le compte",
       accountCreated: "Compte créé !",
-      checkEmail: "Veuillez vérifier votre email pour confirmer votre compte.",
+      checkEmail: "Votre compte est prêt à être utilisé.",
       error: "Erreur",
       unexpectedError: "Une erreur inattendue s'est produite. Veuillez réessayer.",
       // MFA translations
@@ -1100,6 +1107,7 @@ export const translations = {
       copySecret: "Copier la clé secrète",
       copyBackupCodes: "Copier les codes de secours",
       needAccount: "Besoin d'un compte ?",
+      alreadyHaveAccount: "Vous avez déjà un compte ?",
       contactSpecialist: "Contactez votre spécialiste de dossier pour obtenir vos identifiants. Les comptes clients sont créés par notre équipe pour des raisons de sécurité.",
     },
     common: {
@@ -1946,6 +1954,7 @@ export const translations = {
       overview: "Übersicht",
       messages: "Nachrichten",
       portfolio: "Portfolio",
+      newCase: "Neuer Rückholungsfall",
     },
     hero: {
       badge: "Über 10.000 Betrugsopfer weltweit vertrauen uns",
@@ -2016,6 +2025,7 @@ export const translations = {
       signUp: "Registrieren",
       email: "E-Mail",
       password: "Passwort",
+      confirmPassword: "Passwort bestätigen",
       firstName: "Vorname",
       lastName: "Nachname",
       promoCode: "Promo-Code (Optional)",
@@ -2027,9 +2037,10 @@ export const translations = {
       welcomeBack: "Willkommen zurück!",
       loggedInSuccess: "Sie wurden erfolgreich angemeldet.",
       signupFailed: "Registrierung fehlgeschlagen",
+      passwordsDoNotMatch: "Die Passwörter stimmen nicht überein",
       couldNotCreate: "Konto konnte nicht erstellt werden",
       accountCreated: "Konto erstellt!",
-      checkEmail: "Bitte überprüfen Sie Ihre E-Mail zur Bestätigung.",
+      checkEmail: "Ihr Konto ist einsatzbereit.",
       error: "Fehler",
       unexpectedError: "Ein unerwarteter Fehler ist aufgetreten. Bitte versuchen Sie es erneut.",
       // MFA translations
@@ -2055,6 +2066,7 @@ export const translations = {
       copySecret: "Geheimen Schlüssel kopieren",
       copyBackupCodes: "Backup-Codes kopieren",
       needAccount: "Konto benötigt?",
+      alreadyHaveAccount: "Sie haben bereits ein Konto?",
       contactSpecialist: "Kontaktieren Sie Ihren Fallspezialisten, um Ihre Zugangsdaten zu erhalten. Kundenkonten werden aus Sicherheitsgründen von unserem Team erstellt.",
     },
     common: {
@@ -2173,7 +2185,7 @@ export const translations = {
       service5Desc: "Bereitstellung von digitalen Wallets zur sicheren Speicherung, Verwaltung und Abwicklung von Transaktionen mit virtuellen Währungen.",
     },
     dashboard: {
-      welcomeBack: "Willkommen zurück",
+      welcomeBack: "Willkommen",
       overview: "Hier ist eine Übersicht Ihres Kontos und Fallstatus",
       needHelp: "Brauchen Sie Hilfe?",
       needHelpDesc: "Unser Team von Krypto-Betrugs-Spezialisten ist hier, um Ihnen bei der Rückgewinnung Ihrer Vermögenswerte zu helfen. Bei Fragen zu Ihrem Fall zögern Sie nicht, uns zu kontaktieren.",
@@ -2901,6 +2913,7 @@ export const translations = {
       overview: "Panoramica",
       messages: "Messaggi",
       portfolio: "Portafoglio",
+      newCase: "Nuovo caso di recupero",
     },
     hero: {
       badge: "Più di 10.000 vittime di frode ci affidano",
@@ -2971,6 +2984,7 @@ export const translations = {
       signUp: "Registrati",
       email: "Email",
       password: "Password",
+      confirmPassword: "Conferma password",
       firstName: "Nome",
       lastName: "Cognome",
       promoCode: "Codice Promo (Opzionale)",
@@ -2982,9 +2996,10 @@ export const translations = {
       welcomeBack: "Bentornato!",
       loggedInSuccess: "Accesso effettuato con successo.",
       signupFailed: "Registrazione fallita",
+      passwordsDoNotMatch: "Le password non corrispondono",
       couldNotCreate: "Impossibile creare l'account",
       accountCreated: "Account creato!",
-      checkEmail: "Controlla la tua email per verificare l'account.",
+      checkEmail: "Il tuo account è pronto per l'uso.",
       error: "Errore",
       unexpectedError: "Si è verificato un errore imprevisto. Riprova.",
       // MFA translations
@@ -3010,6 +3025,7 @@ export const translations = {
       copySecret: "Copia chiave segreta",
       copyBackupCodes: "Copia codici di backup",
       needAccount: "Hai bisogno di un account?",
+      alreadyHaveAccount: "Hai già un account?",
       contactSpecialist: "Contatta il tuo specialista per ottenere le credenziali. Gli account clienti vengono creati dal nostro team per motivi di sicurezza.",
     },
     common: {
@@ -3128,7 +3144,7 @@ export const translations = {
       service5Desc: "Fornitura di portafogli digitali per conservare, gestire e effettuare transazioni in valute virtuali in modo sicuro.",
     },
     dashboard: {
-      welcomeBack: "Bentornato",
+      welcomeBack: "Benvenuto",
       overview: "Ecco una panoramica del tuo account e dello stato del caso",
       needHelp: "Hai bisogno di aiuto?",
       needHelpDesc: "Il nostro team di specialisti in frodi crypto è qui per aiutarti a recuperare i tuoi beni. Se hai domande sul tuo caso, non esitare a contattarci.",

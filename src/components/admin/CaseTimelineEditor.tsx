@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useCallback, useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { useLanguage } from '@/contexts/LanguageContext';
@@ -41,22 +41,22 @@ interface CaseTimelineEditorProps {
 const getEventIcon = (eventType: string) => {
   switch (eventType) {
     case 'case_opened':
-      return <FileText className="h-4 w-4" />;
+      return <FileText className="h-3 w-3" />;
     case 'investigation_started':
-      return <Search className="h-4 w-4" />;
+      return <Search className="h-3 w-3" />;
     case 'funds_recovered':
     case 'balance_adjustment':
-      return <DollarSign className="h-4 w-4" />;
+      return <DollarSign className="h-3 w-3" />;
     case 'case_closed':
-      return <CheckCircle className="h-4 w-4" />;
+      return <CheckCircle className="h-3 w-3" />;
     case 'document_submitted':
-      return <FileText className="h-4 w-4" />;
+      return <FileText className="h-3 w-3" />;
     case 'contact':
-      return <User className="h-4 w-4" />;
+      return <User className="h-3 w-3" />;
     case 'note':
-      return <MessageSquare className="h-4 w-4" />;
+      return <MessageSquare className="h-3 w-3" />;
     default:
-      return <AlertCircle className="h-4 w-4" />;
+      return <AlertCircle className="h-3 w-3" />;
   }
 };
 
@@ -83,7 +83,7 @@ const CaseTimelineEditor = ({ customerId, caseNumber }: CaseTimelineEditorProps)
   const [events, setEvents] = useState<TimelineEvent[]>([]);
   const [loading, setLoading] = useState(true);
 
-  const fetchEvents = async () => {
+  const fetchEvents = useCallback(async () => {
     try {
       const { data, error } = await supabase
         .from('case_timeline')
@@ -93,16 +93,20 @@ const CaseTimelineEditor = ({ customerId, caseNumber }: CaseTimelineEditorProps)
 
       if (error) throw error;
       setEvents(data || []);
-    } catch (error: any) {
-      toast({ title: t('common.error'), description: error.message, variant: "destructive" });
+    } catch (error: unknown) {
+      toast({
+        title: t('common.error'),
+        description: error instanceof Error ? error.message : 'Unable to load timeline events.',
+        variant: "destructive",
+      });
     } finally {
       setLoading(false);
     }
-  };
+  }, [customerId, t, toast]);
 
   useEffect(() => {
     fetchEvents();
-  }, [customerId]);
+  }, [fetchEvents]);
 
   const handleDelete = async (eventId: string) => {
     try {
@@ -114,8 +118,12 @@ const CaseTimelineEditor = ({ customerId, caseNumber }: CaseTimelineEditorProps)
       if (error) throw error;
       toast({ title: t('dialogs.eventDeleted') });
       fetchEvents();
-    } catch (error: any) {
-      toast({ title: t('common.error'), description: error.message, variant: "destructive" });
+    } catch (error: unknown) {
+      toast({
+        title: t('common.error'),
+        description: error instanceof Error ? error.message : 'Unable to delete this timeline event.',
+        variant: "destructive",
+      });
     }
   };
 
@@ -130,9 +138,9 @@ const CaseTimelineEditor = ({ customerId, caseNumber }: CaseTimelineEditorProps)
   }
 
   return (
-    <Card className="bg-card border-border">
-      <CardHeader className="border-b border-border flex-row items-center justify-between">
-        <div>
+    <Card className="min-w-0 overflow-hidden bg-card border-border">
+      <CardHeader className="flex flex-col gap-3 border-b border-border p-4 sm:flex-row sm:items-center sm:justify-between sm:p-6">
+        <div className="min-w-0">
           <CardTitle className="text-sm flex items-center gap-2">
             <Clock className="h-4 w-4 text-primary" />
             {t('dialogs.caseTimeline')}
@@ -142,12 +150,12 @@ const CaseTimelineEditor = ({ customerId, caseNumber }: CaseTimelineEditorProps)
           )}
         </div>
         <AddTimelineEventDialog customerId={customerId} onSuccess={fetchEvents}>
-          <Button size="sm">
+          <Button size="sm" className="w-full sm:w-auto">
             <Plus className="h-4 w-4 mr-1" /> {t('dialogs.addEvent')}
           </Button>
         </AddTimelineEventDialog>
       </CardHeader>
-      <CardContent className="p-4">
+      <CardContent className="p-3 sm:p-4">
         {events.length === 0 ? (
           <div className="text-center py-8">
             <Clock className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
@@ -159,33 +167,33 @@ const CaseTimelineEditor = ({ customerId, caseNumber }: CaseTimelineEditorProps)
             </AddTimelineEventDialog>
           </div>
         ) : (
-          <div className="space-y-4 max-h-[500px] overflow-y-auto pr-2">
+          <div className="max-h-[500px] space-y-4 overflow-x-hidden overflow-y-auto pl-3 sm:pr-2">
             {events.map((event, index) => (
               <div 
                 key={event.id} 
-                className="relative pl-8 pb-4 border-l-2 border-border last:border-l-transparent"
+                className="relative min-w-0 border-l-2 border-border pb-4 pl-5 last:border-l-transparent sm:pl-8"
               >
                 {/* Timeline dot */}
-                <div className={`absolute -left-[9px] top-0 w-4 h-4 rounded-full border-2 ${getEventColor(event.event_type)}`}>
+                <div className={`absolute -left-[11px] top-0 h-5 w-5 rounded-full border-2 ${getEventColor(event.event_type)}`}>
                   <div className="w-full h-full flex items-center justify-center">
                     {getEventIcon(event.event_type)}
                   </div>
                 </div>
                 
-                <div className="bg-secondary/30 rounded-lg p-3 ml-2 group hover:bg-secondary/50 transition-colors">
+                <div className="group ml-1 min-w-0 rounded-lg bg-secondary/30 p-3 transition-colors hover:bg-secondary/50 sm:ml-2">
                   <div className="flex items-start justify-between gap-2">
-                    <div className="flex-1">
-                      <div className="flex items-center gap-2 mb-1">
-                        <Badge variant="outline" className={`text-xs ${getEventColor(event.event_type)}`}>
+                    <div className="min-w-0 flex-1">
+                      <div className="mb-1 flex flex-wrap items-center gap-x-2 gap-y-1">
+                        <Badge variant="outline" className={`max-w-full whitespace-normal break-words text-xs ${getEventColor(event.event_type)}`}>
                           {event.event_type.replace('_', ' ')}
                         </Badge>
-                        <span className="text-xs text-muted-foreground">
+                        <span className="text-xs text-muted-foreground whitespace-nowrap">
                           {format(new Date(event.created_at), 'MMM d, yyyy HH:mm')}
                         </span>
                       </div>
-                      <p className="font-medium text-sm">{event.title}</p>
+                      <p className="break-words text-sm font-medium">{event.title}</p>
                       {event.description && (
-                        <p className="text-sm text-muted-foreground mt-1">{event.description}</p>
+                        <p className="mt-1 whitespace-pre-wrap break-words text-sm text-muted-foreground">{event.description}</p>
                       )}
                     </div>
                     <AlertDialog>
@@ -193,7 +201,7 @@ const CaseTimelineEditor = ({ customerId, caseNumber }: CaseTimelineEditorProps)
                         <Button 
                           size="icon" 
                           variant="ghost" 
-                          className="h-7 w-7 opacity-0 group-hover:opacity-100 transition-opacity text-destructive"
+                          className="h-7 w-7 shrink-0 text-destructive opacity-100 transition-opacity sm:opacity-0 sm:group-hover:opacity-100 sm:focus-visible:opacity-100"
                         >
                           <Trash2 className="h-4 w-4" />
                         </Button>

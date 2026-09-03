@@ -69,7 +69,7 @@ const DashboardIndex = () => {
         {/* Main Grid */}
         <div className="grid grid-cols-1 xl:grid-cols-[minmax(280px,0.75fr)_minmax(0,1.35fr)] gap-5 xl:gap-6 items-stretch">
           <div className="min-w-0">
-            <BalanceCard balance={balance?.balance || 0} />
+            <BalanceCard balance={balance?.balance || 0} currency={balance?.currency || 'EUR'} />
           </div>
           <div className="min-w-0">
             <CaseStatusCard

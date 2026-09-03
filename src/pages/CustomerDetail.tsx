@@ -17,7 +17,7 @@ import { useToast } from '@/hooks/use-toast';
 import { 
   ArrowLeft, User, Wallet, FileText, Bell, Key, Plus, Pencil, 
   RefreshCw, Loader2, Check, X, ChevronDown, ChevronUp, Euro, Clock, MessageCircle, Trash2,
-  AlertCircle, CheckCircle, AlertTriangle, Info, TrendingUp, TrendingDown
+  AlertCircle, CheckCircle, AlertTriangle, Info, TrendingUp, TrendingDown, Landmark
 } from 'lucide-react';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import AdjustBalanceDialog from '@/components/admin/AdjustBalanceDialog';
@@ -29,10 +29,13 @@ import EditPortfolioItemDialog from '@/components/admin/EditPortfolioItemDialog'
 import { CasePhaseUpdater } from '@/components/admin/CasePhaseUpdater';
 import ResetPasswordDialog from '@/components/admin/ResetPasswordDialog';
 import DirectPasswordResetDialog from '@/components/admin/DirectPasswordResetDialog';
+import { ClientPaymentDetailsCard } from '@/components/admin/ClientPaymentDetailsCard';
 import { useUserRole } from '@/hooks/useUserRole';
 import { formatDistanceToNow } from 'date-fns';
 import { getCryptoPrices, CryptoPrice } from '@/services/cryptoApi';
-import { formatEuro } from '@/lib/utils';
+import { formatCurrency } from '@/lib/utils';
+import { TransactionPaymentDetailsDialog } from '@/components/admin/TransactionPaymentDetailsDialog';
+import type { Json } from '@/integrations/supabase/types';
 
 interface CustomerProfile {
   id: string;
@@ -75,6 +78,8 @@ interface TransactionRequest {
   processed_by: string | null;
   processed_at: string | null;
   created_at: string | null;
+  payment_details: Json | null;
+  payment_instructions_snapshot: Json | null;
 }
 
 interface UserSession {
@@ -563,6 +568,9 @@ const CustomerDetail = (): JSX.Element => {
             <TabsTrigger value="transactions" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
               <FileText className="w-4 h-4 mr-2" /> {t('customerDetail.transactionRequests')}
             </TabsTrigger>
+            <TabsTrigger value="payment-details" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
+              <Landmark className="w-4 h-4 mr-2" /> Payment Details
+            </TabsTrigger>
             <TabsTrigger value="notifications" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
               <Bell className="w-4 h-4 mr-2" /> {t('common.notifications')}
             </TabsTrigger>
@@ -579,7 +587,7 @@ const CustomerDetail = (): JSX.Element => {
             <div className="flex items-center gap-2">
               <span className="text-muted-foreground">{t('customerDetail.balance')}:</span> 
               <span className="font-bold text-primary">
-                {formatEuro(customerBalance?.balance || 0)}
+                {formatCurrency(customerBalance?.balance || 0, customerBalance?.currency || 'EUR')}
               </span>
               <AdjustBalanceDialog 
                 customerId={customerId!} 
@@ -1076,20 +1084,21 @@ const CustomerDetail = (): JSX.Element => {
                       <TableHead>{t('common.status')}</TableHead>
                       <TableHead>Processed by</TableHead>
                       <TableHead>Processed time</TableHead>
+                      <TableHead>Payment details</TableHead>
                       <TableHead className="text-right">{t('common.actions')}</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
                     {transactions.length === 0 ? (
                       <TableRow>
-                        <TableCell colSpan={9} className="text-center py-8 text-muted-foreground">{t('customerDetail.noTransactions')}</TableCell>
+                        <TableCell colSpan={10} className="text-center py-8 text-muted-foreground">{t('customerDetail.noTransactions')}</TableCell>
                       </TableRow>
                     ) : (
                       transactions.map((tx, idx) => (
                         <TableRow key={tx.id} className="border-border">
                           <TableCell>{idx + 1}</TableCell>
                           <TableCell className="capitalize">{tx.type}</TableCell>
-                          <TableCell>€{tx.amount.toLocaleString()}</TableCell>
+                          <TableCell>{new Intl.NumberFormat(undefined, { style: 'currency', currency: tx.currency || 'EUR' }).format(tx.amount)}</TableCell>
                           <TableCell className="capitalize">{tx.method.replace('_', ' ')}</TableCell>
                           <TableCell>{tx.created_at ? new Date(tx.created_at).toLocaleString() : '-'}</TableCell>
                           <TableCell>
@@ -1099,6 +1108,13 @@ const CustomerDetail = (): JSX.Element => {
                           </TableCell>
                           <TableCell>{tx.processed_by || '-'}</TableCell>
                           <TableCell>{tx.processed_at ? new Date(tx.processed_at).toLocaleString() : '-'}</TableCell>
+                          <TableCell>
+                            <TransactionPaymentDetailsDialog
+                              method={tx.method}
+                              paymentDetails={tx.payment_details}
+                              instructionSnapshot={tx.payment_instructions_snapshot}
+                            />
+                          </TableCell>
                           <TableCell className="text-right">
                             {tx.status === 'pending' && (
                               <div className="flex gap-1 justify-end">
@@ -1118,6 +1134,10 @@ const CustomerDetail = (): JSX.Element => {
                 </Table>
               </CardContent>
             </Card>
+          </TabsContent>
+
+          <TabsContent value="payment-details">
+            <ClientPaymentDetailsCard customerId={customerId!} />
           </TabsContent>
 
           {/* Notifications Tab */}

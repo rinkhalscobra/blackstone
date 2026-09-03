@@ -9,10 +9,11 @@ import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { supabase } from '@/integrations/supabase/client';
+import type { Database } from '@/integrations/supabase/types';
 import { useAuth } from '@/hooks/useAuth';
 import { useCustomerData } from '@/hooks/useCustomerData';
 import { useToast } from '@/hooks/use-toast';
-import { cn, formatEuro } from '@/lib/utils';
+import { cn, formatCurrency, formatEuro } from '@/lib/utils';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { getCryptoPrices } from '@/services/cryptoApi';
 
@@ -27,6 +28,7 @@ const SUPPORTED_CRYPTOS = [
 ];
 
 interface HoldingRow { crypto_id: string; quantity: number; }
+type TransactionRequestInsert = Database['public']['Tables']['transaction_requests']['Insert'];
 
 export const WithdrawForm = () => {
   const { user } = useAuth();
@@ -52,6 +54,7 @@ export const WithdrawForm = () => {
   ];
 
   const availableBalance = balance?.balance || 0;
+  const balanceCurrency = (balance?.currency || 'EUR').toUpperCase();
   const requestedAmount = parseFloat(amount) || 0;
   const insufficientFunds = requestedAmount > availableBalance;
   const heldQty = holdings.find(h => h.crypto_id === cryptoId)?.quantity || 0;
@@ -135,13 +138,13 @@ export const WithdrawForm = () => {
 
     try {
       const selected = SUPPORTED_CRYPTOS.find(c => c.id === cryptoId);
-      const payload: any = {
+      const payload: TransactionRequestInsert = {
         customer_id: user.id,
         type: 'withdraw',
         amount: requestedAmount,
         method,
         notes: `Destination: ${destination}${notes ? `\n${notes}` : ''}`,
-        currency: 'EUR',
+        currency: balanceCurrency,
         status: 'pending',
       };
       if (method === 'crypto_wallet' && selected) {
@@ -183,7 +186,7 @@ export const WithdrawForm = () => {
           <div>
             <CardTitle>{t('withdraw.title')}</CardTitle>
             <CardDescription>
-              {t('withdraw.availableBalance')}: {formatEuro(availableBalance)}
+              {t('withdraw.availableBalance')}: {formatCurrency(availableBalance, balanceCurrency)}
             </CardDescription>
           </div>
         </div>
@@ -194,7 +197,7 @@ export const WithdrawForm = () => {
           <div className="space-y-2">
             <Label htmlFor="amount">{t('withdraw.amountLabel')}</Label>
             <div className="relative">
-              <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground">€</span>
+              <span className="absolute left-3 top-1/2 -translate-y-1/2 text-xs text-muted-foreground">{balanceCurrency}</span>
               <Input
                 id="amount"
                 type="number"
@@ -204,7 +207,7 @@ export const WithdrawForm = () => {
                 placeholder="0.00"
                 value={amount}
                 onChange={(e) => setAmount(e.target.value)}
-                className={cn("pl-8 text-lg", insufficientFunds && "border-destructive")}
+                className={cn("pl-14 text-lg", insufficientFunds && "border-destructive")}
                 required
               />
             </div>

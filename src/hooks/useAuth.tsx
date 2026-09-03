@@ -1,14 +1,18 @@
 import { createContext, useContext, useEffect, useState } from "react";
 import { User, Session } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
+import type { Database } from "@/integrations/supabase/types";
 import { useToast } from "@/hooks/use-toast";
-import { getClientIPs } from "@/utils/getClientIP";
+
+type AppRole = Database["public"]["Enums"]["app_role"];
+type SignUpResult = { error: Error | null; session: Session | null };
+type SignInResult = { error: Error | null };
 
 interface AuthContextType {
   user: User | null;
   session: Session | null;
-  signUp: (email: string, password: string, firstName: string, lastName: string, promocode?: string) => Promise<{ error: any }>;
-  signIn: (email: string, password: string) => Promise<{ error: any }>;
+  signUp: (email: string, password: string, firstName: string, lastName: string, promocode?: string) => Promise<SignUpResult>;
+  signIn: (email: string, password: string) => Promise<SignInResult>;
   signOut: () => Promise<void>;
   loading: boolean;
 }
@@ -66,7 +70,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const signUp = async (email: string, password: string, firstName: string, lastName: string, promocode?: string) => {
     try {
       let groupId: string | null = null;
-      let roleType: string | null = null;
+      let roleType: AppRole | null = null;
       let promocodeId: string | null = null;
 
       // Validate promocode if provided
@@ -86,7 +90,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
             description: "The promocode you entered is invalid or inactive.",
             variant: "destructive",
           });
-          return { error: { message: "Invalid promocode" } };
+          return { error: new Error("Invalid promocode"), session: null };
         }
 
         // Check if code is expired
@@ -96,7 +100,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
             description: "This promocode has expired.",
             variant: "destructive",
           });
-          return { error: { message: "Promocode expired" } };
+          return { error: new Error("Promocode expired"), session: null };
         }
 
         // Check usage limit
@@ -106,7 +110,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
             description: "This promocode has reached its usage limit.",
             variant: "destructive",
           });
-          return { error: { message: "Promocode limit reached" } };
+          return { error: new Error("Promocode limit reached"), session: null };
         }
 
         groupId = codeData.group_id;
@@ -118,7 +122,6 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         email,
         password,
         options: {
-          emailRedirectTo: `${window.location.origin}/`,
           data: {
             first_name: firstName,
             last_name: lastName,
@@ -135,7 +138,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
           description: error.message,
           variant: "destructive",
         });
-        return { error };
+        return { error, session: null };
       }
 
       // If signup successful and we have a promocode, update the profile and increment usage
@@ -150,7 +153,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         if (roleType && roleType !== 'user') {
           await supabase
             .from('user_roles')
-            .insert({ user_id: data.user.id, role: roleType as any });
+            .insert({ user_id: data.user.id, role: roleType });
         }
 
         // Increment promocode usage
@@ -170,23 +173,26 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
       toast({
         title: "Success!",
-        description: "Please check your email to confirm your account.",
+        description: data.session
+          ? "Your account is ready to use."
+          : "Your account was created. Sign in after email confirmation is disabled in Supabase.",
       });
 
-      return { error: null };
-    } catch (error: any) {
+      return { error: null, session: data.session };
+    } catch (error: unknown) {
+      const normalizedError = error instanceof Error ? error : new Error("An unexpected error occurred");
       toast({
         title: "Sign up failed",
-        description: error.message,
+        description: normalizedError.message,
         variant: "destructive",
       });
-      return { error };
+      return { error: normalizedError, session: null };
     }
   };
 
   const signIn = async (email: string, password: string) => {
     try {
-      const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+      const { error } = await supabase.auth.signInWithPassword({ email, password });
 
       if (error) {
         toast({
@@ -205,8 +211,8 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       });
 
       return { error: null };
-    } catch (error: any) {
-      return { error };
+    } catch (error: unknown) {
+      return { error: error instanceof Error ? error : new Error("An unexpected error occurred") };
     }
   };
 
