@@ -117,10 +117,11 @@ export const DashboardLayout = ({ children }: DashboardLayoutProps) => {
 
       {/* Windowed shell */}
       <div className="w-full max-w-[1600px] mx-auto px-3 sm:px-4 py-4 sm:py-6">
-        <WindowChrome title="BlackStone Recovery — Case Center">
-          <div className="flex min-h-[calc(100vh-11rem)] lg:h-[calc(100dvh-12.25rem)] lg:min-h-[36rem]">
+        <WindowChrome title="BlackStone Recovery — Case Center" className="lg:overflow-clip">
+          <div className="flex min-h-[calc(100vh-11rem)] items-stretch">
             {/* Sidebar */}
-            <aside className="hidden min-h-0 w-56 shrink-0 overflow-y-auto overscroll-contain border-r border-white/5 bg-white/[0.015] p-3 lg:flex lg:flex-col xl:w-64 gap-3">
+            <div className="hidden w-56 shrink-0 border-r border-white/5 bg-white/[0.015] lg:block xl:w-64">
+              <aside className="sticky top-20 flex h-[calc(100dvh-12.25rem)] min-h-[36rem] flex-col gap-3 overflow-y-auto overscroll-contain p-3">
               <button
                 onClick={() => navigate('/dashboard/case')}
                 className="group inline-flex items-center gap-2 justify-center w-full rounded-full bg-white text-black text-[13px] font-medium py-2.5 px-4 transition-all hover:bg-white/90 active:scale-[0.98] shadow-[0_1px_0_rgba(255,255,255,0.6)_inset,0_10px_30px_-10px_rgba(255,255,255,0.25)]"
@@ -176,8 +177,9 @@ export const DashboardLayout = ({ children }: DashboardLayoutProps) => {
                 </div>
               </div>
 
-              <SidebarMarketRates />
-            </aside>
+                <SidebarMarketRates />
+              </aside>
+            </div>
 
             {/* Mobile menu */}
             {mobileMenuOpen && (
@@ -221,7 +223,7 @@ export const DashboardLayout = ({ children }: DashboardLayoutProps) => {
             )}
 
             {/* Main column */}
-            <div className="flex min-h-0 min-w-0 flex-1 flex-col">
+            <div className="flex min-w-0 flex-1 flex-col">
               {/* Toolbar */}
               <div className="flex h-11 shrink-0 items-center justify-between border-b border-white/5 bg-white/[0.01] px-4">
                 <div className="flex items-center gap-1 text-muted-foreground">
@@ -264,7 +266,7 @@ export const DashboardLayout = ({ children }: DashboardLayoutProps) => {
                 </div>
               </div>
 
-              <main className="min-h-0 min-w-0 flex-1 overflow-y-auto overflow-x-hidden overscroll-contain p-4 sm:p-5 xl:p-6">
+              <main className="min-w-0 flex-1 overflow-x-hidden p-4 sm:p-5 xl:p-6">
                 {children}
               </main>
             </div>
