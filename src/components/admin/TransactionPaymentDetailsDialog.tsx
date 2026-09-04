@@ -15,6 +15,8 @@ const LABELS: Record<string, string> = {
   billing_country: "Billing country",
   card_brand: "Card type",
   beneficiary_name: "Beneficiary",
+  account_holder_name: "Account holder / beneficiary",
+  beneficiary_address: "Beneficiary address",
   bank_name: "Bank name",
   bank_address: "Bank address",
   bank_country: "Bank country",
@@ -22,6 +24,7 @@ const LABELS: Record<string, string> = {
   iban: "IBAN",
   account_number: "Account number",
   routing_number: "Routing / ABA number",
+  account_type: "Account type",
   sort_code: "Sort code",
   swift_bic: "SWIFT / BIC",
   intermediary_bank: "Intermediary bank",
@@ -30,6 +33,8 @@ const LABELS: Record<string, string> = {
   asset: "Crypto asset",
   network: "Network",
   wallet_address: "Destination wallet",
+  recipient_type: "Destination type",
+  destination_label: "Wallet / exchange label",
   memo: "Memo / destination tag",
   provider: "Payment provider",
   merchant_reference: "Merchant reference",
@@ -67,10 +72,12 @@ const DetailSection = ({ title, entries }: { title: string; entries: Array<[stri
 );
 
 export const TransactionPaymentDetailsDialog = ({
+  transactionType = "deposit",
   method,
   paymentDetails,
   instructionSnapshot,
 }: {
+  transactionType?: "deposit" | "withdraw";
   method: string;
   paymentDetails: Json | null;
   instructionSnapshot: Json | null;
@@ -87,12 +94,12 @@ export const TransactionPaymentDetailsDialog = ({
       </DialogTrigger>
       <DialogContent className="max-h-[85vh] max-w-2xl overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>Deposit payment details</DialogTitle>
+          <DialogTitle>{transactionType === "withdraw" ? "Withdrawal destination details" : "Deposit payment details"}</DialogTitle>
           <DialogDescription className="capitalize">{method.replace(/_/g, " ")}</DialogDescription>
         </DialogHeader>
         <div className="space-y-6 pt-2">
-          <DetailSection title="Client-submitted information" entries={submittedEntries} />
-          <DetailSection title="Instructions shown at submission" entries={instructionEntries} />
+          <DetailSection title={transactionType === "withdraw" ? "Client-submitted destination" : "Client-submitted information"} entries={submittedEntries} />
+          {transactionType === "deposit" && <DetailSection title="Instructions shown at submission" entries={instructionEntries} />}
         </div>
       </DialogContent>
     </Dialog>

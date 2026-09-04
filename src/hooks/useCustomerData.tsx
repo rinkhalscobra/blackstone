@@ -39,6 +39,7 @@ interface Transaction {
   status: string;
   created_at: string;
   notes: string | null;
+  review_message: string | null;
 }
 
 interface CaseTimelineEvent {

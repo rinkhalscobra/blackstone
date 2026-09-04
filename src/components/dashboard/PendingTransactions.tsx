@@ -2,12 +2,14 @@ import { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
-import { useToast } from '@/hooks/use-toast';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Check, X, Loader2, ArrowUpRight, ArrowDownLeft, Eye } from 'lucide-react';
+import { TransactionPaymentDetailsDialog } from '@/components/admin/TransactionPaymentDetailsDialog';
+import { TransactionReviewDialog } from '@/components/admin/TransactionReviewDialog';
+import type { Json } from '@/integrations/supabase/types';
 
 const formatTransactionAmount = (amount: number, currency: string) =>
   new Intl.NumberFormat(undefined, { style: 'currency', currency: currency || 'EUR' }).format(amount);
@@ -23,6 +25,8 @@ interface Transaction {
   created_at: string | null;
   crypto_symbol?: string | null;
   quantity?: number | null;
+  payment_details: Json | null;
+  payment_instructions_snapshot: Json | null;
   customer?: {
     first_name: string | null;
     last_name: string | null;
@@ -48,11 +52,9 @@ export const PendingTransactions = ({
 }: PendingTransactionsProps) => {
   const navigate = useNavigate();
   const { user } = useAuth();
-  const { toast } = useToast();
   const { t } = useLanguage();
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [loading, setLoading] = useState(true);
-  const [processingId, setProcessingId] = useState<string | null>(null);
 
   const fetchTransactions = useCallback(async () => {
     if (!user) return;
@@ -139,56 +141,6 @@ export const PendingTransactions = ({
       supabase.removeChannel(channel);
     };
   }, [fetchTransactions]);
-
-  const handleAction = async (transactionId: string, action: 'approved' | 'rejected') => {
-    setProcessingId(transactionId);
-    try {
-      const { error } = await supabase
-        .from('transaction_requests')
-        .update({
-          status: action,
-          processed_by: user?.id,
-          processed_at: new Date().toISOString(),
-        })
-        .eq('id', transactionId);
-
-      if (error) throw error;
-
-      toast({
-        title: action === 'approved' 
-          ? (t('customerDetail.transactionApproved') || 'Transaction Approved')
-          : (t('customerDetail.transactionRejected') || 'Transaction Rejected'),
-        description: action === 'approved' 
-          ? 'Balance has been updated automatically.'
-          : 'Transaction has been rejected.',
-      });
-
-      // Create notification for the customer
-      const transaction = transactions.find(t => t.id === transactionId);
-      if (transaction) {
-        await supabase.from('notifications').insert({
-          user_id: transaction.customer_id,
-          type: action === 'approved' ? 'success' : 'error',
-          title: action === 'approved' 
-            ? `${transaction.type === 'deposit' ? 'Deposit' : 'Withdrawal'} Approved`
-            : `${transaction.type === 'deposit' ? 'Deposit' : 'Withdrawal'} Rejected`,
-          message: action === 'approved'
-            ? `Your ${transaction.type} of ${formatTransactionAmount(transaction.amount, transaction.currency)} has been approved.`
-            : `Your ${transaction.type} request has been rejected. Please contact support for more information.`,
-        });
-      }
-
-      fetchTransactions();
-    } catch (error: unknown) {
-      toast({
-        title: t('common.error'),
-        description: error instanceof Error ? error.message : 'Unable to update this transaction.',
-        variant: 'destructive',
-      });
-    } finally {
-      setProcessingId(null);
-    }
-  };
 
   if (loading) {
     return (
@@ -277,46 +229,31 @@ export const PendingTransactions = ({
 
               {/* Action Buttons */}
               <div className="flex gap-2 flex-shrink-0">
+                <TransactionPaymentDetailsDialog
+                  transactionType={tx.type}
+                  method={tx.method}
+                  paymentDetails={tx.payment_details}
+                  instructionSnapshot={tx.payment_instructions_snapshot}
+                />
                 <Button
                   size="sm"
                   variant="outline"
                   className="h-8 w-8 p-0"
                   onClick={() => navigate(`/customer/${tx.customer_id}`)}
+                  title="Open client record"
                 >
                   <Eye className="h-4 w-4" />
                 </Button>
-                <Button
-                  size="sm"
-                  variant="outline"
-                  className="h-8 bg-green-500/20 hover:bg-green-500/30 border-green-500/30 text-green-400"
-                  onClick={() => handleAction(tx.id, 'approved')}
-                  disabled={processingId === tx.id}
-                >
-                  {processingId === tx.id ? (
-                    <Loader2 className="h-4 w-4 animate-spin" />
-                  ) : (
-                    <>
-                      <Check className="h-4 w-4 mr-1" />
-                      <span className="hidden sm:inline">Approve</span>
-                    </>
-                  )}
-                </Button>
-                <Button
-                  size="sm"
-                  variant="outline"
-                  className="h-8 bg-red-500/20 hover:bg-red-500/30 border-red-500/30 text-red-400"
-                  onClick={() => handleAction(tx.id, 'rejected')}
-                  disabled={processingId === tx.id}
-                >
-                  {processingId === tx.id ? (
-                    <Loader2 className="h-4 w-4 animate-spin" />
-                  ) : (
-                    <>
-                      <X className="h-4 w-4 mr-1" />
-                      <span className="hidden sm:inline">Reject</span>
-                    </>
-                  )}
-                </Button>
+                <TransactionReviewDialog transaction={tx} action="approved" onReviewed={fetchTransactions}>
+                  <Button size="sm" variant="outline" className="h-8 border-green-500/30 bg-green-500/20 text-green-400 hover:bg-green-500/30 hover:text-green-300">
+                    <Check className="mr-1 h-4 w-4" /><span className="hidden sm:inline">Approve</span>
+                  </Button>
+                </TransactionReviewDialog>
+                <TransactionReviewDialog transaction={tx} action="rejected" onReviewed={fetchTransactions}>
+                  <Button size="sm" variant="outline" className="h-8 border-red-500/30 bg-red-500/20 text-red-400 hover:bg-red-500/30 hover:text-red-300">
+                    <X className="mr-1 h-4 w-4" /><span className="hidden sm:inline">Reject</span>
+                  </Button>
+                </TransactionReviewDialog>
               </div>
             </div>
           ))}

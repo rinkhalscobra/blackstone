@@ -35,6 +35,7 @@ import { formatDistanceToNow } from 'date-fns';
 import { getCryptoPrices, CryptoPrice } from '@/services/cryptoApi';
 import { formatCurrency } from '@/lib/utils';
 import { TransactionPaymentDetailsDialog } from '@/components/admin/TransactionPaymentDetailsDialog';
+import { TransactionReviewDialog } from '@/components/admin/TransactionReviewDialog';
 import type { Json } from '@/integrations/supabase/types';
 
 interface CustomerProfile {
@@ -76,7 +77,8 @@ interface Note {
 
 interface TransactionRequest {
   id: string;
-  type: string;
+  customer_id: string;
+  type: 'deposit' | 'withdraw';
   amount: number;
   currency: string;
   method: string;
@@ -86,6 +88,7 @@ interface TransactionRequest {
   created_at: string | null;
   payment_details: Json | null;
   payment_instructions_snapshot: Json | null;
+  review_message: string | null;
 }
 
 interface UserSession {
@@ -364,25 +367,6 @@ const CustomerDetail = (): JSX.Element => {
       toast({ title: t('common.error'), description: error.message, variant: "destructive" });
     } finally {
       setAddingNote(false);
-    }
-  };
-
-  const handleTransactionAction = async (transactionId: string, action: 'approved' | 'rejected') => {
-    try {
-      const { error } = await supabase
-        .from('transaction_requests')
-        .update({ 
-          status: action, 
-          processed_by: user?.id, 
-          processed_at: new Date().toISOString() 
-        })
-        .eq('id', transactionId);
-      
-      if (error) throw error;
-      toast({ title: action === 'approved' ? t('customerDetail.transactionApproved') : t('customerDetail.transactionRejected') });
-      fetchCustomerData();
-    } catch (error: any) {
-      toast({ title: t('common.error'), description: error.message, variant: "destructive" });
     }
   };
 
@@ -1096,13 +1080,14 @@ const CustomerDetail = (): JSX.Element => {
                       <TableHead>Processed by</TableHead>
                       <TableHead>Processed time</TableHead>
                       <TableHead>Payment details</TableHead>
+                      <TableHead>Client message</TableHead>
                       <TableHead className="text-right">{t('common.actions')}</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
                     {transactions.length === 0 ? (
                       <TableRow>
-                        <TableCell colSpan={10} className="text-center py-8 text-muted-foreground">{t('customerDetail.noTransactions')}</TableCell>
+                        <TableCell colSpan={11} className="text-center py-8 text-muted-foreground">{t('customerDetail.noTransactions')}</TableCell>
                       </TableRow>
                     ) : (
                       transactions.map((tx, idx) => (
@@ -1121,20 +1106,24 @@ const CustomerDetail = (): JSX.Element => {
                           <TableCell>{tx.processed_at ? new Date(tx.processed_at).toLocaleString() : '-'}</TableCell>
                           <TableCell>
                             <TransactionPaymentDetailsDialog
+                              transactionType={tx.type}
                               method={tx.method}
                               paymentDetails={tx.payment_details}
                               instructionSnapshot={tx.payment_instructions_snapshot}
                             />
                           </TableCell>
+                          <TableCell className="max-w-56">
+                            <p className="line-clamp-2 text-xs text-muted-foreground" title={tx.review_message || undefined}>{tx.review_message || '-'}</p>
+                          </TableCell>
                           <TableCell className="text-right">
                             {tx.status === 'pending' && (
                               <div className="flex gap-1 justify-end">
-                                <Button size="icon" variant="ghost" className="h-7 w-7 text-green-400" onClick={() => handleTransactionAction(tx.id, 'approved')}>
-                                  <Check className="h-4 w-4" />
-                                </Button>
-                                <Button size="icon" variant="ghost" className="h-7 w-7 text-red-400" onClick={() => handleTransactionAction(tx.id, 'rejected')}>
-                                  <X className="h-4 w-4" />
-                                </Button>
+                                <TransactionReviewDialog transaction={tx} action="approved" onReviewed={fetchCustomerData}>
+                                  <Button size="icon" variant="ghost" className="h-7 w-7 text-green-400" title="Approve and message client"><Check className="h-4 w-4" /></Button>
+                                </TransactionReviewDialog>
+                                <TransactionReviewDialog transaction={tx} action="rejected" onReviewed={fetchCustomerData}>
+                                  <Button size="icon" variant="ghost" className="h-7 w-7 text-red-400" title="Reject and message client"><X className="h-4 w-4" /></Button>
+                                </TransactionReviewDialog>
                               </div>
                             )}
                           </TableCell>

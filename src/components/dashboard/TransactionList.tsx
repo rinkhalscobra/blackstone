@@ -1,4 +1,4 @@
-import { ArrowDownRight, ArrowUpRight, Clock, CheckCircle, XCircle, Loader2 } from 'lucide-react';
+import { ArrowDownRight, ArrowUpRight, MessageSquareText } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
@@ -16,6 +16,7 @@ interface Transaction {
   notes: string | null;
   crypto_symbol?: string | null;
   quantity?: number | null;
+  review_message?: string | null;
 }
 
 
@@ -64,11 +65,9 @@ export const TransactionList = ({ transactions, showAll = false }: TransactionLi
         ) : (
           <div className="space-y-4">
             {displayTransactions.map((tx) => (
-              <div 
-                key={tx.id} 
-                className="flex items-center justify-between p-4 rounded-lg bg-secondary/50 hover:bg-secondary transition-colors"
-              >
-                <div className="flex items-center gap-4">
+              <div key={tx.id} className="rounded-lg bg-secondary/50 p-4 transition-colors hover:bg-secondary">
+                <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
+                  <div className="flex items-center gap-4">
                   <div className={cn(
                     "w-12 h-12 rounded-full flex items-center justify-center",
                     tx.type === 'deposit' ? 'bg-success/10' : 'bg-destructive/10'
@@ -91,9 +90,9 @@ export const TransactionList = ({ transactions, showAll = false }: TransactionLi
                       {format(new Date(tx.created_at), 'MMM d, yyyy h:mm a')}
                     </div>
                   </div>
-                </div>
+                  </div>
 
-                <div className="text-right">
+                  <div className="ml-16 text-left sm:ml-0 sm:text-right">
                   <div className={cn(
                     "font-semibold text-lg",
                     tx.type === 'deposit' ? 'text-success' : 'text-destructive'
@@ -107,7 +106,20 @@ export const TransactionList = ({ transactions, showAll = false }: TransactionLi
                   <div className="mt-1">
                     {getStatusBadge(tx.status)}
                   </div>
+                  </div>
                 </div>
+                {tx.review_message && tx.status !== 'pending' && (
+                  <div className={cn(
+                    "ml-0 mt-4 flex gap-3 rounded-md border p-3 text-sm sm:ml-16",
+                    tx.status === 'approved' ? "border-green-500/25 bg-green-500/5" : "border-red-500/25 bg-red-500/5",
+                  )}>
+                    <MessageSquareText className={cn("mt-0.5 h-4 w-4 shrink-0", tx.status === 'approved' ? "text-green-400" : "text-red-400")} />
+                    <div>
+                      <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Message from your case team</p>
+                      <p className="mt-1 whitespace-pre-wrap text-foreground">{tx.review_message}</p>
+                    </div>
+                  </div>
+                )}
               </div>
             ))}
           </div>

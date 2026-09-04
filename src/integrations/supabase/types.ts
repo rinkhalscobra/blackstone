@@ -571,6 +571,7 @@ export type Database = {
           processed_at: string | null
           processed_by: string | null
           quantity: number | null
+          review_message: string | null
           status: Database["public"]["Enums"]["transaction_status"]
           type: Database["public"]["Enums"]["transaction_type"]
           unit_price: number | null
@@ -592,6 +593,7 @@ export type Database = {
           processed_at?: string | null
           processed_by?: string | null
           quantity?: number | null
+          review_message?: string | null
           status?: Database["public"]["Enums"]["transaction_status"]
           type: Database["public"]["Enums"]["transaction_type"]
           unit_price?: number | null
@@ -613,6 +615,7 @@ export type Database = {
           processed_at?: string | null
           processed_by?: string | null
           quantity?: number | null
+          review_message?: string | null
           status?: Database["public"]["Enums"]["transaction_status"]
           type?: Database["public"]["Enums"]["transaction_type"]
           unit_price?: number | null
