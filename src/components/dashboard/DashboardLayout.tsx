@@ -117,7 +117,7 @@ export const DashboardLayout = ({ children }: DashboardLayoutProps) => {
 
       {/* Windowed shell */}
       <div className="w-full max-w-[1600px] mx-auto px-3 sm:px-4 py-4 sm:py-6">
-        <WindowChrome title="BlackStone Recovery — Case Center" className="lg:overflow-clip">
+        <WindowChrome title="BrightFund Recovery — Case Center" className="lg:overflow-clip">
           <div className="flex min-h-[calc(100vh-11rem)] items-stretch">
             {/* Sidebar */}
             <div className="hidden w-56 shrink-0 border-r border-white/5 bg-white/[0.015] lg:block xl:w-64">

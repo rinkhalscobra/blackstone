@@ -2,9 +2,9 @@ interface BrandMarkProps {
   className?: string;
 }
 
-/** BlackStone Recovery black tile with a white B monogram. */
+/** BrightFund Recovery black tile with a white B monogram. */
 const BrandMark = ({ className = "h-9 w-9" }: BrandMarkProps) => (
-  <svg viewBox="0 0 40 40" className={className} role="img" aria-label="BlackStone Recovery">
+  <svg viewBox="0 0 40 40" className={className} role="img" aria-label="BrightFund Recovery">
     <rect x="2.5" y="2.5" width="35" height="35" rx="10" fill="#000000" stroke="#ffffff" strokeOpacity="0.2" />
     <path
       fill="#ffffff"

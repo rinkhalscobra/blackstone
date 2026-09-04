@@ -59,7 +59,7 @@ const AppMockup = () => (
           <span className="w-3 h-3 rounded-full bg-white/35" />
           <span className="w-3 h-3 rounded-full bg-white/20" />
         </div>
-        <span className="absolute left-1/2 -translate-x-1/2 text-xs text-white/50">BlackStone Recovery — Case Center</span>
+        <span className="absolute left-1/2 -translate-x-1/2 text-xs text-white/50">BrightFund Recovery — Case Center</span>
       </div>
 
       <div className="grid grid-cols-12 h-[520px]">
@@ -154,7 +154,7 @@ const AppMockup = () => (
             <div className="liquid-glass rounded-xl p-3 mb-4">
               <div className="flex items-center gap-1.5 mb-1.5">
                 <Sparkles className="w-3.5 h-3.5 text-white/80" />
-                <span className="text-[11px] font-semibold text-white">Summary by BlackStone Recovery AI</span>
+                <span className="text-[11px] font-semibold text-white">Summary by BrightFund Recovery AI</span>
               </div>
               <p className="text-[11px] text-white/70 leading-relaxed">
                 On-chain trace complete across 3 clusters. Funds routed via a licensed VASP — freeze request filed. Estimated recovery: 68%. No further action required from you.
@@ -171,7 +171,7 @@ const AppMockup = () => (
                 Two of the three receiving wallets were cashed out through a compliant exchange — our freeze request is
                 filed and expected to be processed within 72 hours.
               </p>
-              <p className="text-white/50">— The BlackStone Recovery Team</p>
+              <p className="text-white/50">— The BrightFund Recovery Team</p>
             </div>
 
             <div className="mt-4 inline-flex items-center gap-2 px-2.5 py-1.5 rounded-md border border-white/10 bg-white/[0.03] text-[11px] text-white/70">

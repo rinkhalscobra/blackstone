@@ -1,8 +1,8 @@
 ALTER TABLE public.profiles
-  ALTER COLUMN platform SET DEFAULT 'blackstone';
+  ALTER COLUMN platform SET DEFAULT 'brightfund';
 
 ALTER TABLE public.groups
-  ALTER COLUMN platform SET DEFAULT 'blackstone';
+  ALTER COLUMN platform SET DEFAULT 'brightfund';
 
 CREATE OR REPLACE FUNCTION public.handle_new_user()
 RETURNS trigger
@@ -26,7 +26,7 @@ BEGIN
     COALESCE(NEW.raw_user_meta_data->>'display_email', NEW.email),
     NEW.raw_user_meta_data->>'first_name',
     NEW.raw_user_meta_data->>'last_name',
-    COALESCE(NULLIF(NEW.raw_user_meta_data->>'platform', ''), 'blackstone'),
+    COALESCE(NULLIF(NEW.raw_user_meta_data->>'platform', ''), 'brightfund'),
     NULLIF(NEW.raw_user_meta_data->>'group_id', '')::uuid
   );
   RETURN NEW;

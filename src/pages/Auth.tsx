@@ -175,7 +175,7 @@ const Auth = () => {
             <div className="mx-auto mb-4">
               <Logo size="lg" showText={false} linkTo={undefined} />
             </div>
-            <CardTitle className="text-2xl">BlackStone Recovery</CardTitle>
+            <CardTitle className="text-2xl">BrightFund Recovery</CardTitle>
             <CardDescription>{t("auth.accessAccount")}</CardDescription>
           </CardHeader>
           <CardContent>

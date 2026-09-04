@@ -12,7 +12,7 @@ FROM (
 WHERE g.id = sub.group_id;
 
 UPDATE public.groups SET platform = 'tk' WHERE name = 'GROUP TK';
-UPDATE public.groups SET platform = 'blackstone' WHERE name ILIKE 'zyra%';
+UPDATE public.groups SET platform = 'brightfund' WHERE name ILIKE 'zyra%';
 
 CREATE OR REPLACE FUNCTION public.get_user_platform_self()
 RETURNS text

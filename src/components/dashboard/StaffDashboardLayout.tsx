@@ -97,7 +97,7 @@ export const StaffDashboardLayout = ({
 
   const content = (
     <main className="container mx-auto px-4 py-6 sm:py-8">
-      <WindowChrome title={`BlackStone Recovery — ${config.label}`}>
+      <WindowChrome title={`BrightFund Recovery — ${config.label}`}>
         <div className="p-5 sm:p-8">
           {/* Header */}
           <div className="mb-6 sm:mb-8">

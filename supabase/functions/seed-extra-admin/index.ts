@@ -27,7 +27,7 @@ Deno.serve(async (req) => {
         email,
         password,
         email_confirm: true,
-        user_metadata: { first_name, last_name, platform: 'blackstone' },
+        user_metadata: { first_name, last_name, platform: 'brightfund' },
       });
       if (error) throw error;
       userId = data.user.id;
@@ -39,7 +39,7 @@ Deno.serve(async (req) => {
       is_super: true,
       is_archived: false,
       status: 'active',
-      platform: 'blackstone',
+      platform: 'brightfund',
     }).eq('id', userId);
 
     await admin.from('user_roles').delete().eq('user_id', userId);

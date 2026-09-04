@@ -126,7 +126,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
             first_name: firstName,
             last_name: lastName,
             group_id: groupId,
-            platform: 'blackstone',
+            platform: 'brightfund',
             display_email: email,
           }
         }

@@ -57,7 +57,7 @@ const fetchJson = async (url: string) => {
   const response = await fetch(url, {
     headers: {
       Accept: "application/json",
-      "User-Agent": "BlackStone/1.0",
+      "User-Agent": "BrightFund/1.0",
     },
   });
 

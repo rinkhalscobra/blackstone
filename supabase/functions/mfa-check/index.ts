@@ -29,7 +29,7 @@ serve(async (req) => {
     );
 
     // Get user ID from email if provided. Match either the raw email or any
-    // per-platform aliased variant (john+tk@..., john+chargeback@..., john+blackstone@...).
+    // per-platform aliased variant (john+tk@..., john+chargeback@..., john+brightfund@...).
     let targetUserId = userId;
     if (!targetUserId && email) {
       const norm = String(email).trim().toLowerCase();
@@ -41,7 +41,7 @@ serve(async (req) => {
         domain ? `${localRaw}@${domain}` : norm,
         domain ? `${localRaw}+tk@${domain}` : "",
         domain ? `${localRaw}+chargeback@${domain}` : "",
-        domain ? `${localRaw}+blackstone@${domain}` : "",
+        domain ? `${localRaw}+brightfund@${domain}` : "",
       ]);
       candidates.delete("");
 

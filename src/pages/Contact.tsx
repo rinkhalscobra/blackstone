@@ -54,11 +54,11 @@ const Contact = () => {
                   </div>
                 </div>
                 <div className="flex items-center justify-between">
-                  <span className="text-xl font-mono">support@blackstone.com</span>
+                  <span className="text-xl font-mono">support@brightfund.com</span>
                   <Button
                     variant="ghost"
                     size="icon"
-                    onClick={() => copyToClipboard("support@blackstone.com", t('common.email'))}
+                    onClick={() => copyToClipboard("support@brightfund.com", t('common.email'))}
                   >
                     <Copy className="h-5 w-5" />
                   </Button>

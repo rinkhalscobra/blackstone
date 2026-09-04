@@ -11,7 +11,7 @@ interface WindowChromeProps {
  * macOS-style window frame used by authenticated app shells.
  * Purely presentational: traffic-light dots on the left, centered title.
  */
-export const WindowChrome = ({ title = 'BlackStone Recovery', children, className }: WindowChromeProps) => {
+export const WindowChrome = ({ title = 'BrightFund Recovery', children, className }: WindowChromeProps) => {
   return (
     <div
       className={cn(

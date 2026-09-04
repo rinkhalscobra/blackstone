@@ -46,7 +46,7 @@ const FraudPanel = () => (
           before it drains you.
         </h2>
         <p className="mt-6 text-white/60 text-base leading-[1.6] max-w-md">
-          BlackStone Recovery watches every wallet, cross-references it against known scam clusters, and flags risk in seconds.
+          BrightFund Recovery watches every wallet, cross-references it against known scam clusters, and flags risk in seconds.
           Chain-of-custody evidence is built automatically — ready for exchanges, banks, and law enforcement.
         </p>
         <div className="mt-8 flex flex-wrap gap-2">

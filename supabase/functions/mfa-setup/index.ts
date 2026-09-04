@@ -152,7 +152,7 @@ serve(async (req) => {
       const backupCodes = generateBackupCodes(8);
       
       // Create OTP Auth URL for QR code
-      const issuer = 'BlackStone Recovery';
+      const issuer = 'BrightFund Recovery';
       const accountName = user.email || user.id;
       const otpAuthUrl = `otpauth://totp/${encodeURIComponent(issuer)}:${encodeURIComponent(accountName)}?secret=${secret}&issuer=${encodeURIComponent(issuer)}&algorithm=SHA1&digits=6&period=30`;
 

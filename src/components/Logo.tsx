@@ -30,7 +30,7 @@ export const Logo = ({ size = 'md', showText = true, linkTo = '/' }: LogoProps) 
             WebkitTextFillColor: 'transparent',
           }}
         >
-          BlackStone Recovery
+          BrightFund Recovery
         </span>
       )}
     </div>

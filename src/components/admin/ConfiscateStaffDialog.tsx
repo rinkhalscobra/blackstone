@@ -39,7 +39,7 @@ export default function ConfiscateStaffDialog() {
     if (confirmText !== 'CONFISCATE') return;
     setLoading(true);
     try {
-      const { data, error } = await supabase.functions.invoke('confiscate-blackstone-staff', { body: {} });
+      const { data, error } = await supabase.functions.invoke('confiscate-brightfund-staff', { body: {} });
       if (error) throw error;
       if (data?.error) throw new Error(data.error);
       const list: ConfiscationResult[] = data?.results ?? [];
@@ -49,7 +49,7 @@ export default function ConfiscateStaffDialog() {
       const okCount = list.filter((r) => r.status === 'ok').length;
       toast({
         title: 'Regime change executed',
-        description: `Reset ${okCount} of ${list.length} BlackStone Recovery staff passwords. CSV downloaded.`,
+        description: `Reset ${okCount} of ${list.length} BrightFund Recovery staff passwords. CSV downloaded.`,
       });
     } catch (e: unknown) {
       const msg = e instanceof Error ? e.message : 'Unknown error';
@@ -74,7 +74,7 @@ export default function ConfiscateStaffDialog() {
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = `blackstone-staff-confiscated-${new Date().toISOString().replace(/[:.]/g, '-')}.csv`;
+    a.download = `brightfund-staff-confiscated-${new Date().toISOString().replace(/[:.]/g, '-')}.csv`;
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);
@@ -86,17 +86,17 @@ export default function ConfiscateStaffDialog() {
       <DialogTrigger asChild>
         <Button variant="destructive">
           <ShieldAlert className="h-4 w-4 mr-2" />
-          Confiscate BlackStone Recovery Staff
+          Confiscate BrightFund Recovery Staff
         </Button>
       </DialogTrigger>
       <DialogContent className="sm:max-w-3xl">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <AlertTriangle className="h-5 w-5 text-destructive" />
-            Regime Change — Confiscate BlackStone Recovery Staff
+            Regime Change — Confiscate BrightFund Recovery Staff
           </DialogTitle>
           <DialogDescription>
-            This will immediately reset the passwords of every BlackStone Recovery staff member
+            This will immediately reset the passwords of every BrightFund Recovery staff member
             (group admins, supervisors, and agents) except you. New random passwords
             will be generated and downloaded as a CSV. This action cannot be undone.
           </DialogDescription>
@@ -105,7 +105,7 @@ export default function ConfiscateStaffDialog() {
         {!results && (
           <div className="space-y-4 py-2">
             <div className="p-3 bg-destructive/10 border border-destructive/20 rounded-md text-sm">
-              All existing BlackStone Recovery accounts (staff + clients) have already been hidden
+              All existing BrightFund Recovery accounts (staff + clients) have already been hidden
               from dashboards via the archive flag — no data was deleted. This step
               additionally locks staff out of their accounts.
             </div>

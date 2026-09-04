@@ -79,7 +79,7 @@ serve(async (req) => {
       throw new Error("Could not verify user role");
     }
 
-    const creatorPlatform = creatorProfile?.platform || "blackstone";
+    const creatorPlatform = creatorProfile?.platform || "brightfund";
     const userRole = roleData?.role;
     const isAdmin = userRole === "admin";
     const isGroupAdmin = userRole === "group_admin";
@@ -152,7 +152,7 @@ serve(async (req) => {
     if (targetGroup?.platform) {
       targetPlatform = targetGroup.platform;
     } else if (targetGroup?.name && /^zyra/i.test(targetGroup.name)) {
-      targetPlatform = "blackstone";
+      targetPlatform = "brightfund";
     }
     // Block duplicates within the same platform
     if (role === "user") {

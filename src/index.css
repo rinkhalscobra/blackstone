@@ -5,13 +5,13 @@
 @tailwind utilities;
 
 /* ============================================================
- * BlackStone Recovery global design system — inherits the /showcase language.
+ * BrightFund Recovery global design system — inherits the /showcase language.
  * All colors MUST be HSL. Tokens drive shadcn + tailwind.
  * ============================================================ */
 
 @layer base {
   :root {
-    /* BlackStone monochrome palette */
+    /* BrightFund monochrome palette */
     --background: 0 0% 4%;
     --foreground: 0 0% 96%;
 

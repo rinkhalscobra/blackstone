@@ -1,8 +1,8 @@
-# BlackStone production configuration
+# BrightFund production configuration
 
 ## Production
 
-- Website: `https://blackstone-pearl.vercel.app`
+- Website: `https://brightfund-pearl.vercel.app`
 - Supabase project: `gbbnsecjzppffphmduca`
 - The frontend reads its Supabase URL and publishable key from Vite environment variables.
 - Supabase Auth redirects allow the production URL and local development on port 8080.
@@ -15,5 +15,5 @@
 
 ## Branding
 
-- Public copy and internal platform identifiers use the BlackStone name.
-- The staff confiscation function is deployed as `confiscate-blackstone-staff`.
+- Public copy and internal platform identifiers use the BrightFund name.
+- The staff confiscation function is deployed as `confiscate-brightfund-staff`.
