@@ -121,7 +121,7 @@ export const DashboardLayout = ({ children }: DashboardLayoutProps) => {
           <div className="flex min-h-[calc(100vh-11rem)] items-stretch">
             {/* Sidebar */}
             <div className="hidden w-56 shrink-0 border-r border-white/5 bg-white/[0.015] lg:block xl:w-64">
-              <aside className="sticky top-20 flex h-[calc(100dvh-12.25rem)] min-h-[36rem] flex-col gap-3 overflow-y-auto overscroll-contain p-3">
+              <aside className="themed-scrollbar sticky top-20 flex h-[calc(100dvh-12.25rem)] min-h-[36rem] flex-col gap-3 overflow-y-auto overscroll-contain p-3">
               <button
                 onClick={() => navigate('/dashboard/case')}
                 className="group inline-flex items-center gap-2 justify-center w-full rounded-full bg-white text-black text-[13px] font-medium py-2.5 px-4 transition-all hover:bg-white/90 active:scale-[0.98] shadow-[0_1px_0_rgba(255,255,255,0.6)_inset,0_10px_30px_-10px_rgba(255,255,255,0.25)]"
@@ -188,7 +188,7 @@ export const DashboardLayout = ({ children }: DashboardLayoutProps) => {
                   className="fixed inset-0 bg-background/80 backdrop-blur"
                   onClick={() => setMobileMenuOpen(false)}
                 />
-                <aside className="fixed left-0 top-16 bottom-0 w-64 overflow-y-auto border-r border-border bg-card p-3">
+                <aside className="themed-scrollbar fixed left-0 top-16 bottom-0 w-64 overflow-y-auto border-r border-border bg-card p-3">
                   <button
                     onClick={() => {
                       navigate('/dashboard/case');
