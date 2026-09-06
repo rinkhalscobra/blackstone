@@ -78,7 +78,7 @@ const Index = () => {
               Digital asset recovery
             </div>
 
-            <h1 className="mt-7 text-5xl md:text-7xl font-semibold tracking-[-0.055em] leading-[0.94]">
+            <h1 className="showcase-display-title mt-7">
               <span className="block text-white">{t("hero.title")}</span>
               <span className="block animate-shiny" style={gradientStyle}>
                 {t("hero.cryptoScam")}

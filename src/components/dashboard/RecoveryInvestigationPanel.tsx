@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import {
   ArrowRight,
+  Activity,
   Bitcoin,
   CheckCircle2,
   Clock3,
@@ -53,6 +54,53 @@ const searchEvents = {
     ['Cross-border network', 'Following intermediary institutions'],
   ],
 };
+
+const riskBuckets = [
+  {
+    name: 'Critical',
+    count: 4,
+    dot: 'bg-red-400',
+    active: 'border-red-400/45 bg-red-500/10 shadow-[0_0_24px_rgb(248_113_113/0.08)]',
+    items: {
+      both: ['Mixer or obfuscation exposure', 'Sanctions proximity signal'],
+      crypto: ['Mixer output association', 'Sanctioned-address proximity'],
+      bank: ['High-risk routing anomaly', 'Restricted entity proximity'],
+    },
+  },
+  {
+    name: 'Suspicious',
+    count: 7,
+    dot: 'bg-amber-300',
+    active: 'border-amber-300/45 bg-amber-500/10 shadow-[0_0_24px_rgb(252_211_77/0.08)]',
+    items: {
+      both: ['Cross-network movement', 'Unverified counterparty'],
+      crypto: ['Chain-hopping pattern', 'New wallet counterparty'],
+      bank: ['Beneficiary mismatch signal', 'New intermediary institution'],
+    },
+  },
+  {
+    name: 'Monitoring',
+    count: 18,
+    dot: 'bg-blue-300',
+    active: 'border-blue-300/45 bg-blue-500/10 shadow-[0_0_24px_rgb(147_197_253/0.08)]',
+    items: {
+      both: ['Dormant destination cluster', 'Low-volume activity'],
+      crypto: ['Dormant wallet endpoint', 'Low-volume wallet cluster'],
+      bank: ['Dormant account reference', 'Low-frequency payment route'],
+    },
+  },
+  {
+    name: 'Cleared',
+    count: 13,
+    dot: 'bg-emerald-400',
+    active: 'border-emerald-400/45 bg-emerald-500/10 shadow-[0_0_24px_rgb(52_211_153/0.08)]',
+    items: {
+      both: ['Verified regulated service', 'Identity-linked endpoint'],
+      crypto: ['Verified VASP endpoint', 'KYC-linked custody service'],
+      bank: ['Verified banking institution', 'Validated beneficiary record'],
+    },
+  },
+] as const;
 
 const resultLabels: Record<string, string> = {
   amount: 'Identified amount',
@@ -128,6 +176,74 @@ const GlobeScanner = ({ scope, activeIndex, running }: { scope: string; activeIn
   </div>
 );
 
+const RiskClassificationGrid = ({
+  scope,
+  activeIndex,
+  running,
+  scanPosition,
+}: {
+  scope: 'both' | 'bank' | 'crypto';
+  activeIndex: number;
+  running: boolean;
+  scanPosition: number;
+}) => {
+  const sourceLabel = scope === 'both' ? 'bank and blockchain signals' : scope === 'crypto' ? 'wallet signals' : 'banking signals';
+
+  return (
+    <div className="relative overflow-hidden rounded-xl border border-border/80 bg-background/45 p-4 sm:p-5">
+      <div className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-primary/70 to-transparent" />
+      <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+        <div>
+          <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.14em] text-muted-foreground">
+            <Activity className={cn('h-3.5 w-3.5 text-primary', running && 'animate-pulse')} />
+            Live risk classification
+          </div>
+          <p className="mt-1 text-xs text-muted-foreground">42 {sourceLabel} cross-referenced against recovery intelligence.</p>
+        </div>
+        <Badge variant="outline" className={cn('w-fit border-border bg-background/70 font-mono text-[10px]', running ? 'text-emerald-400' : 'text-amber-400')}>
+          <span className={cn('mr-1.5 h-1.5 w-1.5 rounded-full', running ? 'animate-pulse bg-emerald-400' : 'bg-amber-400')} />
+          {running ? `Signal ${scanPosition}/42` : 'Classification complete'}
+        </Badge>
+      </div>
+
+      <div className="mt-4 h-1 overflow-hidden rounded-full bg-muted">
+        <div className="h-full rounded-full bg-gradient-to-r from-primary/50 via-primary to-emerald-400 transition-[width] duration-700" style={{ width: `${(scanPosition / 42) * 100}%` }} />
+      </div>
+
+      <div className="mt-4 grid gap-3 sm:grid-cols-2">
+        {riskBuckets.map((bucket, index) => {
+          const isActive = running && activeIndex === index;
+          return (
+            <div key={bucket.name} className={cn('relative overflow-hidden rounded-xl border border-border/75 bg-card/45 p-3.5 transition-all duration-500', isActive && bucket.active)}>
+              {isActive && <div className="pointer-events-none absolute inset-y-0 left-0 w-px animate-pulse bg-current opacity-70" />}
+              <div className="flex items-center justify-between gap-3">
+                <div className="flex items-center gap-2">
+                  <span className={cn('h-2 w-2 rounded-full', bucket.dot, isActive && 'animate-ping')} />
+                  <span className="text-sm font-semibold text-foreground">{bucket.name}</span>
+                </div>
+                <span className="font-mono text-xs text-muted-foreground">{bucket.count}</span>
+              </div>
+              <div className="mt-2 space-y-1.5">
+                {bucket.items[scope].map((item) => (
+                  <div key={item} className="flex items-center gap-2 text-xs text-muted-foreground">
+                    <span className="h-1 w-1 shrink-0 rounded-full bg-muted-foreground/60" />
+                    <span className="truncate">{item}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          );
+        })}
+      </div>
+
+      <div className="mt-4 flex flex-wrap items-center justify-between gap-2 border-t border-border/70 pt-3 text-[11px] text-muted-foreground">
+        <span>{running ? 'Classification updates automatically as the global trace advances.' : 'Classification snapshot retained with the published finding.'}</span>
+        <span className="font-medium text-foreground">Case intelligence · {running ? 'Live' : 'Verified'}</span>
+      </div>
+    </div>
+  );
+};
+
 export const RecoveryInvestigationPanel = ({
   phase,
   searchStartedAt,
@@ -155,6 +271,7 @@ export const RecoveryInvestigationPanel = ({
     const elapsed = Math.max(0, now - started);
     const progress = Math.min(100, (elapsed / durationMs) * 100);
     const remaining = durationMs - elapsed;
+    const scanPosition = remaining > 0 ? (Math.floor(now / 1000) % 42) + 1 : 42;
 
     return (
       <div className="overflow-hidden rounded-xl border border-primary/20 bg-[linear-gradient(135deg,hsl(var(--primary)/0.08),transparent_45%),linear-gradient(to_bottom,hsl(var(--card)),hsl(var(--background)/0.75))] p-4 sm:p-6">
@@ -213,6 +330,14 @@ export const RecoveryInvestigationPanel = ({
             )}
           </div>
         </div>
+        <div className="mt-6">
+          <RiskClassificationGrid
+            scope={scope}
+            activeIndex={activeIndex}
+            running={remaining > 0}
+            scanPosition={scanPosition}
+          />
+        </div>
       </div>
     );
   }
@@ -266,6 +391,13 @@ export const RecoveryInvestigationPanel = ({
           <ArrowRight className="ml-auto h-4 w-4 text-muted-foreground" />
           <ShieldCheck className="h-5 w-5 text-emerald-400" />
         </div>
+
+        <RiskClassificationGrid
+          scope={scope}
+          activeIndex={0}
+          running={false}
+          scanPosition={42}
+        />
 
         {entries.length > 0 && (
           <dl className="grid gap-3 sm:grid-cols-2">

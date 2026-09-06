@@ -26,7 +26,7 @@ export const translations = {
       overview: "Overview",
       messages: "Messages",
       portfolio: "Portfolio",
-      newCase: "New recovery case",
+      newCase: "View my case",
     },
     hero: {
       badge: "Trusted by 10,000+ Fraud Victims Worldwide",
@@ -1006,7 +1006,7 @@ export const translations = {
       overview: "Aperçu",
       messages: "Messages",
       portfolio: "Portefeuille",
-      newCase: "Nouveau dossier de récupération",
+      newCase: "Voir mon dossier",
     },
     hero: {
       badge: "Plus de 10 000 victimes de fraude nous font confiance",
@@ -1976,7 +1976,7 @@ export const translations = {
       overview: "Übersicht",
       messages: "Nachrichten",
       portfolio: "Portfolio",
-      newCase: "Neuer Rückholungsfall",
+      newCase: "Meinen Fall anzeigen",
     },
     hero: {
       badge: "Über 10.000 Betrugsopfer weltweit vertrauen uns",
@@ -2946,7 +2946,7 @@ export const translations = {
       overview: "Panoramica",
       messages: "Messaggi",
       portfolio: "Portafoglio",
-      newCase: "Nuovo caso di recupero",
+      newCase: "Visualizza il mio caso",
     },
     hero: {
       badge: "Più di 10.000 vittime di frode ci affidano",

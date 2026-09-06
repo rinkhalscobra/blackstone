@@ -11,7 +11,6 @@ import {
   X,
   MessageCircle,
   BadgeDollarSign,
-  Sparkles,
   ArrowLeft,
   ArrowRight,
   Archive,
@@ -128,8 +127,8 @@ export const DashboardLayout = ({ children }: DashboardLayoutProps) => {
                 onClick={() => navigate('/dashboard/case')}
                 className="group inline-flex items-center gap-2 justify-center w-full rounded-full bg-white text-black text-[13px] font-medium py-2.5 px-4 transition-all hover:bg-white/90 active:scale-[0.98] shadow-[0_1px_0_rgba(255,255,255,0.6)_inset,0_10px_30px_-10px_rgba(255,255,255,0.25)]"
               >
-                <Sparkles className="w-4 h-4" />
-                <span>{t('nav.newCase') || 'New recovery case'}</span>
+                <FileText className="w-4 h-4" />
+                <span>{t('nav.newCase')}</span>
               </button>
 
               <nav className="mt-1 space-y-0.5">
@@ -198,8 +197,8 @@ export const DashboardLayout = ({ children }: DashboardLayoutProps) => {
                     }}
                     className="inline-flex items-center gap-2 justify-center w-full rounded-full bg-white text-black text-[13px] font-medium py-2.5 px-4 mb-3"
                   >
-                    <Sparkles className="w-4 h-4" />
-                    <span>{t('nav.newCase') || 'New recovery case'}</span>
+                    <FileText className="w-4 h-4" />
+                    <span>{t('nav.newCase')}</span>
                   </button>
                   <nav className="space-y-1">
                     {navItems.map((item) => (

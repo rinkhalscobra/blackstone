@@ -20,7 +20,7 @@ const FinalCTA = () => (
         }}
       />
       <div className="relative">
-        <h2 className="text-4xl md:text-6xl font-semibold tracking-tight leading-[1.02] text-white">
+        <h2 className="showcase-section-title text-white">
           Stop counting the loss.
           <br />
           Start the recovery.

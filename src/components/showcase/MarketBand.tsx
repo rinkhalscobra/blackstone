@@ -27,7 +27,7 @@ const MarketBand = () => {
           className="flex flex-col items-center text-center mb-14"
         >
           <SectionEyebrow label="Live market" tag="Real time" />
-          <h2 className="mt-4 text-4xl md:text-6xl font-semibold tracking-tight leading-[0.95]">
+          <h2 className="showcase-section-title mt-4">
             <span className="block text-white">Live market.</span>
             <span className="block animate-shiny" style={gradientStyle}>
               Real signal.

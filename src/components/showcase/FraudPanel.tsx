@@ -40,7 +40,7 @@ const FraudPanel = () => (
         transition={{ duration: 0.7 }}
       >
         <SectionEyebrow label="Detection" tag="AI-native" />
-        <h2 className="mt-5 text-3xl md:text-5xl font-semibold tracking-tight leading-[1.02] text-white">
+        <h2 className="showcase-section-title mt-5 text-white">
           Spot the scam
           <br />
           before it drains you.

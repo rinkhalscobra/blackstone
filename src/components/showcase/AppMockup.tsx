@@ -67,7 +67,7 @@ const AppMockup = () => (
         <div className="col-span-3 border-r border-white/10 bg-black/30 p-4 flex flex-col gap-4">
           <button className="rounded-lg bg-white text-black text-xs font-semibold px-3 py-2 flex items-center justify-center gap-1.5">
             <Sparkles className="w-3.5 h-3.5" />
-            New recovery case
+            View my case
           </button>
           <div className="flex flex-col gap-0.5 text-sm">
             {navItems.map(({ icon: Icon, label, count, active }) => (

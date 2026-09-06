@@ -1,10 +1,11 @@
-import { Wallet, ArrowUpRight, ArrowDownRight, Landmark } from 'lucide-react';
+import { Wallet, ArrowUpRight, ArrowDownRight } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Link } from 'react-router-dom';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { formatCurrency } from '@/lib/utils';
 import { BALANCE_CURRENCIES, balanceForCurrency, type CurrencyBalance } from '@/lib/balances';
+import { CurrencyIcon } from '@/components/dashboard/CurrencyIcon';
 
 interface BalanceCardProps {
   balances: CurrencyBalance[];
@@ -25,8 +26,8 @@ export const BalanceCard = ({ balances }: BalanceCardProps) => {
         <div className="mb-4 grid grid-cols-1 gap-2 sm:grid-cols-3">
           {BALANCE_CURRENCIES.map((currency) => (
             <div key={currency} className="rounded-lg border border-border/70 bg-background/35 p-3">
-              <div className="mb-1 flex items-center gap-2 text-xs font-medium text-muted-foreground">
-                <Landmark className="h-3.5 w-3.5" /> {currency}
+              <div className="mb-2 flex items-center gap-2 text-xs font-medium text-muted-foreground">
+                <CurrencyIcon currency={currency} /> {currency}
               </div>
               <p className="font-semibold text-foreground">
                 {formatCurrency(balanceForCurrency(balances, currency), currency)}

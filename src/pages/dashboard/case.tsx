@@ -4,9 +4,7 @@ import { CaseTimeline } from '@/components/dashboard/CaseTimeline';
 import { useCustomerData } from '@/hooks/useCustomerData';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Link } from 'react-router-dom';
-import { User, Mail, Phone, Calendar, MessageSquare } from 'lucide-react';
+import { User, Mail, Phone, Calendar } from 'lucide-react';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useAuth } from '@/hooks/useAuth';
 import { RecoveryFundsPanel } from '@/components/dashboard/RecoveryFundsPanel';
@@ -40,42 +38,17 @@ const CasePage = () => {
         </div>
 
         {/* Case Overview */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          {/* Case Status - Takes 2 columns */}
-          <div className="lg:col-span-2">
-            <CaseStatusCard 
-              caseNumber={profile?.case_number || null}
-              status={profile?.status || null}
-              casePhase={profile?.case_phase || null}
-              searchStartedAt={profile?.recovery_search_started_at}
-              searchDurationMinutes={profile?.recovery_search_duration_minutes}
-              searchScope={profile?.recovery_search_scope}
-              resultType={profile?.recovery_result_type}
-              resultDetails={profile?.recovery_result_details}
-              completedAt={profile?.recovery_completed_at}
-            />
-          </div>
-
-          {/* Contact Card */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-sm font-medium text-muted-foreground">
-                {t('case.needAssistance')}
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <p className="text-sm text-muted-foreground">
-                {t('case.specialistHelp')}
-              </p>
-              <Button asChild className="w-full">
-                <Link to="/contact">
-                  <MessageSquare className="mr-2 h-4 w-4" />
-                  {t('case.contactSupport')}
-                </Link>
-              </Button>
-            </CardContent>
-          </Card>
-        </div>
+        <CaseStatusCard
+          caseNumber={profile?.case_number || null}
+          status={profile?.status || null}
+          casePhase={profile?.case_phase || null}
+          searchStartedAt={profile?.recovery_search_started_at}
+          searchDurationMinutes={profile?.recovery_search_duration_minutes}
+          searchScope={profile?.recovery_search_scope}
+          resultType={profile?.recovery_result_type}
+          resultDetails={profile?.recovery_result_details}
+          completedAt={profile?.recovery_completed_at}
+        />
 
         <RecoveryFundsPanel customerId={user?.id} casePhase={profile?.case_phase} />
 

@@ -29,7 +29,7 @@ const About = () => {
               <Logo size="lg" showText={false} linkTo={undefined} />
             </div>
             
-            <h1 className="text-5xl font-bold mb-8 text-primary">{t('about.title')}</h1>
+            <h1 className="text-4xl font-bold mb-8 text-primary">{t('about.title')}</h1>
             
             <div className="prose prose-invert max-w-none mb-12">
               <p className="text-lg text-muted-foreground mb-6">

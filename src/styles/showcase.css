@@ -18,6 +18,23 @@ html {
   scroll-margin-top: 6rem;
 }
 
+/* Shared typography scale for every marketing section. Display headings use
+   one responsive size; section headings use a single smaller tier. */
+.showcase-display-title,
+.c3-watermark-main {
+  font-size: clamp(3rem, 6vw, 4.5rem);
+  font-weight: 600;
+  line-height: 0.94;
+  letter-spacing: -0.055em;
+}
+
+.showcase-section-title {
+  font-size: clamp(2.25rem, 4vw, 3.75rem);
+  font-weight: 600;
+  line-height: 1.02;
+  letter-spacing: -0.035em;
+}
+
 /* Lightweight particle background — replaces the full-screen video. */
 .showcase-background {
   overflow: hidden;
@@ -137,10 +154,6 @@ html {
   z-index: 2;
 }
 .c3-watermark-main {
-  font-size: 9rem;
-  font-weight: 800;
-  line-height: 0.9;
-  letter-spacing: -0.05em;
   filter: url(#c3-noise);
   display: flex;
   flex-direction: column;
@@ -289,7 +302,7 @@ html {
 }
 
 @media (max-width: 1024px) {
-  .c3-watermark-main { font-size: 3.5rem; filter: none; }
+  .c3-watermark-main { filter: none; }
   .c3-watermark-line-2 {
     background: none;
     -webkit-text-fill-color: #d4d4d4;
