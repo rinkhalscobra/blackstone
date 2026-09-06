@@ -11,6 +11,13 @@ import { cn } from "@/lib/utils";
 
 type ReviewAction = "approved" | "rejected";
 
+type SupabaseErrorLike = {
+  code?: string;
+  message?: string;
+  details?: string;
+  hint?: string;
+};
+
 interface ReviewTransaction {
   id: string;
   customer_id: string;
@@ -30,6 +37,23 @@ const defaultMessage = (transaction: ReviewTransaction, action: ReviewAction) =>
   return action === "approved"
     ? `Your ${request} request for ${formatAmount(transaction)} has been approved.`
     : `Your ${request} request for ${formatAmount(transaction)} was not approved. Please contact your case specialist if you need more information.`;
+};
+
+const errorMessage = (error: unknown) => {
+  if (error instanceof Error) return error.message;
+  if (typeof error === "string") return error;
+  if (error && typeof error === "object") {
+    const value = error as SupabaseErrorLike;
+    return [value.message, value.details, value.hint].filter(Boolean).join(" ") || "Please try again.";
+  }
+  return "Please try again.";
+};
+
+const isMissingReviewMessageColumn = (error: unknown) => {
+  if (!error || typeof error !== "object") return false;
+  const value = error as SupabaseErrorLike;
+  const description = [value.message, value.details, value.hint].filter(Boolean).join(" ").toLowerCase();
+  return description.includes("review_message") && (value.code === "PGRST204" || value.code === "42703" || description.includes("does not exist"));
 };
 
 export const TransactionReviewDialog = ({
@@ -56,18 +80,37 @@ export const TransactionReviewDialog = ({
     const clientMessage = message.trim() || defaultMessage(transaction, action);
 
     try {
-      const { data, error } = await supabase
+      const reviewFields = {
+        status: action,
+        processed_by: user.id,
+        processed_at: new Date().toISOString(),
+      };
+
+      let { data, error } = await supabase
         .from("transaction_requests")
         .update({
-          status: action,
-          processed_by: user.id,
-          processed_at: new Date().toISOString(),
+          ...reviewFields,
           review_message: clientMessage,
         })
         .eq("id", transaction.id)
         .eq("status", "pending")
         .select("id")
         .maybeSingle();
+
+      // Keep approvals working while the review-message migration is rolling out.
+      // The message is still delivered through the notification created below.
+      if (error && isMissingReviewMessageColumn(error)) {
+        console.warn("review_message is not available in the database yet; retrying the review without it.", error);
+        const fallback = await supabase
+          .from("transaction_requests")
+          .update(reviewFields)
+          .eq("id", transaction.id)
+          .eq("status", "pending")
+          .select("id")
+          .maybeSingle();
+        data = fallback.data;
+        error = fallback.error;
+      }
 
       if (error) throw error;
       if (!data) throw new Error("This request has already been reviewed.");
@@ -89,9 +132,10 @@ export const TransactionReviewDialog = ({
       setMessage("");
       await onReviewed?.();
     } catch (error: unknown) {
+      console.error("Unable to review transaction request:", error);
       toast({
         title: "Unable to review request",
-        description: error instanceof Error ? error.message : "Please try again.",
+        description: errorMessage(error),
         variant: "destructive",
       });
     } finally {

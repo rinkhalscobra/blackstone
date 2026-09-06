@@ -16,6 +16,7 @@ import { useToast } from "@/hooks/use-toast";
 import { cn, formatCurrency } from "@/lib/utils";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { getCryptoPrices } from "@/services/cryptoApi";
+import { BALANCE_CURRENCIES, balanceForCurrency, normalizeBalanceCurrency } from "@/lib/balances";
 
 type WithdrawMethod = "bank_transfer" | "crypto_wallet" | "wire_transfer";
 type DetailRecord = Record<string, string>;
@@ -43,11 +44,12 @@ type TransactionRequestInsert = Database["public"]["Tables"]["transaction_reques
 
 export const WithdrawForm = () => {
   const { user } = useAuth();
-  const { balance } = useCustomerData();
+  const { balances, profile } = useCustomerData();
   const { toast } = useToast();
   const navigate = useNavigate();
   const { t } = useLanguage();
   const [amount, setAmount] = useState("");
+  const [currency, setCurrency] = useState("");
   const [method, setMethod] = useState<WithdrawMethod>("bank_transfer");
   const [details, setDetails] = useState(emptyDetails);
   const [notes, setNotes] = useState("");
@@ -64,8 +66,8 @@ export const WithdrawForm = () => {
     { id: "wire_transfer" as const, label: t("withdraw.wireTransfer"), description: "International bank wire", icon: Send },
   ];
 
-  const availableBalance = balance?.balance || 0;
-  const balanceCurrency = (balance?.currency || "USD").toUpperCase();
+  const balanceCurrency = currency || normalizeBalanceCurrency(profile?.preferred_currency || profile?.display_currency);
+  const availableBalance = balanceForCurrency(balances, balanceCurrency);
   const requestedAmount = Number(amount) || 0;
   const selectedCrypto = SUPPORTED_CRYPTOS.find((crypto) => crypto.id === cryptoId) || SUPPORTED_CRYPTOS[0];
   const selectedDetails = details[method];
@@ -228,7 +230,22 @@ export const WithdrawForm = () => {
       <CardContent>
         <form onSubmit={handleSubmit} className="space-y-6">
           <div className="space-y-2">
-            <Label htmlFor="amount">{method === "crypto_wallet" ? "Estimated value (USD)" : `Amount (${balanceCurrency})`}</Label>
+            <div className="flex flex-wrap items-end justify-between gap-3">
+              <Label htmlFor="amount">{method === "crypto_wallet" ? "Estimated value (USD)" : `Amount (${balanceCurrency})`}</Label>
+              {method !== "crypto_wallet" && (
+                <div className="w-32 space-y-1">
+                  <Label className="text-xs text-muted-foreground">Balance</Label>
+                  <Select value={balanceCurrency} onValueChange={(value) => { setCurrency(value); setAmount(""); }}>
+                    <SelectTrigger><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      {BALANCE_CURRENCIES.map((supportedCurrency) => (
+                        <SelectItem key={supportedCurrency} value={supportedCurrency}>{supportedCurrency}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              )}
+            </div>
             <div className="relative">
               <span className="absolute left-3 top-1/2 -translate-y-1/2 text-xs text-muted-foreground">{transactionCurrency}</span>
               <Input

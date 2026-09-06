@@ -245,10 +245,10 @@ const UserMenu = ({ onClose }: UserMenuProps) => {
                       <span>USD</span>
                     </div>
                   </SelectItem>
-                  <SelectItem value="gbp">
+                  <SelectItem value="cad">
                     <div className="flex items-center gap-2">
-                      <span className="text-primary">£</span>
-                      <span>GBP</span>
+                      <span className="text-primary">C$</span>
+                      <span>CAD</span>
                     </div>
                   </SelectItem>
                 </SelectContent>

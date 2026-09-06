@@ -17,16 +17,15 @@ import { useAccountValuation } from '@/hooks/useAccountValuation';
 const DashboardIndex = () => {
   const navigate = useNavigate();
   const { role, isLoading: roleLoading, isStaff } = useUserRole();
-  const { balance, profile, transactions, isLoading, refetch } = useCustomerData();
+  const { balances, profile, transactions, isLoading, refetch } = useCustomerData();
   const { user } = useAuth();
   const { t } = useLanguage();
   const displayCurrency = (
-    profile?.preferred_currency || profile?.display_currency || balance?.currency || 'USD'
+    profile?.preferred_currency || profile?.display_currency || 'USD'
   ).toUpperCase();
   const account = useAccountValuation({
     userId: user?.id,
-    cashBalance: balance?.balance || 0,
-    cashCurrency: balance?.currency || displayCurrency,
+    cashBalances: balances,
     displayCurrency,
   });
   const refreshAccountValue = account.refresh;
@@ -83,10 +82,9 @@ const DashboardIndex = () => {
         <div className="space-y-5 xl:space-y-6">
           <div className="min-w-0">
             <BalanceCard
-              cashValue={account.cashValue}
               portfolioValue={account.portfolioValue}
-              totalValue={account.totalAccountValue}
               displayCurrency={displayCurrency}
+              balances={balances}
               isValuationLoading={account.isLoading}
             />
           </div>

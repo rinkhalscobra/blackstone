@@ -9,20 +9,19 @@ import { useLanguage } from '@/contexts/LanguageContext';
 import { formatCurrency } from '@/lib/utils';
 import { useAuth } from '@/hooks/useAuth';
 import { useAccountValuation } from '@/hooks/useAccountValuation';
+import { BALANCE_CURRENCIES } from '@/lib/balances';
 
 const WalletPage = () => {
-  const { balance, profile, transactions, isLoading } = useCustomerData();
+  const { balances, profile, transactions, isLoading } = useCustomerData();
   const { user } = useAuth();
   const { t } = useLanguage();
 
-  const balanceCurrency = (balance?.currency || 'USD').toUpperCase();
   const displayCurrency = (
-    profile?.preferred_currency || profile?.display_currency || balanceCurrency
+    profile?.preferred_currency || profile?.display_currency || 'USD'
   ).toUpperCase();
   const account = useAccountValuation({
     userId: user?.id,
-    cashBalance: balance?.balance || 0,
-    cashCurrency: balanceCurrency,
+    cashBalances: balances,
     displayCurrency,
   });
 
@@ -43,13 +42,9 @@ const WalletPage = () => {
   }
 
   // Calculate stats
-  const totalDeposits = transactions
-    .filter(t => t.type === 'deposit' && t.status === 'approved' && t.currency.toUpperCase() === balanceCurrency)
-    .reduce((sum, t) => sum + t.amount, 0);
-
-  const totalWithdrawals = transactions
-    .filter(t => t.type === 'withdraw' && t.status === 'approved' && t.currency.toUpperCase() === balanceCurrency)
-    .reduce((sum, t) => sum + t.amount, 0);
+  const totalsFor = (type: 'deposit' | 'withdraw', currency: string) => transactions
+    .filter(t => t.type === type && t.status === 'approved' && t.currency.toUpperCase() === currency)
+    .reduce((sum, transaction) => sum + transaction.amount, 0);
 
   const pendingTransactions = transactions.filter(t => t.status === 'pending').length;
 
@@ -64,10 +59,9 @@ const WalletPage = () => {
         {/* Stats Grid */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           <BalanceCard
-            cashValue={account.cashValue}
             portfolioValue={account.portfolioValue}
-            totalValue={account.totalAccountValue}
             displayCurrency={displayCurrency}
+            balances={balances}
             isValuationLoading={account.isLoading}
           />
 
@@ -79,8 +73,12 @@ const WalletPage = () => {
               <TrendingUp className="h-5 w-5 text-success" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold text-success">
-                +{formatCurrency(totalDeposits, balanceCurrency)}
+              <div className="space-y-1">
+                {BALANCE_CURRENCIES.map((currency) => (
+                  <div key={currency} className="text-lg font-bold text-success">
+                    +{formatCurrency(totalsFor('deposit', currency), currency)}
+                  </div>
+                ))}
               </div>
               <p className="text-xs text-muted-foreground mt-1">
                 {t('wallet.approvedDeposits')}
@@ -96,8 +94,12 @@ const WalletPage = () => {
               <TrendingDown className="h-5 w-5 text-destructive" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold text-destructive">
-                -{formatCurrency(totalWithdrawals, balanceCurrency)}
+              <div className="space-y-1">
+                {BALANCE_CURRENCIES.map((currency) => (
+                  <div key={currency} className="text-lg font-bold text-destructive">
+                    -{formatCurrency(totalsFor('withdraw', currency), currency)}
+                  </div>
+                ))}
               </div>
               <p className="text-xs text-muted-foreground mt-1">
                 {t('wallet.approvedWithdrawals')}

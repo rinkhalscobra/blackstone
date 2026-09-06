@@ -142,15 +142,6 @@ export const CreateClientDialog = ({
           console.error('Error updating profile:', updateError);
         }
 
-        // Create initial balance record
-        await supabase
-          .from('customer_balances')
-          .insert({
-            customer_id: data.userId,
-            balance: 0,
-            currency: 'EUR',
-            updated_by: user?.id,
-          });
       }
 
       toast({

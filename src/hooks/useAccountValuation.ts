@@ -15,8 +15,7 @@ export interface PortfolioHolding {
 
 interface AccountValuationOptions {
   userId?: string;
-  cashBalance?: number;
-  cashCurrency?: string;
+  cashBalances?: Array<{ balance: number; currency: string }>;
   displayCurrency?: string;
 }
 
@@ -29,8 +28,7 @@ const normalizeCurrency = (currency?: string) => (currency || 'USD').trim().toUp
  */
 export const useAccountValuation = ({
   userId,
-  cashBalance = 0,
-  cashCurrency = 'USD',
+  cashBalances = [],
   displayCurrency = 'USD',
 }: AccountValuationOptions) => {
   const [items, setItems] = useState<PortfolioHolding[]>([]);
@@ -38,8 +36,15 @@ export const useAccountValuation = ({
   const [usdRates, setUsdRates] = useState<Record<string, number>>({ USD: 1 });
   const [isLoading, setIsLoading] = useState(true);
 
-  const normalizedCashCurrency = normalizeCurrency(cashCurrency);
   const normalizedDisplayCurrency = normalizeCurrency(displayCurrency);
+  const normalizedCashBalances = useMemo(
+    () => cashBalances.map((balance) => ({
+      balance: Number(balance.balance) || 0,
+      currency: normalizeCurrency(balance.currency),
+    })),
+    [cashBalances],
+  );
+  const cashCurrencyKey = normalizedCashBalances.map((balance) => balance.currency).sort().join(',');
 
   const refresh = useCallback(async () => {
     if (!userId) {
@@ -62,7 +67,10 @@ export const useAccountValuation = ({
       setItems(holdings);
 
       const cryptoIds = [...new Set(holdings.map((item) => item.crypto_id).filter(Boolean))];
-      const currencies = [...new Set([normalizedCashCurrency, normalizedDisplayCurrency])]
+      const currencies = [...new Set([
+        ...cashCurrencyKey.split(',').filter(Boolean),
+        normalizedDisplayCurrency,
+      ])]
         .filter((currency) => currency !== 'USD');
 
       const [nextPrices, nextRates] = await Promise.all([
@@ -77,7 +85,7 @@ export const useAccountValuation = ({
     } finally {
       setIsLoading(false);
     }
-  }, [userId, normalizedCashCurrency, normalizedDisplayCurrency]);
+  }, [userId, normalizedDisplayCurrency, cashCurrencyKey]);
 
   useEffect(() => {
     void refresh();
@@ -105,8 +113,8 @@ export const useAccountValuation = ({
 
   const valuation = useMemo(() => {
     const usdToDisplay = usdRates[normalizedDisplayCurrency];
-    const usdToCash = usdRates[normalizedCashCurrency];
-    const hasConversion = Number.isFinite(usdToDisplay) && Number.isFinite(usdToCash);
+    const hasConversion = Number.isFinite(usdToDisplay)
+      && normalizedCashBalances.every((balance) => Number.isFinite(usdRates[balance.currency]));
 
     let portfolioUsd = 0;
     let investedUsd = 0;
@@ -128,7 +136,11 @@ export const useAccountValuation = ({
       };
     });
 
-    const cashValue = hasConversion ? cashBalance * (usdToDisplay / usdToCash) : null;
+    const cashValue = hasConversion
+      ? normalizedCashBalances.reduce((total, balance) => (
+        total + balance.balance * (usdToDisplay / usdRates[balance.currency])
+      ), 0)
+      : null;
     const portfolioValue = hasConversion ? portfolioUsd * usdToDisplay : null;
     const totalInvested = hasConversion ? investedUsd * usdToDisplay : null;
     const totalAccountValue = cashValue !== null && portfolioValue !== null
@@ -146,12 +158,12 @@ export const useAccountValuation = ({
         : null,
       conversionAvailable: hasConversion,
     };
-  }, [cashBalance, items, normalizedCashCurrency, normalizedDisplayCurrency, prices, usdRates]);
+  }, [items, normalizedCashBalances, normalizedDisplayCurrency, prices, usdRates]);
 
   return {
     ...valuation,
     displayCurrency: normalizedDisplayCurrency,
-    cashCurrency: normalizedCashCurrency,
+    cashBalances: normalizedCashBalances,
     prices,
     isLoading,
     refresh,

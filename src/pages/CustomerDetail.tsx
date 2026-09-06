@@ -16,7 +16,7 @@ import { Input } from '@/components/ui/input';
 import { useToast } from '@/hooks/use-toast';
 import { 
   ArrowLeft, User, Wallet, FileText, Bell, Key, Plus, Pencil, 
-  RefreshCw, Loader2, Check, X, ChevronDown, ChevronUp, Euro, Clock, MessageCircle, Trash2,
+  RefreshCw, Loader2, Check, X, ChevronDown, ChevronUp, Clock, MessageCircle, Trash2,
   AlertCircle, CheckCircle, AlertTriangle, Info, TrendingUp, TrendingDown, Landmark
 } from 'lucide-react';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
@@ -37,6 +37,7 @@ import { formatCurrency } from '@/lib/utils';
 import { TransactionPaymentDetailsDialog } from '@/components/admin/TransactionPaymentDetailsDialog';
 import { TransactionReviewDialog } from '@/components/admin/TransactionReviewDialog';
 import type { Json } from '@/integrations/supabase/types';
+import { BALANCE_CURRENCIES, balanceForCurrency } from '@/lib/balances';
 
 interface CustomerProfile {
   id: string;
@@ -136,7 +137,7 @@ const CustomerDetail = (): JSX.Element => {
   const [transactions, setTransactions] = useState<TransactionRequest[]>([]);
   const [sessions, setSessions] = useState<UserSession[]>([]);
   const [portfolio, setPortfolio] = useState<PortfolioItem[]>([]);
-  const [customerBalance, setCustomerBalance] = useState<CustomerBalance | null>(null);
+  const [customerBalances, setCustomerBalances] = useState<CustomerBalance[]>([]);
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [loading, setLoading] = useState(true);
   const [newNote, setNewNote] = useState('');
@@ -206,9 +207,19 @@ const CustomerDetail = (): JSX.Element => {
           'postgres_changes',
           { event: '*', schema: 'public', table: 'customer_balances', filter: `customer_id=eq.${customerId}` },
           (payload) => {
-            if (payload.new) {
-              setCustomerBalance(payload.new as CustomerBalance);
+            if (payload.eventType === 'DELETE') {
+              const removed = payload.old as Pick<CustomerBalance, 'id'>;
+              setCustomerBalances((current) => current.filter((balance) => balance.id !== removed.id));
+              return;
             }
+
+            const changed = payload.new as CustomerBalance;
+            setCustomerBalances((current) => {
+              const exists = current.some((balance) => balance.id === changed.id);
+              return exists
+                ? current.map((balance) => balance.id === changed.id ? changed : balance)
+                : [...current, changed].sort((a, b) => a.currency.localeCompare(b.currency));
+            });
           }
         )
         .subscribe();
@@ -321,7 +332,7 @@ const CustomerDetail = (): JSX.Element => {
         agentIds.length > 0 
           ? supabase.from('profiles').select('id, email, first_name, last_name').in('id', agentIds)
           : Promise.resolve({ data: [], error: null }),
-        supabase.from('customer_balances').select('*').eq('customer_id', customerId).single(),
+        supabase.from('customer_balances').select('*').eq('customer_id', customerId).order('currency'),
         supabase.from('notifications').select('*').eq('user_id', customerId).order('created_at', { ascending: false })
       ]);
 
@@ -332,7 +343,7 @@ const CustomerDetail = (): JSX.Element => {
       setSessions(sessionsRes.data || []);
       setPortfolio(portfolioRes.data || []);
       setAgents(agentsRes.data || []);
-      setCustomerBalance(balanceRes.data || null);
+      setCustomerBalances(balanceRes.data || []);
       setNotifications(notificationsRes.data || []);
 
       // Fetch live crypto prices for portfolio items
@@ -574,21 +585,26 @@ const CustomerDetail = (): JSX.Element => {
             <div><span className="text-muted-foreground">{t('customerDetail.name')}:</span> <span className="font-medium">{customer.first_name} {customer.last_name}</span></div>
             <div><span className="text-muted-foreground">{t('common.email')}:</span> <span className="text-primary">{customer.email}</span></div>
             <div><span className="text-muted-foreground">{t('admin.caseNumber')}:</span> <span className="font-medium">{customer.case_number || '-'}</span></div>
-            <div className="flex items-center gap-2">
-              <span className="text-muted-foreground">{t('customerDetail.balance')}:</span> 
-              <span className="font-bold text-primary">
-                {formatCurrency(customerBalance?.balance || 0, customerBalance?.currency || 'EUR')}
-              </span>
-              <AdjustBalanceDialog 
-                customerId={customerId!} 
-                currentBalance={customerBalance?.balance || 0}
-                currency={customerBalance?.currency || 'EUR'}
-                onSuccess={fetchCustomerData}
-              >
-                <Button size="sm" variant="outline" className="h-6 px-2">
-                  <Euro className="h-3 w-3 mr-1" /> {t('customerDetail.adjust')}
-                </Button>
-              </AdjustBalanceDialog>
+            <div className="flex flex-wrap items-center gap-2">
+              <span className="text-muted-foreground">{t('customerDetail.balance')}:</span>
+              {BALANCE_CURRENCIES.map((currency) => {
+                const currentBalance = balanceForCurrency(customerBalances, currency);
+                return (
+                  <div key={currency} className="flex items-center gap-1 rounded-md border border-border bg-background/40 px-2 py-1">
+                    <span className="font-bold text-primary">{formatCurrency(currentBalance, currency)}</span>
+                    <AdjustBalanceDialog
+                      customerId={customerId!}
+                      currentBalance={currentBalance}
+                      currency={currency}
+                      onSuccess={fetchCustomerData}
+                    >
+                      <Button size="sm" variant="ghost" className="h-6 px-1.5">
+                        <Pencil className="h-3 w-3 mr-1" /> {t('customerDetail.adjust')}
+                      </Button>
+                    </AdjustBalanceDialog>
+                  </div>
+                );
+              })}
             </div>
             <div><span className="text-muted-foreground">{t('admin.subscription')}:</span> <Badge variant="outline" className="ml-1">{customer.subscription || 'BASIC'}</Badge></div>
           </div>
@@ -721,7 +737,7 @@ const CustomerDetail = (): JSX.Element => {
                               <SelectContent>
                                 <SelectItem value="EUR">EUR</SelectItem>
                                 <SelectItem value="USD">USD</SelectItem>
-                                <SelectItem value="GBP">GBP</SelectItem>
+                                <SelectItem value="CAD">CAD</SelectItem>
                               </SelectContent>
                             </Select>
                           </div>

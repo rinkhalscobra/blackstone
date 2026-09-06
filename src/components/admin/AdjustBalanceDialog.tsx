@@ -7,7 +7,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { useLanguage } from '@/contexts/LanguageContext';
-import { Loader2, Euro, Plus, Minus } from 'lucide-react';
+import { Loader2, Landmark, Plus, Minus } from 'lucide-react';
 import { formatCurrency } from '@/lib/utils';
 
 interface AdjustBalanceDialogProps {
@@ -42,16 +42,15 @@ const AdjustBalanceDialog = ({
       return;
     }
 
-    if (!reason.trim()) {
-      toast({ title: t('dialogs.reasonRequired'), variant: "destructive" });
-      return;
-    }
-
     setLoading(true);
     
     try {
       const adjustedAmount = adjustmentType === 'debit' ? -numAmount : numAmount;
       const newBalance = currentBalance + adjustedAmount;
+
+      if (newBalance < 0) {
+        throw new Error(`Insufficient ${currency.toUpperCase()} balance.`);
+      }
 
       // Upsert balance - creates row if missing, updates if exists
       const { error: balanceError } = await supabase
@@ -61,7 +60,7 @@ const AdjustBalanceDialog = ({
           balance: newBalance,
           currency: currency,
           updated_at: new Date().toISOString()
-        }, { onConflict: 'customer_id' });
+        }, { onConflict: 'customer_id,currency' });
 
       if (balanceError) throw balanceError;
 
@@ -94,8 +93,8 @@ const AdjustBalanceDialog = ({
       <DialogContent className="bg-card border-border">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
-            <Euro className="h-5 w-5 text-primary" />
-            {t('dialogs.adjustBalance')}
+            <Landmark className="h-5 w-5 text-primary" />
+            {t('dialogs.adjustBalance')} ({currency.toUpperCase()})
           </DialogTitle>
         </DialogHeader>
         

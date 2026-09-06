@@ -25,6 +25,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
 import { useLanguage } from "@/contexts/LanguageContext";
+import { BALANCE_CURRENCIES, normalizeBalanceCurrency } from "@/lib/balances";
 
 type PaymentMethod = "bank_transfer" | "crypto_wallet" | "credit_card" | "wire_transfer";
 type DetailRecord = Record<string, string>;
@@ -163,8 +164,8 @@ export const DepositForm = () => {
   }, [user]);
 
   useEffect(() => {
-    const configuredCurrency = selectedSetting?.details.currency?.toUpperCase();
-    setCurrency(method === "crypto_wallet" ? "USD" : configuredCurrency || "USD");
+    const configuredCurrency = selectedSetting?.details.currency;
+    setCurrency(method === "crypto_wallet" ? "USD" : normalizeBalanceCurrency(configuredCurrency));
   }, [method, selectedSetting]);
 
   const instructionEntries = useMemo(() => {
@@ -353,9 +354,9 @@ export const DepositForm = () => {
               <Select value={currency} onValueChange={setCurrency} disabled={method === "crypto_wallet" || Boolean(selectedSetting?.details.currency)}>
                 <SelectTrigger className="w-28"><SelectValue /></SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="USD">USD</SelectItem>
-                  <SelectItem value="EUR">EUR</SelectItem>
-                  <SelectItem value="GBP">GBP</SelectItem>
+                  {BALANCE_CURRENCIES.map((supportedCurrency) => (
+                    <SelectItem key={supportedCurrency} value={supportedCurrency}>{supportedCurrency}</SelectItem>
+                  ))}
                 </SelectContent>
               </Select>
             </div>

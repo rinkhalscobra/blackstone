@@ -159,7 +159,7 @@ const Navigation = ({ landing = false }: NavigationProps) => {
           {!landing && user && isStaff && (
             <div className="hidden md:flex items-center gap-6">
               {getStaffLinks().map(link => (
-                <Link key={link.to} to={link.to} className="text-sm text-foreground hover:text-primary transition-colors flex items-center gap-1">
+                <Link key={`${link.to}-${link.label}`} to={link.to} className="text-sm text-foreground hover:text-primary transition-colors flex items-center gap-1">
                   <link.icon className="h-4 w-4" />
                   {link.label}
                 </Link>
@@ -341,7 +341,7 @@ const Navigation = ({ landing = false }: NavigationProps) => {
 
                     {!landing && user && isStaff && getStaffLinks().map(link => (
                       <Link
-                        key={link.to}
+                        key={`${link.to}-${link.label}`}
                         to={link.to}
                         onClick={closeMobileMenu}
                         className="flex items-center gap-3 px-3 py-3 rounded-lg text-foreground hover:bg-secondary transition-colors"

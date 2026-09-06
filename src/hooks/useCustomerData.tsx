@@ -1,7 +1,8 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from './useAuth';
 import type { Json } from '@/integrations/supabase/types';
+import { normalizeBalanceCurrency } from '@/lib/balances';
 
 interface CustomerBalance {
   id: string;
@@ -61,28 +62,28 @@ interface Notification {
 
 export const useCustomerData = () => {
   const { user } = useAuth();
-  const [balance, setBalance] = useState<CustomerBalance | null>(null);
+  const [balances, setBalances] = useState<CustomerBalance[]>([]);
   const [profile, setProfile] = useState<Profile | null>(null);
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [timeline, setTimeline] = useState<CaseTimelineEvent[]>([]);
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
-  const fetchData = async () => {
+  const fetchData = useCallback(async () => {
     if (!user) return;
     
     setIsLoading(true);
     try {
       // Fetch all data in parallel
       const [balanceRes, profileRes, transactionsRes, timelineRes, notificationsRes] = await Promise.all([
-        supabase.from('customer_balances').select('*').eq('customer_id', user.id).single(),
+        supabase.from('customer_balances').select('*').eq('customer_id', user.id).order('currency'),
         supabase.from('profiles').select('*').eq('id', user.id).single(),
         supabase.from('transaction_requests').select('*').eq('customer_id', user.id).order('created_at', { ascending: false }),
         supabase.from('case_timeline').select('*').eq('customer_id', user.id).order('created_at', { ascending: false }),
         supabase.from('notifications').select('*').eq('user_id', user.id).order('created_at', { ascending: false }),
       ]);
 
-      if (balanceRes.data) setBalance(balanceRes.data);
+      if (balanceRes.data) setBalances(balanceRes.data);
       if (profileRes.data) setProfile(profileRes.data);
       if (transactionsRes.data) setTransactions(transactionsRes.data as Transaction[]);
       if (timelineRes.data) setTimeline(timelineRes.data);
@@ -92,7 +93,7 @@ export const useCustomerData = () => {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [user]);
 
   useEffect(() => {
     if (!user) {
@@ -126,7 +127,19 @@ export const useCustomerData = () => {
     const balanceChannel = supabase
       .channel(`customer-balance-${suffix}`)
       .on('postgres_changes', { event: '*', schema: 'public', table: 'customer_balances', filter: `customer_id=eq.${user.id}` }, (payload) => {
-        setBalance(payload.new as CustomerBalance);
+        if (payload.eventType === 'DELETE') {
+          const removed = payload.old as Pick<CustomerBalance, 'id'>;
+          setBalances((current) => current.filter((balance) => balance.id !== removed.id));
+          return;
+        }
+
+        const changed = payload.new as CustomerBalance;
+        setBalances((current) => {
+          const exists = current.some((balance) => balance.id === changed.id);
+          return exists
+            ? current.map((balance) => balance.id === changed.id ? changed : balance)
+            : [...current, changed].sort((a, b) => a.currency.localeCompare(b.currency));
+        });
       })
       .subscribe();
 
@@ -145,7 +158,7 @@ export const useCustomerData = () => {
       supabase.removeChannel(balanceChannel);
       supabase.removeChannel(profileChannel);
     };
-  }, [user]);
+  }, [user, fetchData]);
 
   const markNotificationRead = async (notificationId: string) => {
     await supabase.from('notifications').update({ is_read: true }).eq('id', notificationId);
@@ -153,9 +166,15 @@ export const useCustomerData = () => {
   };
 
   const unreadCount = notifications.filter(n => !n.is_read).length;
+  const selectedCurrency = normalizeBalanceCurrency(profile?.preferred_currency || profile?.display_currency);
+  const balance = useMemo(
+    () => balances.find((item) => item.currency.toUpperCase() === selectedCurrency) || balances[0] || null,
+    [balances, selectedCurrency],
+  );
 
   return {
     balance,
+    balances,
     profile,
     transactions,
     timeline,

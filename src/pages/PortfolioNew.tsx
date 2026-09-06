@@ -53,8 +53,7 @@ const PortfolioNew = () => {
 
   const account = useAccountValuation({
     userId: user?.id,
-    cashBalance: 0,
-    cashCurrency: displayCurrency,
+    cashBalances: [],
     displayCurrency,
   });
   const portfolioItems = account.holdings;
