@@ -553,6 +553,63 @@ export type Database = {
           },
         ]
       }
+      recovery_funds: {
+        Row: {
+          amount: number
+          balance_credited_at: string | null
+          created_at: string
+          created_by: string | null
+          currency: string
+          customer_id: string
+          id: string
+          notes: string | null
+          origin_key: string
+          reference: string | null
+          source_name: string | null
+          source_type: string
+          status: string
+          updated_at: string
+          updated_by: string | null
+          visible_to_client: boolean
+        }
+        Insert: {
+          amount: number
+          balance_credited_at?: string | null
+          created_at?: string
+          created_by?: string | null
+          currency: string
+          customer_id: string
+          id?: string
+          notes?: string | null
+          origin_key?: string
+          reference?: string | null
+          source_name?: string | null
+          source_type?: string
+          status?: string
+          updated_at?: string
+          updated_by?: string | null
+          visible_to_client?: boolean
+        }
+        Update: {
+          amount?: number
+          balance_credited_at?: string | null
+          created_at?: string
+          created_by?: string | null
+          currency?: string
+          customer_id?: string
+          id?: string
+          notes?: string | null
+          origin_key?: string
+          reference?: string | null
+          source_name?: string | null
+          source_type?: string
+          status?: string
+          updated_at?: string
+          updated_by?: string | null
+          visible_to_client?: boolean
+        }
+        Relationships: []
+      }
       transaction_requests: {
         Row: {
           amount: number

@@ -10,7 +10,7 @@ import {
   Menu,
   X,
   MessageCircle,
-  PieChart,
+  BadgeDollarSign,
   Sparkles,
   ArrowLeft,
   ArrowRight,
@@ -53,7 +53,9 @@ export const DashboardLayout = ({ children }: DashboardLayoutProps) => {
 
   const navItems = [
     { path: '/dashboard', label: t('nav.overview'), icon: LayoutDashboard, count: undefined as number | undefined },
-    { path: '/portfolio', label: t('nav.portfolio'), icon: PieChart, count: undefined },
+    ...(profile?.case_phase === 'completed'
+      ? [{ path: '/dashboard/funds', label: 'Located Funds', icon: BadgeDollarSign, count: undefined }]
+      : []),
     { path: '/dashboard/wallet', label: t('nav.wallet'), icon: Wallet, count: undefined },
     { path: '/dashboard/transactions', label: t('nav.transactions'), icon: ArrowDownUp, count: undefined },
     { path: '/dashboard/case', label: t('nav.myCase'), icon: FileText, count: undefined },

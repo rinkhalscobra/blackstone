@@ -39,7 +39,6 @@ const Footer = () => {
             <ul className="space-y-2">
               <li><Link to="/cryptocurrencies" className="text-sm text-muted-foreground hover:text-primary">{t('nav.cryptocurrencies')}</Link></li>
               <li><Link to="/exchanges" className="text-sm text-muted-foreground hover:text-primary">{t('nav.exchanges')}</Link></li>
-              <li><Link to="/portfolio" className="text-sm text-muted-foreground hover:text-primary">{t('footer.portfolio')}</Link></li>
               <li><Link to="/watchlist" className="text-sm text-muted-foreground hover:text-primary">{t('footer.watchlist')}</Link></li>
             </ul>
           </div>

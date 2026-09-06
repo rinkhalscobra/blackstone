@@ -1,6 +1,6 @@
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { Menu, Search, Bell, ChevronDown, User, LayoutDashboard, Wallet, FileText, HeadphonesIcon, LogOut, Shield, Users, MessageCircle, PieChart } from "lucide-react";
+import { Menu, Search, Bell, ChevronDown, User, LayoutDashboard, Wallet, FileText, HeadphonesIcon, LogOut, Shield, Users, MessageCircle, BadgeDollarSign } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -58,7 +58,7 @@ const Navigation = ({ landing = false }: NavigationProps) => {
 
   const landingLinks = [
     { target: "recovery", label: "Recovery" },
-    { target: "portfolio", label: "Portfolio" },
+    { target: "located-funds", label: "Located Funds" },
     { target: "cases", label: "Cases" },
     { target: "pricing", label: "Pricing" },
     { target: "contact", label: "Contact" },
@@ -68,7 +68,7 @@ const Navigation = ({ landing = false }: NavigationProps) => {
   const userLinks = [
     { to: "/dashboard", label: t('nav.dashboard'), icon: LayoutDashboard },
     { to: "/dashboard/messages", label: t('nav.messages'), icon: MessageCircle, badge: unreadMessages },
-    { to: "/portfolio", label: t('footer.portfolio'), icon: PieChart },
+    { to: "/dashboard/funds", label: "Located Funds", icon: BadgeDollarSign },
     { to: "/dashboard/wallet", label: t('nav.wallet'), icon: Wallet },
     { to: "/dashboard/transactions", label: t('nav.transactions'), icon: FileText },
     { to: "/dashboard/case", label: t('nav.myCase'), icon: Shield },
@@ -77,11 +77,8 @@ const Navigation = ({ landing = false }: NavigationProps) => {
   // Staff links
   const getStaffLinks = () => {
     const links = [
-      { to: getDashboardLink(), label: t('nav.dashboard'), icon: LayoutDashboard },
+      { to: getDashboardLink(), label: userRole === 'admin' ? t('nav.users') : t('nav.dashboard'), icon: LayoutDashboard },
     ];
-    if (userRole === 'admin') {
-      links.push({ to: "/admin", label: t('nav.users'), icon: Users });
-    }
     if (userRole === 'group_admin') {
       links.push({ to: "/group-admin", label: t('groupAdmin.myOffice'), icon: Shield });
     }
@@ -218,9 +215,9 @@ const Navigation = ({ landing = false }: NavigationProps) => {
                       {!isStaff && (
                         <>
                           <DropdownMenuItem asChild>
-                            <Link to="/portfolio" className="cursor-pointer flex items-center gap-2">
-                              <PieChart className="h-4 w-4" />
-                              {t('footer.portfolio')}
+                            <Link to="/dashboard/funds" className="cursor-pointer flex items-center gap-2">
+                              <BadgeDollarSign className="h-4 w-4" />
+                              Located Funds
                             </Link>
                           </DropdownMenuItem>
                           <DropdownMenuItem asChild>

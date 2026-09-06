@@ -1,4 +1,4 @@
-import { Wallet, ArrowUpRight, ArrowDownRight, Landmark, ChartPie } from 'lucide-react';
+import { Wallet, ArrowUpRight, ArrowDownRight, Landmark } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Link } from 'react-router-dom';
@@ -7,25 +7,11 @@ import { formatCurrency } from '@/lib/utils';
 import { BALANCE_CURRENCIES, balanceForCurrency, type CurrencyBalance } from '@/lib/balances';
 
 interface BalanceCardProps {
-  portfolioValue: number | null;
-  displayCurrency: string;
   balances: CurrencyBalance[];
-  isValuationLoading?: boolean;
 }
 
-export const BalanceCard = ({
-  portfolioValue,
-  displayCurrency,
-  balances,
-  isValuationLoading = false,
-}: BalanceCardProps) => {
+export const BalanceCard = ({ balances }: BalanceCardProps) => {
   const { t } = useLanguage();
-
-  const formatValue = (value: number | null) => {
-    if (isValuationLoading) return '—';
-    if (value === null) return t('balance.rateUnavailable');
-    return formatCurrency(value, displayCurrency);
-  };
 
   return (
     <Card className="h-full bg-gradient-to-br from-primary/20 via-card to-card border-primary/30">
@@ -36,26 +22,17 @@ export const BalanceCard = ({
         <Wallet className="h-5 w-5 text-primary" />
       </CardHeader>
       <CardContent>
-        <div className="mb-4 space-y-2">
-          <div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
-            {BALANCE_CURRENCIES.map((currency) => (
-              <div key={currency} className="rounded-lg border border-border/70 bg-background/35 p-3">
-                <div className="mb-1 flex items-center gap-2 text-xs font-medium text-muted-foreground">
-                  <Landmark className="h-3.5 w-3.5" /> {currency}
-                </div>
-                <p className="font-semibold text-foreground">
-                  {formatCurrency(balanceForCurrency(balances, currency), currency)}
-                </p>
+        <div className="mb-4 grid grid-cols-1 gap-2 sm:grid-cols-3">
+          {BALANCE_CURRENCIES.map((currency) => (
+            <div key={currency} className="rounded-lg border border-border/70 bg-background/35 p-3">
+              <div className="mb-1 flex items-center gap-2 text-xs font-medium text-muted-foreground">
+                <Landmark className="h-3.5 w-3.5" /> {currency}
               </div>
-            ))}
-          </div>
-          <div className="rounded-lg border border-border/70 bg-background/35 p-3">
-            <div className="mb-1 flex items-center gap-2 text-xs text-muted-foreground">
-              <ChartPie className="h-3.5 w-3.5" />
-              {t('balance.investments')}
+              <p className="font-semibold text-foreground">
+                {formatCurrency(balanceForCurrency(balances, currency), currency)}
+              </p>
             </div>
-            <p className="font-semibold text-foreground">{formatValue(portfolioValue)}</p>
-          </div>
+          ))}
         </div>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
           <Button asChild size="sm" className="flex-1">

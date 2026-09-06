@@ -8,9 +8,12 @@ import { Button } from '@/components/ui/button';
 import { Link } from 'react-router-dom';
 import { User, Mail, Phone, Calendar, MessageSquare } from 'lucide-react';
 import { useLanguage } from '@/contexts/LanguageContext';
+import { useAuth } from '@/hooks/useAuth';
+import { RecoveryFundsPanel } from '@/components/dashboard/RecoveryFundsPanel';
 
 const CasePage = () => {
   const { profile, timeline, isLoading } = useCustomerData();
+  const { user } = useAuth();
   const { t } = useLanguage();
 
   if (isLoading) {
@@ -73,6 +76,8 @@ const CasePage = () => {
             </CardContent>
           </Card>
         </div>
+
+        <RecoveryFundsPanel customerId={user?.id} casePhase={profile?.case_phase} />
 
         {/* Profile Info Card */}
         <Card>

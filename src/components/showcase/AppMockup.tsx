@@ -18,7 +18,7 @@ import {
 } from "lucide-react";
 
 const navItems = [
-  { icon: Wallet, label: "Portfolio", count: 5, active: false },
+  { icon: Wallet, label: "Located Funds", count: 5, active: false },
   { icon: Eye, label: "Watchlist", count: 3 },
   { icon: Briefcase, label: "Cases", count: 2, active: true },
   { icon: History, label: "Transactions" },
@@ -44,7 +44,7 @@ const labels = [
 
 const AppMockup = () => (
   <motion.div
-    id="portfolio"
+    id="located-funds"
     initial={{ opacity: 0, y: 40 }}
     whileInView={{ opacity: 1, y: 0 }}
     viewport={{ once: true, margin: "-100px" }}

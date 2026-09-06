@@ -15,29 +15,27 @@ import { Textarea } from '@/components/ui/textarea';
 import { Input } from '@/components/ui/input';
 import { useToast } from '@/hooks/use-toast';
 import { 
-  ArrowLeft, User, Wallet, FileText, Bell, Key, Plus, Pencil, 
+  ArrowLeft, User, FileText, Bell, Key, Plus, Pencil,
   RefreshCw, Loader2, Check, X, ChevronDown, ChevronUp, Clock, MessageCircle, Trash2,
-  AlertCircle, CheckCircle, AlertTriangle, Info, TrendingUp, TrendingDown, Landmark
+  AlertCircle, CheckCircle, AlertTriangle, Info, Landmark, BadgeDollarSign, FolderKanban
 } from 'lucide-react';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import AdjustBalanceDialog from '@/components/admin/AdjustBalanceDialog';
 import CaseTimelineEditor from '@/components/admin/CaseTimelineEditor';
 import { AgentChatWindow } from '@/components/chat/AgentChatWindow';
 import CreateNotificationDialog from '@/components/admin/CreateNotificationDialog';
-import AddPortfolioForClientDialog from '@/components/admin/AddPortfolioForClientDialog';
-import EditPortfolioItemDialog from '@/components/admin/EditPortfolioItemDialog';
 import { CasePhaseUpdater } from '@/components/admin/CasePhaseUpdater';
 import ResetPasswordDialog from '@/components/admin/ResetPasswordDialog';
 import DirectPasswordResetDialog from '@/components/admin/DirectPasswordResetDialog';
 import { ClientPaymentDetailsCard } from '@/components/admin/ClientPaymentDetailsCard';
 import { useUserRole } from '@/hooks/useUserRole';
 import { formatDistanceToNow } from 'date-fns';
-import { getCryptoPrices, CryptoPrice } from '@/services/cryptoApi';
 import { formatCurrency } from '@/lib/utils';
 import { TransactionPaymentDetailsDialog } from '@/components/admin/TransactionPaymentDetailsDialog';
 import { TransactionReviewDialog } from '@/components/admin/TransactionReviewDialog';
 import type { Json } from '@/integrations/supabase/types';
 import { BALANCE_CURRENCIES, balanceForCurrency } from '@/lib/balances';
+import { RecoveryFundsPanel } from '@/components/dashboard/RecoveryFundsPanel';
 
 interface CustomerProfile {
   id: string;
@@ -99,16 +97,6 @@ interface UserSession {
   access_token?: string | null;
 }
 
-interface PortfolioItem {
-  id: string;
-  crypto_id: string;
-  crypto_name: string;
-  crypto_symbol: string;
-  quantity: number;
-  purchase_price: number;
-  wallet_address?: string | null;
-}
-
 interface CustomerBalance {
   id: string;
   balance: number;
@@ -136,7 +124,6 @@ const CustomerDetail = (): JSX.Element => {
   const [notes, setNotes] = useState<Note[]>([]);
   const [transactions, setTransactions] = useState<TransactionRequest[]>([]);
   const [sessions, setSessions] = useState<UserSession[]>([]);
-  const [portfolio, setPortfolio] = useState<PortfolioItem[]>([]);
   const [customerBalances, setCustomerBalances] = useState<CustomerBalance[]>([]);
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [loading, setLoading] = useState(true);
@@ -147,7 +134,6 @@ const CustomerDetail = (): JSX.Element => {
   const [userInfoOpen, setUserInfoOpen] = useState(true);
   const [notesOpen, setNotesOpen] = useState(true);
   const [agents, setAgents] = useState<AgentProfile[]>([]);
-  const [cryptoPrices, setCryptoPrices] = useState<Record<string, CryptoPrice>>({});
   
   // Edit form state
   const [editFirstName, setEditFirstName] = useState('');
@@ -242,31 +228,6 @@ const CustomerDetail = (): JSX.Element => {
         )
         .subscribe();
 
-      const portfolioChannel = supabase
-        .channel(`portfolio-${customerId}`)
-        .on(
-          'postgres_changes',
-          { event: '*', schema: 'public', table: 'portfolio_items', filter: `user_id=eq.${customerId}` },
-          () => {
-            supabase
-              .from('portfolio_items')
-              .select('*')
-              .eq('user_id', customerId)
-              .then(async ({ data }) => {
-                if (data) {
-                  setPortfolio(data);
-                  // Refresh prices
-                  if (data.length > 0) {
-                    const cryptoIds = [...new Set(data.map((item: PortfolioItem) => item.crypto_id))];
-                    const prices = await getCryptoPrices(cryptoIds);
-                    setCryptoPrices(prices);
-                  }
-                }
-              });
-          }
-        )
-        .subscribe();
-
       const notesChannel = supabase
         .channel(`notes-${customerId}`)
         .on(
@@ -303,7 +264,6 @@ const CustomerDetail = (): JSX.Element => {
         supabase.removeChannel(transactionsChannel);
         supabase.removeChannel(balanceChannel);
         supabase.removeChannel(notificationsChannel);
-        supabase.removeChannel(portfolioChannel);
         supabase.removeChannel(notesChannel);
         supabase.removeChannel(timelineChannel);
       };
@@ -323,12 +283,11 @@ const CustomerDetail = (): JSX.Element => {
       
       const agentIds = agentRoles?.map(r => r.user_id) || [];
       
-      const [profileRes, notesRes, transactionsRes, sessionsRes, portfolioRes, agentsRes, balanceRes, notificationsRes] = await Promise.all([
+      const [profileRes, notesRes, transactionsRes, sessionsRes, agentsRes, balanceRes, notificationsRes] = await Promise.all([
         supabase.from('profiles').select('*').eq('id', customerId).single(),
         supabase.from('customer_notes').select('*').eq('customer_id', customerId).order('created_at', { ascending: false }),
         supabase.from('transaction_requests').select('*').eq('customer_id', customerId).order('created_at', { ascending: false }),
         supabase.from('user_sessions').select('*').eq('user_id', customerId).order('login_time', { ascending: false }),
-        supabase.from('portfolio_items').select('*').eq('user_id', customerId),
         agentIds.length > 0 
           ? supabase.from('profiles').select('id, email, first_name, last_name').in('id', agentIds)
           : Promise.resolve({ data: [], error: null }),
@@ -341,18 +300,9 @@ const CustomerDetail = (): JSX.Element => {
       setNotes(notesRes.data || []);
       setTransactions(transactionsRes.data || []);
       setSessions(sessionsRes.data || []);
-      setPortfolio(portfolioRes.data || []);
       setAgents(agentsRes.data || []);
       setCustomerBalances(balanceRes.data || []);
       setNotifications(notificationsRes.data || []);
-
-      // Fetch live crypto prices for portfolio items
-      const portfolioData = portfolioRes.data || [];
-      if (portfolioData.length > 0) {
-        const cryptoIds = [...new Set(portfolioData.map((item: PortfolioItem) => item.crypto_id))];
-        const prices = await getCryptoPrices(cryptoIds);
-        setCryptoPrices(prices);
-      }
     } catch (error: any) {
       toast({ title: t('common.error'), description: error.message, variant: "destructive" });
     } finally {
@@ -464,20 +414,6 @@ const CustomerDetail = (): JSX.Element => {
     }
   };
 
-  const handleDeletePortfolioItem = async (portfolioId: string) => {
-    try {
-      const { error } = await supabase
-        .from('portfolio_items')
-        .delete()
-        .eq('id', portfolioId);
-      if (error) throw error;
-      toast({ title: t('customerDetail.portfolioDeleted') });
-      fetchCustomerData();
-    } catch (error: any) {
-      toast({ title: t('common.error'), description: error.message, variant: "destructive" });
-    }
-  };
-
   const getNotificationIcon = (type: string) => {
     switch (type) {
       case 'success': return <CheckCircle className="h-5 w-5 text-green-400" />;
@@ -518,25 +454,6 @@ const CustomerDetail = (): JSX.Element => {
     processing: 'bg-white/10 text-neutral-300'
   };
 
-  // Calculate portfolio totals with live prices
-  const calculatePortfolioTotals = () => {
-    let totalLiveValue = 0;
-    let totalInvested = 0;
-    portfolio.forEach((item) => {
-      const livePrice = cryptoPrices[item.crypto_id];
-      if (livePrice) {
-        totalLiveValue += livePrice.current_price * item.quantity;
-      }
-      totalInvested += item.purchase_price * item.quantity;
-    });
-    const profitLoss = totalLiveValue - totalInvested;
-    const profitLossPercentage = totalInvested > 0 ? (profitLoss / totalInvested) * 100 : 0;
-    return { totalLiveValue, totalInvested, profitLoss, profitLossPercentage };
-  };
-
-  const { totalLiveValue, totalInvested, profitLoss, profitLossPercentage } = calculatePortfolioTotals();
-  const totalPortfolioValue = Object.keys(cryptoPrices).length > 0 ? totalLiveValue : portfolio.reduce((sum, item) => sum + (item.quantity * item.purchase_price), 0);
-
   return (
     <div className="min-h-screen bg-background">
       <Navigation />
@@ -560,11 +477,14 @@ const CustomerDetail = (): JSX.Element => {
             <TabsTrigger value="profile" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
               <User className="w-4 h-4 mr-2" /> {t('customerDetail.profile')}
             </TabsTrigger>
+            <TabsTrigger value="case" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
+              <FolderKanban className="w-4 h-4 mr-2" /> Case Management
+            </TabsTrigger>
             <TabsTrigger value="messages" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
               <MessageCircle className="w-4 h-4 mr-2" /> {t('nav.messages')}
             </TabsTrigger>
-            <TabsTrigger value="portfolios" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
-              <Wallet className="w-4 h-4 mr-2" /> {t('customerDetail.portfolios')}
+            <TabsTrigger value="funds" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
+              <BadgeDollarSign className="w-4 h-4 mr-2" /> Located Funds
             </TabsTrigger>
             <TabsTrigger value="transactions" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
               <FileText className="w-4 h-4 mr-2" /> {t('customerDetail.transactionRequests')}
@@ -609,24 +529,20 @@ const CustomerDetail = (): JSX.Element => {
             <div><span className="text-muted-foreground">{t('admin.subscription')}:</span> <Badge variant="outline" className="ml-1">{customer.subscription || 'BASIC'}</Badge></div>
           </div>
 
-          {/* Case Phase Updater */}
-          <div className="mb-6">
-            <CasePhaseUpdater 
-              customerId={customerId!} 
-              currentPhase={customer.case_phase} 
+          {/* Case Management Tab */}
+          <TabsContent value="case" className="space-y-6">
+            <CasePhaseUpdater
+              customerId={customerId!}
+              currentPhase={customer.case_phase}
               searchStartedAt={customer.recovery_search_started_at}
               searchDurationMinutes={customer.recovery_search_duration_minutes}
               searchScope={customer.recovery_search_scope}
               resultType={customer.recovery_result_type}
               resultDetails={customer.recovery_result_details}
-              onUpdate={fetchCustomerData} 
+              onUpdate={fetchCustomerData}
             />
-          </div>
-
-          {/* Case Timeline Section */}
-          <div className="mb-6">
             <CaseTimelineEditor customerId={customerId!} caseNumber={customer.case_number} />
-          </div>
+          </TabsContent>
 
           {/* Messages Tab */}
           <TabsContent value="messages">
@@ -921,160 +837,9 @@ const CustomerDetail = (): JSX.Element => {
             </Card>
           </TabsContent>
 
-          {/* Portfolios Tab */}
-          <TabsContent value="portfolios">
-            <div className="grid md:grid-cols-4 gap-6">
-              <Card className="bg-card border-border">
-                <CardContent className="p-4">
-                  <div className="flex items-center gap-3 p-3 bg-primary/20 rounded-lg mb-4">
-                    <div className="w-10 h-10 bg-primary/30 rounded-lg flex items-center justify-center">
-                      <Wallet className="h-5 w-5 text-primary" />
-                    </div>
-                    <div>
-                      <p className="font-medium">{t('nav.overview')}</p>
-                      <p className="text-sm text-muted-foreground">€{totalPortfolioValue.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</p>
-                    </div>
-                  </div>
-                  <p className="text-sm text-muted-foreground mb-2">{t('customerDetail.portfolios')} ({portfolio.length})</p>
-                  {Object.keys(cryptoPrices).length > 0 && (
-                    <div className={`text-sm flex items-center gap-1 ${profitLoss >= 0 ? 'text-green-400' : 'text-red-400'}`}>
-                      {profitLoss >= 0 ? <TrendingUp className="h-4 w-4" /> : <TrendingDown className="h-4 w-4" />}
-                      {profitLoss >= 0 ? '+' : ''}{profitLossPercentage.toFixed(2)}%
-                    </div>
-                  )}
-                </CardContent>
-              </Card>
-
-              <div className="md:col-span-3">
-                <Card className="bg-card border-border">
-                  <CardHeader className="border-b border-border flex-row items-center justify-between">
-                    <div>
-                      <p className="text-sm text-muted-foreground flex items-center gap-2">
-                        <Wallet className="h-4 w-4 text-primary" /> {t('customerDetail.totalValue')}
-                      </p>
-                      <p className="text-3xl font-bold text-primary">€{totalPortfolioValue.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</p>
-                      {Object.keys(cryptoPrices).length > 0 && (
-                        <p className={`text-sm flex items-center gap-1 ${profitLoss >= 0 ? 'text-green-400' : 'text-red-400'}`}>
-                          {profitLoss >= 0 ? <TrendingUp className="h-4 w-4" /> : <TrendingDown className="h-4 w-4" />}
-                          {profitLoss >= 0 ? '+' : ''}€{Math.abs(profitLoss).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })} ({profitLossPercentage >= 0 ? '+' : ''}{profitLossPercentage.toFixed(2)}%)
-                        </p>
-                      )}
-                    </div>
-                    <AddPortfolioForClientDialog customerId={customerId!} onSuccess={fetchCustomerData}>
-                      <Button size="sm" className="bg-primary">
-                        <Plus className="h-4 w-4 mr-2" /> {t('customerDetail.addPortfolio')}
-                      </Button>
-                    </AddPortfolioForClientDialog>
-                  </CardHeader>
-                  <CardContent className="p-0">
-                    <Table>
-                      <TableHeader>
-                        <TableRow className="border-border">
-                          <TableHead>Asset</TableHead>
-                          <TableHead>{t('portfolio.walletAddress')}</TableHead>
-                          <TableHead>{t('crypto.currentPrice')}</TableHead>
-                          <TableHead>Avg. Cost</TableHead>
-                          <TableHead>{t('customerDetail.balance')}</TableHead>
-                          <TableHead>Value</TableHead>
-                          <TableHead>{t('crypto.profitLoss')}</TableHead>
-                          <TableHead className="text-right">{t('common.actions')}</TableHead>
-                        </TableRow>
-                      </TableHeader>
-                      <TableBody>
-                        {portfolio.length === 0 ? (
-                          <TableRow>
-                            <TableCell colSpan={8} className="text-center py-8 text-muted-foreground">{t('customerDetail.noPortfolio')}</TableCell>
-                          </TableRow>
-                        ) : (
-                          portfolio.map((item) => {
-                            const livePrice = cryptoPrices[item.crypto_id];
-                            const currentValue = livePrice ? livePrice.current_price * item.quantity : item.purchase_price * item.quantity;
-                            const invested = item.purchase_price * item.quantity;
-                            const itemProfitLoss = currentValue - invested;
-                            const itemProfitLossPercentage = invested > 0 ? (itemProfitLoss / invested) * 100 : 0;
-
-                            return (
-                              <TableRow key={item.id} className="border-border">
-                                <TableCell>
-                                  <div className="flex items-center gap-2">
-                                    {livePrice?.image ? (
-                                      <img src={livePrice.image} alt={item.crypto_name} className="w-8 h-8 rounded-full" />
-                                    ) : (
-                                      <div className="w-8 h-8 bg-primary/20 rounded-full flex items-center justify-center text-xs font-bold">
-                                        {item.crypto_symbol.substring(0, 2)}
-                                      </div>
-                                    )}
-                                    <div>
-                                      <p className="font-medium">{item.crypto_name}</p>
-                                      <p className="text-xs text-muted-foreground">{item.crypto_symbol.toUpperCase()}</p>
-                                    </div>
-                                  </div>
-                                </TableCell>
-                                <TableCell className="font-mono text-xs">
-                                  {item.wallet_address ? (
-                                    <span title={item.wallet_address} className="cursor-help">
-                                      {item.wallet_address.substring(0, 6)}...{item.wallet_address.slice(-4)}
-                                    </span>
-                                  ) : (
-                                    <span className="text-muted-foreground">-</span>
-                                  )}
-                                </TableCell>
-                                <TableCell>
-                                  {livePrice ? (
-                                    <div>
-                                      <p className="font-medium">€{livePrice.current_price.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</p>
-                                      <p className={`text-xs ${livePrice.price_change_percentage_24h >= 0 ? 'text-green-400' : 'text-red-400'}`}>
-                                        {livePrice.price_change_percentage_24h >= 0 ? '+' : ''}{livePrice.price_change_percentage_24h.toFixed(2)}%
-                                      </p>
-                                    </div>
-                                  ) : (
-                                    <span className="text-muted-foreground">---</span>
-                                  )}
-                                </TableCell>
-                                <TableCell>€{item.purchase_price.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</TableCell>
-                                <TableCell>{item.quantity.toFixed(6)} {item.crypto_symbol.toUpperCase()}</TableCell>
-                                <TableCell>€{currentValue.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</TableCell>
-                                <TableCell>
-                                  {livePrice ? (
-                                    <div className={itemProfitLoss >= 0 ? 'text-green-400' : 'text-red-400'}>
-                                      <p className="font-medium">{itemProfitLoss >= 0 ? '+' : ''}€{itemProfitLoss.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</p>
-                                      <p className="text-xs">{itemProfitLossPercentage >= 0 ? '+' : ''}{itemProfitLossPercentage.toFixed(2)}%</p>
-                                    </div>
-                                  ) : (
-                                    <span className="text-muted-foreground">---</span>
-                                  )}
-                                </TableCell>
-                                <TableCell className="text-right">
-                                  <div className="flex items-center justify-end gap-1">
-                                    <EditPortfolioItemDialog portfolioItem={item} onSuccess={fetchCustomerData}>
-                                      <Button 
-                                        variant="ghost" 
-                                        size="icon"
-                                        className="text-muted-foreground hover:text-foreground"
-                                      >
-                                        <Pencil className="h-4 w-4" />
-                                      </Button>
-                                    </EditPortfolioItemDialog>
-                                    <Button 
-                                      variant="ghost" 
-                                      size="icon" 
-                                      onClick={() => handleDeletePortfolioItem(item.id)}
-                                      className="text-destructive hover:text-destructive hover:bg-destructive/10"
-                                    >
-                                      <Trash2 className="h-4 w-4" />
-                                    </Button>
-                                  </div>
-                                </TableCell>
-                              </TableRow>
-                            );
-                          })
-                        )}
-                      </TableBody>
-                    </Table>
-                  </CardContent>
-                </Card>
-              </div>
-            </div>
+          {/* Located Funds Tab */}
+          <TabsContent value="funds">
+            <RecoveryFundsPanel customerId={customerId!} casePhase={customer.case_phase} editable />
           </TabsContent>
 
           {/* Transaction Requests Tab */}

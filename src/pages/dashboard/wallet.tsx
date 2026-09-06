@@ -7,23 +7,11 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { TrendingUp, TrendingDown, Clock } from 'lucide-react';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { formatCurrency } from '@/lib/utils';
-import { useAuth } from '@/hooks/useAuth';
-import { useAccountValuation } from '@/hooks/useAccountValuation';
 import { BALANCE_CURRENCIES } from '@/lib/balances';
 
 const WalletPage = () => {
-  const { balances, profile, transactions, isLoading } = useCustomerData();
-  const { user } = useAuth();
+  const { balances, transactions, isLoading } = useCustomerData();
   const { t } = useLanguage();
-
-  const displayCurrency = (
-    profile?.preferred_currency || profile?.display_currency || 'USD'
-  ).toUpperCase();
-  const account = useAccountValuation({
-    userId: user?.id,
-    cashBalances: balances,
-    displayCurrency,
-  });
 
   if (isLoading) {
     return (
@@ -58,12 +46,7 @@ const WalletPage = () => {
 
         {/* Stats Grid */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          <BalanceCard
-            portfolioValue={account.portfolioValue}
-            displayCurrency={displayCurrency}
-            balances={balances}
-            isValuationLoading={account.isLoading}
-          />
+          <BalanceCard balances={balances} />
 
           <Card>
             <CardHeader className="flex flex-row items-center justify-between pb-2">

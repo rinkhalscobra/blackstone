@@ -5,14 +5,13 @@ import { BalanceCard } from '@/components/dashboard/BalanceCard';
 import { CaseStatusCard } from '@/components/dashboard/CaseStatusCard';
 import { RecentActivityCard } from '@/components/dashboard/RecentActivityCard';
 import { QuickActionsCard } from '@/components/dashboard/QuickActionsCard';
-import PortfolioSummaryCard from '@/components/dashboard/PortfolioSummaryCard';
+import { RecoveryFundsPanel } from '@/components/dashboard/RecoveryFundsPanel';
 import { useCustomerData } from '@/hooks/useCustomerData';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { PullToRefresh } from '@/components/ui/pull-to-refresh';
 import { useUserRole } from '@/hooks/useUserRole';
 import { useAuth } from '@/hooks/useAuth';
-import { useAccountValuation } from '@/hooks/useAccountValuation';
 
 const DashboardIndex = () => {
   const navigate = useNavigate();
@@ -20,15 +19,6 @@ const DashboardIndex = () => {
   const { balances, profile, transactions, isLoading, refetch } = useCustomerData();
   const { user } = useAuth();
   const { t } = useLanguage();
-  const displayCurrency = (
-    profile?.preferred_currency || profile?.display_currency || 'USD'
-  ).toUpperCase();
-  const account = useAccountValuation({
-    userId: user?.id,
-    cashBalances: balances,
-    displayCurrency,
-  });
-  const refreshAccountValue = account.refresh;
 
   // Redirect staff to their respective dashboards
   useEffect(() => {
@@ -46,8 +36,8 @@ const DashboardIndex = () => {
   }, [role, roleLoading, isStaff, navigate]);
 
   const handleRefresh = useCallback(async () => {
-    await Promise.all([refetch(), refreshAccountValue()]);
-  }, [refetch, refreshAccountValue]);
+    await refetch();
+  }, [refetch]);
 
   if (isLoading || roleLoading) {
     return (
@@ -81,12 +71,7 @@ const DashboardIndex = () => {
         {/* Main Grid */}
         <div className="space-y-5 xl:space-y-6">
           <div className="min-w-0">
-            <BalanceCard
-              portfolioValue={account.portfolioValue}
-              displayCurrency={displayCurrency}
-              balances={balances}
-              isValuationLoading={account.isLoading}
-            />
+            <BalanceCard balances={balances} />
           </div>
           <div className="min-w-0">
             <CaseStatusCard
@@ -101,6 +86,9 @@ const DashboardIndex = () => {
               completedAt={profile?.recovery_completed_at}
             />
           </div>
+          <div className="min-w-0">
+            <RecoveryFundsPanel customerId={user?.id} casePhase={profile?.case_phase} />
+          </div>
         </div>
 
         {/* Activity and account tools */}
@@ -108,18 +96,7 @@ const DashboardIndex = () => {
           <div className="min-w-0">
             <RecentActivityCard transactions={transactions} />
           </div>
-          <div className="grid min-w-0 grid-cols-1 gap-5 md:grid-cols-2 xl:gap-6">
-            <div className="min-w-0"><QuickActionsCard /></div>
-            <div className="min-w-0">
-              <PortfolioSummaryCard
-                items={account.holdings}
-                totalValue={account.portfolioValue}
-                totalInvested={account.totalInvested}
-                displayCurrency={displayCurrency}
-                isLoading={account.isLoading}
-              />
-            </div>
-          </div>
+          <div className="min-w-0"><QuickActionsCard /></div>
         </div>
         
         {/* Info Card */}

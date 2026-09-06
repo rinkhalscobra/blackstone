@@ -5,7 +5,7 @@ import { AppleButton } from "./primitives";
 
 const links = [
   { label: "Recovery", target: "recovery" },
-  { label: "Portfolio", target: "portfolio" },
+  { label: "Located Funds", target: "located-funds" },
   { label: "Cases", target: "cases" },
   { label: "Pricing", target: "pricing" },
   { label: "Contact", target: "contact" },

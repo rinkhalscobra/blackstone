@@ -14,7 +14,7 @@ import About from "./pages/About";
 import Legal from "./pages/Legal";
 import FAQ from "./pages/FAQ";
 import Contact from "./pages/Contact";
-import PortfolioNew from "./pages/PortfolioNew";
+import RecoveryFundsPage from "./pages/dashboard/funds";
 import WatchlistNew from "./pages/WatchlistNew";
 import Disclaimer from "./pages/Disclaimer";
 import Privacy from "./pages/Privacy";
@@ -54,7 +54,7 @@ const App = () => (
             <Route path="/legal" element={<Legal />} />
             <Route path="/faq" element={<FAQ />} />
             <Route path="/contact" element={<Contact />} />
-            <Route path="/portfolio" element={<PortfolioNew />} />
+            <Route path="/dashboard/funds" element={<RecoveryFundsPage />} />
             <Route path="/watchlist" element={<WatchlistNew />} />
             <Route path="/disclaimer" element={<Disclaimer />} />
             <Route path="/privacy" element={<Privacy />} />
