@@ -161,7 +161,7 @@ const Auth = () => {
 
   return (
     <PublicLayout>
-      <div className="public-section public-grid grid min-h-[85vh] items-center gap-8 !pt-28 lg:grid-cols-[1.15fr_1fr] lg:gap-12">
+      <div className="public-section public-grid grid min-h-[85vh] items-center gap-8 !pt-40 lg:grid-cols-[1.15fr_1fr] lg:gap-12">
         <div>
           <p className="public-eyebrow">Crest Financial</p>
           <h1 className="public-page-title mt-5">{p('authTitle')}</h1>

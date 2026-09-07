@@ -433,7 +433,7 @@ const CustomerDetail = (): JSX.Element => {
 
   if (!customer) {
     return (
-      <div className="min-h-screen bg-background">
+      <div className="min-h-screen bg-background pt-28">
         <Navigation />
         <main className="container mx-auto px-4 py-8">
           <p className="text-muted-foreground text-center">{t('customerDetail.customerNotFound')}</p>
@@ -455,7 +455,7 @@ const CustomerDetail = (): JSX.Element => {
   };
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-background pt-28">
       <Navigation />
       
       <main className="container mx-auto px-4 py-8">

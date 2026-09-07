@@ -10,7 +10,7 @@
 .public-section {
   padding-top: 2.5rem;
   padding-bottom: 2.5rem;
-  scroll-margin-top: 5rem;
+  scroll-margin-top: 8rem;
 }
 .public-site .public-brand {
   font-size: clamp(0.875rem, 1.4vw, 1.2rem);
@@ -98,7 +98,7 @@
   background: rgba(255, 255, 255, 0.06);
 }
 .public-nav-link {
-  font-size: 0.875rem;
+  font-size: 1.125rem;
   color: #b6c0ba;
   transition: color 0.15s;
 }
@@ -122,7 +122,7 @@
   color: #aeb8b2;
 }
 .public-document section {
-  scroll-margin-top: 6rem;
+  scroll-margin-top: 8rem;
   padding: 1.5rem 0;
   border-top: 1px solid rgba(255, 255, 255, 0.1);
 }

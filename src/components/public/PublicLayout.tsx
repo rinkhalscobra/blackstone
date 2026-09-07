@@ -1,7 +1,7 @@
 import { useEffect, useState, type ReactNode } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { ArrowUpRight, Menu, ArrowRight } from 'lucide-react';
-import BrandMark from '@/components/BrandMark';
+import Logo from '@/components/Logo';
 import LanguageSelector from '@/components/LanguageSelector';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
 import { useAuth } from '@/hooks/useAuth';
@@ -15,15 +15,7 @@ import '@/styles/public-site.css';
 
 export const PUBLIC_CONTACT = COMPANY_CONTACT;
 
-const PublicBrand = () => (
-  <Link
-    to="/"
-    className="public-brand inline-flex min-w-0 items-center gap-2 font-semibold tracking-tight text-white"
-  >
-    <BrandMark className="h-8 w-8 shrink-0" />
-    <span>{COMPANY.brand}</span>
-  </Link>
-);
+const PublicBrand = () => <Logo size="md" linkTo="/" />;
 
 const PublicNavigation = () => {
   const p = usePublicContent();
@@ -59,7 +51,7 @@ const PublicNavigation = () => {
 
   return (
     <header className="fixed inset-x-0 top-0 z-50 border-b border-white/10 bg-[#080b09]/95 backdrop-blur-xl">
-      <div className="public-gutter flex h-16 items-center justify-between gap-3">
+      <div className="public-gutter flex h-28 items-center justify-between gap-3">
         <PublicBrand />
         <nav aria-label={p('explore')} className="hidden items-center gap-5 xl:flex">
           {sections.map((item) => (
@@ -225,7 +217,7 @@ export const PublicPageHeader = ({
   title: string;
   description?: string;
 }) => (
-  <div className="public-gutter pb-7 pt-28">
+  <div className="public-gutter pb-7 pt-40">
     <p className="public-eyebrow flex items-center gap-2">
       <span className="h-1.5 w-1.5 rounded-full bg-emerald-200" />
       {eyebrow}

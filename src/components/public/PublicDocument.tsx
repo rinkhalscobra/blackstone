@@ -25,7 +25,7 @@ export const PublicDocument = ({
     <PublicLayout>
       <PublicPageHeader eyebrow={t('nav.legal')} title={title} description={description} />
       <div className="public-section public-grid grid items-start gap-8 !pt-0 lg:grid-cols-[minmax(14rem,.55fr)_minmax(0,2fr)]">
-        <aside className="public-surface p-5 lg:sticky lg:top-24">
+        <aside className="public-surface p-5 lg:sticky lg:top-32">
           <h2 className="public-eyebrow">{p('contents')}</h2>
           <nav className="mt-4 space-y-2" aria-label={p('contents')}>
             {sections.map((section, index) => (

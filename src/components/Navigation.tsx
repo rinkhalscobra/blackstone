@@ -94,7 +94,7 @@ const Navigation = ({ landing = false }: NavigationProps) => {
   return (
     <nav className="fixed top-0 left-0 right-0 z-50 border-b border-white/5 bg-background/40 backdrop-blur-xl supports-[backdrop-filter]:bg-background/30">
       <div className="container px-4 sm:px-6 lg:px-8">
-        <div className="flex h-16 items-center justify-between">
+        <div className="flex h-28 items-center justify-between">
           <Logo size="md" />
 
           {landing && (
