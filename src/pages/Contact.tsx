@@ -1,5 +1,6 @@
 import { Link, useSearchParams } from 'react-router-dom';
-import { Mail, Phone, MapPin, Copy, ArrowUpRight, FileText } from 'lucide-react';
+import { Mail, Phone, Copy, ArrowUpRight, FileText } from 'lucide-react';
+import { CompanyRegistration } from '@/components/CompanyRegistration';
 import { PublicLayout, PublicPageHeader, PUBLIC_CONTACT } from '@/components/public/PublicLayout';
 import { PUBLIC_PLANS } from '@/components/public/PublicSections';
 import { usePublicContent } from '@/i18n/publicSite';
@@ -105,27 +106,7 @@ const Contact = () => {
             </Link>
           </div>
         </div>
-        <div className="public-grid mt-7 grid gap-6 border-y border-white/10 py-6 md:grid-cols-2">
-          <div className="flex items-start gap-3">
-            <MapPin className="mt-1 h-5 w-5 shrink-0 text-[#a6c7b3]" />
-            <div>
-              <h2 className="public-eyebrow">{p('office')}</h2>
-              <address className="mt-3 text-sm not-italic leading-relaxed text-neutral-300">
-                {PUBLIC_CONTACT.address}
-              </address>
-            </div>
-          </div>
-          <dl className="grid grid-cols-2 gap-4 text-sm">
-            <div>
-              <dt className="text-neutral-500">R.C.S. Luxembourg</dt>
-              <dd className="mt-2">{PUBLIC_CONTACT.registration}</dd>
-            </div>
-            <div>
-              <dt className="text-neutral-500">{t('nav.legal')}</dt>
-              <dd className="mt-2">{PUBLIC_CONTACT.court}</dd>
-            </div>
-          </dl>
-        </div>
+        <CompanyRegistration className="mt-7" />
       </section>
     </PublicLayout>
   );

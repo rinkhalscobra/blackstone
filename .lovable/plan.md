@@ -1,4 +1,4 @@
-# BrightFund production configuration
+# Crest Financial production configuration
 
 ## Production
 
@@ -15,5 +15,10 @@
 
 ## Branding
 
-- Public copy and internal platform identifiers use the BrightFund name.
-- The staff confiscation function is deployed as `confiscate-brightfund-staff`.
+- Public branding uses Crest Financial; the legal operator is Maple Crest Financial Inc.
+- Corporate registration: 1812368-3, business number 797436847. The public registration is not a financial-services licence.
+- Official record: https://ised-isde.canada.ca/cc/lgcy/fdrlCrpDtls.html?corpId=18123683
+- Shared legal identity and contact settings are in `src/config/company.ts`.
+- The current deployment URL and support email remain in use until replacement destinations are confirmed. `VITE_SUPPORT_EMAIL` can configure the support mailbox.
+- Existing `brightfund` tenant IDs, auth aliases, applied migration names, and the deployed `confiscate-brightfund-staff` endpoint are compatibility identifiers, not display branding. Do not rename them without a coordinated database and deployment migration.
+- Deploy the updated `mfa-setup` function to use Crest Financial for newly enrolled authenticator accounts. Existing enrolments remain valid with their previous local labels.

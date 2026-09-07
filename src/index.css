@@ -5,13 +5,13 @@
 @tailwind utilities;
 
 /* ============================================================
- * BrightFund Recovery global design system — inherits the /showcase language.
+ * Crest Financial global design system — inherits the /showcase language.
  * All colors MUST be HSL. Tokens drive shadcn + tailwind.
  * ============================================================ */
 
 @layer base {
   :root {
-    /* BrightFund monochrome palette */
+    /* Crest Financial monochrome palette */
     --background: 0 0% 4%;
     --foreground: 0 0% 96%;
 

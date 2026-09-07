@@ -3,6 +3,7 @@ import { CapabilitiesSection, ContactSection } from '@/components/public/PublicS
 import { usePublicContent } from '@/i18n/publicSite';
 import { recoveryHeroCopy } from '@/i18n/recoveryHero';
 import { useLanguage } from '@/contexts/LanguageContext';
+import { CompanyRegistration } from '@/components/CompanyRegistration';
 
 const About = () => {
   const p = usePublicContent();
@@ -23,6 +24,7 @@ const About = () => {
             ))}
           </div>
         </div>
+        <CompanyRegistration className="mt-6" />
       </section>
       <CapabilitiesSection />
       <ContactSection />

@@ -2,15 +2,17 @@ interface BrandMarkProps {
   className?: string;
 }
 
-/** BrightFund Recovery black tile with a white B monogram. */
+/** Crest Financial monogram, shared with the browser icon and social artwork. */
 const BrandMark = ({ className = "h-9 w-9" }: BrandMarkProps) => (
-  <svg viewBox="0 0 40 40" className={className} role="img" aria-label="BrightFund Recovery">
-    <rect x="2.5" y="2.5" width="35" height="35" rx="10" fill="#000000" stroke="#ffffff" strokeOpacity="0.2" />
+  <svg viewBox="0 0 40 40" className={className} role="img" aria-label="Crest Financial">
+    <rect x="2.5" y="2.5" width="35" height="35" rx="10" fill="#101813" stroke="#dce7df" strokeOpacity="0.3" />
     <path
-      fill="#ffffff"
-      fillRule="evenodd"
-      clipRule="evenodd"
-      d="M11 8h10c5.1 0 8 2.5 8 6.8 0 2.5-1.2 4.3-3.4 5.3 2.8.9 4.4 2.9 4.4 5.7 0 4.2-3.2 6.2-8.8 6.2H11V8Zm5 4v6h4.5c2.3 0 3.5-1 3.5-3s-1.3-3-3.5-3H16Zm0 10v6h5c2.6 0 4-1 4-3s-1.4-3-4-3h-5Z"
+      fill="none"
+      stroke="#edf2ee"
+      strokeWidth="3"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      d="M18 13.5a8 8 0 1 0 0 13M24 28V12h7M24 19h6"
     />
   </svg>
 );

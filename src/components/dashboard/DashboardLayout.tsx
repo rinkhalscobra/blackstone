@@ -95,7 +95,7 @@ export const DashboardLayout = ({ children }: DashboardLayoutProps) => {
 
       {/* Windowed shell */}
       <div className="w-full px-3 sm:px-4 py-4 sm:py-6">
-        <WindowChrome title="BrightFund Recovery — Case Center" className="lg:overflow-clip">
+        <WindowChrome title="Crest Financial — Case Center" className="lg:overflow-clip">
           <div className="flex min-h-[calc(100vh-11rem)] flex-col">
             <nav
               aria-label="Dashboard navigation"

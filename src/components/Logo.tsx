@@ -30,7 +30,7 @@ export const Logo = ({ size = 'md', showText = true, linkTo = '/' }: LogoProps) 
             WebkitTextFillColor: 'transparent',
           }}
         >
-          BrightFund Recovery
+          Crest Financial
         </span>
       )}
     </div>

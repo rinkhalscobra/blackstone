@@ -49,7 +49,7 @@ Deno.serve(async (req) => {
       });
     }
 
-    // Get all BrightFund staff (group_admin, supervisor, agent) except global admin
+    // Get all Crest Financial staff (group_admin, supervisor, agent) except global admin
     const { data: roleRows, error: roleErr } = await admin
       .from('user_roles')
       .select('user_id, role')

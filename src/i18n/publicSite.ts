@@ -437,10 +437,10 @@ const messages = {
     'Indagini con uno scopo chiaro.',
   ],
   aboutIntro: [
-    'BrightFund Recovery brings structure to complex digital asset cases: understanding the incident, examining the trail, and documenting what comes next.',
-    'BrightFund Recovery structure les dossiers complexes : comprendre les faits, examiner le parcours des actifs et documenter les étapes suivantes.',
-    'BrightFund Recovery strukturiert komplexe Fälle: Vorfälle verstehen, Spuren untersuchen und nächste Schritte dokumentieren.',
-    'BrightFund Recovery struttura i casi complessi: comprendere gli eventi, analizzare il percorso e documentare i passi successivi.',
+    'Crest Financial brings structure to complex digital asset cases: understanding the incident, examining the trail, and documenting what comes next.',
+    'Crest Financial structure les dossiers complexes : comprendre les faits, examiner le parcours des actifs et documenter les étapes suivantes.',
+    'Crest Financial strukturiert komplexe Fälle: Vorfälle verstehen, Spuren untersuchen und nächste Schritte dokumentieren.',
+    'Crest Financial struttura i casi complessi: comprendere gli eventi, analizzare il percorso e documentare i passi successivi.',
   ],
   principles: [
     'The principles behind the work',
@@ -524,10 +524,10 @@ const messages = {
     'Il tuo caso. In un unico spazio.',
   ],
   authIntro: [
-    'Access case progress, messages, and your currency balances through your BrightFund account.',
-    'Accédez à la progression, aux messages et aux soldes en devises dans votre compte BrightFund.',
-    'Greifen Sie im BrightFund-Konto auf Fallfortschritt, Nachrichten und Währungsguthaben zu.',
-    'Accedi ad avanzamento, messaggi e saldi in valuta dal tuo account BrightFund.',
+    'Access case progress, messages, and your currency balances through your Crest Financial account.',
+    'Accédez à la progression, aux messages et aux soldes en devises dans votre compte Crest Financial.',
+    'Greifen Sie im Crest Financial-Konto auf Fallfortschritt, Nachrichten und Währungsguthaben zu.',
+    'Accedi ad avanzamento, messaggi e saldi in valuta dal tuo account Crest Financial.',
   ],
   notFound: [
     'This page could not be found.',

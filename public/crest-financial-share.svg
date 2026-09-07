@@ -1,0 +1,27 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="630" viewBox="0 0 1200 630">
+  <defs>
+    <radialGradient id="light" cx="90%" cy="15%" r="90%"><stop stop-color="#23392c"/><stop offset="1" stop-color="#080c09"/></radialGradient>
+  </defs>
+  <rect width="1200" height="630" fill="url(#light)"/>
+  <rect x="32" y="32" width="1136" height="566" rx="24" fill="none" stroke="#b8d0c1" stroke-opacity=".22"/>
+  <g transform="translate(70 66) scale(1.5)">
+    <rect x="2.5" y="2.5" width="35" height="35" rx="10" fill="#101813" stroke="#dce7df" stroke-opacity=".3"/>
+    <path fill="none" stroke="#edf2ee" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" d="M18 13.5a8 8 0 1 0 0 13M24 28V12h7M24 19h6"/>
+  </g>
+  <g font-family="Arial, Helvetica, sans-serif">
+    <text x="148" y="108" fill="#edf2ee" font-size="29" font-weight="600">Crest Financial</text>
+    <text x="74" y="201" fill="#a4bfae" font-size="14" letter-spacing="3">DIGITAL ASSET INVESTIGATIONS</text>
+    <text x="70" y="282" fill="#edf2ee" font-size="62" letter-spacing="-2">Clarity starts</text>
+    <text x="70" y="353" fill="#d2e4d9" font-size="62" letter-spacing="-2">with the evidence.</text>
+    <text x="74" y="409" fill="#abbcb1" font-size="22">Case review. Transaction tracing. Documented findings.</text>
+    <path d="M74 467H1126" stroke="#b8d0c1" stroke-opacity=".2"/>
+    <text x="74" y="512" fill="#e1ebe5" font-size="18">Operated by Maple Crest Financial Inc.</text>
+    <text x="74" y="543" fill="#a4b5aa" font-size="15">Canadian corporation no. 1812368-3</text>
+    <g transform="translate(910 168)" fill="none" stroke="#bed7c8">
+      <rect width="150" height="178" rx="14" stroke-opacity=".3"/>
+      <path d="M28 41h57m-57 26h94m-94 24h94m-94 24h67" stroke-opacity=".5" stroke-width="2"/>
+      <circle cx="116" cy="148" r="31" fill="#18271e" stroke-opacity=".6"/>
+      <path d="m103 148 9 9 17-18" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+    </g>
+  </g>
+</svg>

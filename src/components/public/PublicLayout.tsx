@@ -8,17 +8,12 @@ import { useAuth } from '@/hooks/useAuth';
 import { useAdmin } from '@/hooks/useAdmin';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { usePublicContent } from '@/i18n/publicSite';
+import { COMPANY, COMPANY_CONTACT } from '@/config/company';
+import { CompanyRegistration } from '@/components/CompanyRegistration';
 import '@/styles/showcase.css';
 import '@/styles/public-site.css';
 
-export const PUBLIC_CONTACT = {
-  email: 'support@brightfund.com',
-  phone: '+44 7441 429776',
-  phoneHref: '+447441429776',
-  address: '63 Rue de Bouillon, L-1248 Luxembourg',
-  registration: 'B 146.532',
-  court: '2080 Luxembourg',
-};
+export const PUBLIC_CONTACT = COMPANY_CONTACT;
 
 const PublicBrand = () => (
   <Link
@@ -26,7 +21,7 @@ const PublicBrand = () => (
     className="public-brand inline-flex min-w-0 items-center gap-2 font-semibold tracking-tight text-white"
   >
     <BrandMark className="h-8 w-8 shrink-0" />
-    <span>BrightFund Recovery</span>
+    <span>{COMPANY.brand}</span>
   </Link>
 );
 
@@ -192,13 +187,11 @@ const PublicFooter = () => {
           ))}
         </div>
       </div>
+      <CompanyRegistration compact className="mt-8" />
       <div className="mt-9 flex flex-wrap justify-between gap-4 border-t border-white/10 pt-5 text-xs leading-relaxed text-neutral-500">
         <span>
-          © {new Date().getFullYear()} BrightFund Recovery. {p('rights')}
+          © {new Date().getFullYear()} {COMPANY.legalName} {p('rights')}
         </span>
-        <address className="not-italic">
-          {PUBLIC_CONTACT.address} · R.C.S. {PUBLIC_CONTACT.registration}
-        </address>
       </div>
     </footer>
   );
