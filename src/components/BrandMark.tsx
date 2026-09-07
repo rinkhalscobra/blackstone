@@ -3,12 +3,10 @@ interface BrandMarkProps {
 }
 
 /** Use the supplied artwork unchanged across public and account layouts. */
-const BrandMark = ({ className = "h-24 w-24" }: BrandMarkProps) => (
+const BrandMark = ({ className = "h-20 w-28 sm:h-24 sm:w-32" }: BrandMarkProps) => (
   <img
     src="/logo2.png"
     alt="Crest Financial"
-    width={1254}
-    height={1254}
     className={`object-contain ${className}`}
     decoding="async"
     draggable={false}
