@@ -1,0 +1,172 @@
+.public-site {
+  background-image: radial-gradient(ellipse at 80% 0%, rgba(150, 190, 165, 0.045), transparent 30%);
+}
+.public-gutter,
+.public-section {
+  width: 100%;
+  padding-left: 1rem;
+  padding-right: 1rem;
+}
+.public-section {
+  padding-top: 2.5rem;
+  padding-bottom: 2.5rem;
+  scroll-margin-top: 5rem;
+}
+.public-site .public-brand {
+  font-size: clamp(0.875rem, 1.4vw, 1.2rem);
+  line-height: 1.2;
+}
+.public-eyebrow {
+  font-size: 0.6875rem;
+  line-height: 1.6;
+  font-weight: 600;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  color: #a6bdb0;
+}
+.public-page-title {
+  font-size: clamp(2rem, 4.2vw, 4rem);
+  font-weight: 500;
+  letter-spacing: -0.045em;
+  line-height: 1.08;
+  overflow-wrap: break-word;
+}
+.public-section-title {
+  font-size: clamp(1.75rem, 2.7vw, 2.6rem);
+  font-weight: 500;
+  letter-spacing: -0.035em;
+  line-height: 1.15;
+}
+.public-description {
+  font-size: 1rem;
+  line-height: 1.7;
+  color: #aeb8b2;
+}
+.public-surface {
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 1rem;
+  background: #0e120f;
+  overflow: hidden;
+}
+.public-paper {
+  color: #1b2b22;
+  background: #e5ebe7;
+  border-radius: 0.875rem;
+}
+.public-button {
+  display: inline-flex;
+  min-height: 3rem;
+  align-items: center;
+  justify-content: center;
+  gap: 0.65rem;
+  padding: 0.75rem 1.25rem;
+  border-radius: 0.5rem;
+  background: #e5ebe7;
+  color: #16231b;
+  font-size: 0.875rem;
+  line-height: 1.5;
+  font-weight: 600;
+  text-align: center;
+  transition: background-color 0.15s;
+}
+.public-button:hover {
+  background: #fff;
+}
+.public-button-small {
+  min-height: 2.5rem;
+  padding: 0.5rem 1rem;
+}
+.public-button-outline {
+  background: transparent;
+  color: #e5ebe7;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+}
+.public-button-outline:hover {
+  background: rgba(255, 255, 255, 0.05);
+}
+.public-icon-button {
+  display: inline-flex;
+  flex-shrink: 0;
+  width: 2.5rem;
+  height: 2.5rem;
+  align-items: center;
+  justify-content: center;
+  border-radius: 0.5rem;
+  color: #c4cfc7;
+}
+.public-icon-button:hover {
+  background: rgba(255, 255, 255, 0.06);
+}
+.public-nav-link {
+  font-size: 0.875rem;
+  color: #b6c0ba;
+  transition: color 0.15s;
+}
+.public-nav-link:hover {
+  color: white;
+}
+.public-site :is(a, button, input, select):focus-visible {
+  outline: 2px solid #a7e0bd;
+  outline-offset: 4px;
+}
+.public-grid > *,
+.public-site main {
+  min-width: 0;
+}
+.public-site :is(input, select) {
+  min-width: 0;
+}
+.public-document {
+  font-size: 1rem;
+  line-height: 1.8;
+  color: #aeb8b2;
+}
+.public-document section {
+  scroll-margin-top: 6rem;
+  padding: 1.5rem 0;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+}
+.public-document h2 {
+  margin-bottom: 0.8rem;
+  font-size: 1.25rem;
+  line-height: 1.4;
+  font-weight: 500;
+  color: #edf1ee;
+}
+.public-document p + p {
+  margin-top: 1rem;
+}
+.public-document ul {
+  list-style: disc;
+  padding-left: 1.25rem;
+  margin-top: 1rem;
+}
+.public-document li + li {
+  margin-top: 0.5rem;
+}
+.public-site .recovery-hero {
+  padding-bottom: 1rem;
+}
+@media (min-width: 640px) {
+  .public-gutter,
+  .public-section {
+    padding-left: 1.5rem;
+    padding-right: 1.5rem;
+  }
+}
+@media (min-width: 1024px) {
+  .public-gutter,
+  .public-section {
+    padding-left: 2rem;
+    padding-right: 2rem;
+  }
+  .public-section {
+    padding-top: 3rem;
+    padding-bottom: 3rem;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .public-site * {
+    scroll-behavior: auto;
+  }
+}

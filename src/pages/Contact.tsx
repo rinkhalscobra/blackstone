@@ -1,124 +1,133 @@
-import Navigation from "@/components/Navigation";
-import Footer from "@/components/Footer";
-import { Card } from "@/components/ui/card";
-import { Phone, Mail, Copy, MapPin, BookOpen, Landmark } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { useToast } from "@/hooks/use-toast";
-import { useLanguage } from "@/contexts/LanguageContext";
+import { Link, useSearchParams } from 'react-router-dom';
+import { Mail, Phone, MapPin, Copy, ArrowUpRight, FileText } from 'lucide-react';
+import { PublicLayout, PublicPageHeader, PUBLIC_CONTACT } from '@/components/public/PublicLayout';
+import { PUBLIC_PLANS } from '@/components/public/PublicSections';
+import { usePublicContent } from '@/i18n/publicSite';
+import { useLanguage } from '@/contexts/LanguageContext';
+import { useToast } from '@/hooks/use-toast';
+import { useAuth } from '@/hooks/useAuth';
 
 const Contact = () => {
+  const p = usePublicContent();
+  const { t, language } = useLanguage();
+  const { user } = useAuth();
   const { toast } = useToast();
-  const { t } = useLanguage();
-
-  const copyToClipboard = (text: string, type: string) => {
-    navigator.clipboard.writeText(text);
-    toast({
-      title: t('common.copied'),
-      description: `${type} ${t('common.copiedToClipboard')}`,
-    });
+  const [params] = useSearchParams();
+  const plan = PUBLIC_PLANS.find((item) => item.id === params.get('plan'));
+  const billing = params.get('billing') === 'yearly' ? 'yearly' : 'monthly';
+  const enquiry = plan ? `${p('review')} — ${p(plan.id)} (${p(billing)})` : p('review');
+  const emailHref = `mailto:${PUBLIC_CONTACT.email}?subject=${encodeURIComponent(enquiry)}`;
+  const copy = async (text: string) => {
+    try {
+      await navigator.clipboard.writeText(text);
+      toast({ title: t('common.copied'), description: t('common.copiedToClipboard') });
+    } catch {
+      toast({ title: t('auth.error'), description: t('auth.unexpectedError'), variant: 'destructive' });
+    }
   };
-
   return (
-    <div className="min-h-screen bg-background pt-16">
-      <Navigation />
-      <main className="pt-8 pb-12">
-        <div className="container mx-auto px-4">
-          <div className="w-full">
-            <h1 className="text-4xl font-bold mb-12 text-center">{t('contact.title')}</h1>
-
-            <div className="space-y-6">
-              <Card className="bg-card border-border p-8">
-                <div className="flex items-center justify-between mb-6">
-                  <div className="flex items-center gap-3">
-                    <Phone className="h-6 w-6 text-primary" />
-                    <span className="text-sm font-medium text-muted-foreground">{t('common.phone').toUpperCase()}</span>
-                  </div>
-                </div>
-                <div className="flex items-center justify-between">
-                  <span className="text-xl font-mono">+44 7441 429776</span>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    onClick={() => copyToClipboard("+44 7441 429776", t('common.phone'))}
-                  >
-                    <Copy className="h-5 w-5" />
-                  </Button>
-                </div>
-              </Card>
-
-              <Card className="bg-card border-border p-8">
-                <div className="flex items-center justify-between mb-6">
-                  <div className="flex items-center gap-3">
-                    <Mail className="h-6 w-6 text-primary" />
-                    <span className="text-sm font-medium text-muted-foreground">{t('common.email').toUpperCase()}</span>
-                  </div>
-                </div>
-                <div className="flex items-center justify-between">
-                  <span className="text-xl font-mono">support@brightfund.com</span>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    onClick={() => copyToClipboard("support@brightfund.com", t('common.email'))}
-                  >
-                    <Copy className="h-5 w-5" />
-                  </Button>
-                </div>
-              </Card>
-
-              <Card className="bg-card border-border p-8">
-                <div className="flex items-center justify-between mb-6">
-                  <div className="flex items-center gap-3">
-                    <MapPin className="h-6 w-6 text-primary" />
-                    <span className="text-sm font-medium text-muted-foreground">ADDRESS</span>
-                  </div>
-                </div>
-                <div className="flex items-center justify-between">
-                  <address className="text-xl font-mono not-italic">63 Rue de Bouillon, L-1248 Luxembourg</address>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    onClick={() => copyToClipboard("63 Rue de Bouillon, L-1248 Luxembourg", "Address")}
-                  >
-                    <Copy className="h-5 w-5" />
-                  </Button>
-                </div>
-              </Card>
-
-              <Card className="bg-card border-border p-8">
-                <div className="flex items-center gap-3 mb-6">
-                  <BookOpen className="h-6 w-6 text-primary" />
-                  <span className="text-sm font-medium text-muted-foreground">IDENTIFICATION DATA</span>
-                </div>
-                <div className="space-y-4">
-                  <div className="flex items-center justify-between border-b border-border pb-4">
-                    <div className="flex items-center gap-3">
-                      <BookOpen className="h-5 w-5 text-primary" />
-                      <span className="text-sm text-muted-foreground">Registration number</span>
-                    </div>
-                    <span className="text-lg font-mono">B 146.532</span>
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-3">
-                      <Landmark className="h-5 w-5 text-primary" />
-                      <span className="text-sm text-muted-foreground">Local Court</span>
-                    </div>
-                    <span className="text-lg font-mono">2080 Luxembourg</span>
-                  </div>
-                </div>
-              </Card>
+    <PublicLayout>
+      <PublicPageHeader
+        eyebrow={t('nav.contact')}
+        title={p('contactTitle')}
+        description={p('contactIntro')}
+      />
+      <section className="public-section !pt-0">
+        {plan && (
+          <div
+            data-selected-plan={plan.id}
+            className="mb-6 flex flex-wrap items-center justify-between gap-4 rounded-xl border border-[#789886] bg-[#132118] p-5"
+          >
+            <div>
+              <p className="public-eyebrow">{p('chosen')}</p>
+              <h2 className="mt-2 text-lg font-medium">
+                {p(plan.id)} · {p(billing)}
+              </h2>
             </div>
-
-            <div className="mt-12 text-center">
-              <p className="text-muted-foreground">
-                {t('contact.responseTime')}
-              </p>
+            <span className="text-xl font-medium">
+              {plan[billing] === 0
+                ? p('free')
+                : new Intl.NumberFormat(language, {
+                    style: 'currency',
+                    currency: 'EUR',
+                    maximumFractionDigits: 0,
+                  }).format(plan[billing])}
+            </span>
+          </div>
+        )}
+        <div className="public-grid grid gap-6 lg:grid-cols-[1.15fr_1fr]">
+          <div className="public-surface divide-y divide-white/10">
+            {[
+              { label: p('email'), value: PUBLIC_CONTACT.email, href: emailHref, icon: Mail },
+              {
+                label: p('phone'),
+                value: PUBLIC_CONTACT.phone,
+                href: `tel:${PUBLIC_CONTACT.phoneHref}`,
+                icon: Phone,
+              },
+            ].map((item) => (
+              <div key={item.label} className="p-6 sm:p-8">
+                <div className="mb-5 flex items-center gap-3 text-[#a6c7b3]">
+                  <item.icon className="h-5 w-5" />
+                  <h2 className="text-sm font-medium">{item.label}</h2>
+                </div>
+                <div className="flex items-start justify-between gap-3">
+                  <a
+                    href={item.href}
+                    className="min-w-0 break-words text-xl font-medium tracking-tight hover:text-[#b7d5c3] sm:text-2xl"
+                  >
+                    {item.value}
+                  </a>
+                  <button
+                    type="button"
+                    aria-label={`${p('copy')} ${item.value}`}
+                    className="public-icon-button"
+                    onClick={() => copy(item.value)}
+                  >
+                    <Copy className="h-4 w-4" />
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
+          <div className="public-paper flex flex-col justify-between gap-7 p-6 sm:p-8">
+            <div>
+              <FileText className="mb-6 h-7 w-7" strokeWidth={1.4} />
+              <h2 className="text-2xl font-medium tracking-tight">{p('preparation')}</h2>
+              <p className="mt-4 text-base leading-relaxed text-[#3b5345]">{p('preparationDesc')}</p>
             </div>
+            <Link
+              to={user ? '/dashboard/messages' : '/auth'}
+              className="inline-flex items-center gap-2 text-sm font-semibold"
+            >
+              {user ? t('nav.messages') : t('nav.login')}
+              <ArrowUpRight className="h-4 w-4" />
+            </Link>
           </div>
         </div>
-      </main>
-      <Footer />
-    </div>
+        <div className="public-grid mt-7 grid gap-6 border-y border-white/10 py-6 md:grid-cols-2">
+          <div className="flex items-start gap-3">
+            <MapPin className="mt-1 h-5 w-5 shrink-0 text-[#a6c7b3]" />
+            <div>
+              <h2 className="public-eyebrow">{p('office')}</h2>
+              <address className="mt-3 text-sm not-italic leading-relaxed text-neutral-300">
+                {PUBLIC_CONTACT.address}
+              </address>
+            </div>
+          </div>
+          <dl className="grid grid-cols-2 gap-4 text-sm">
+            <div>
+              <dt className="text-neutral-500">R.C.S. Luxembourg</dt>
+              <dd className="mt-2">{PUBLIC_CONTACT.registration}</dd>
+            </div>
+            <div>
+              <dt className="text-neutral-500">{t('nav.legal')}</dt>
+              <dd className="mt-2">{PUBLIC_CONTACT.court}</dd>
+            </div>
+          </dl>
+        </div>
+      </section>
+    </PublicLayout>
   );
 };
-
 export default Contact;

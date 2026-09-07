@@ -234,7 +234,7 @@ export const getExchangeRates = async (base: string, quotes: string[]): Promise<
     if (!data?.rates || typeof data.rates !== 'object') return {};
     return Object.fromEntries(
       Object.entries(data.rates)
-        .map(([symbol, rate]) => [symbol, Number(rate)])
+        .map(([symbol, rate]): [string, number] => [symbol, Number(rate)])
         .filter(([, rate]) => Number.isFinite(rate) && rate > 0),
     );
   } catch (error) {

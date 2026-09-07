@@ -1,51 +1,64 @@
-import Navigation from "@/components/Navigation";
-import Footer from "@/components/Footer";
-import { Input } from "@/components/ui/input";
-import { Search, X } from "lucide-react";
-import { useLanguage } from "@/contexts/LanguageContext";
+import { useState } from 'react';
+import { Search, FileText } from 'lucide-react';
+import { PublicLayout, PublicPageHeader, PublicTextLink } from '@/components/public/PublicLayout';
+import { Accordion, AccordionItem, AccordionTrigger, AccordionContent } from '@/components/ui/accordion';
+import { usePublicContent } from '@/i18n/publicSite';
 
 const News = () => {
-  const { t } = useLanguage();
-
+  const p = usePublicContent();
+  const [search, setSearch] = useState('');
+  const guides = [
+    { title: 'preparation', description: 'preparationDesc', body: 'answer1' },
+    { title: 'statusGuide', description: 'fundsIntro', body: 'answer2' },
+    { title: 'careTitle', description: 'careIntro', body: 'answer3' },
+  ] as const;
+  const filtered = guides.filter((guide) =>
+    `${p(guide.title)} ${p(guide.description)}`.toLowerCase().includes(search.toLowerCase()),
+  );
   return (
-    <div className="min-h-screen bg-background pt-16">
-      <Navigation />
-      <main className="pt-8 pb-12">
-        <div className="container mx-auto px-4">
-          <h1 className="text-4xl font-bold mb-4">{t('pages.newsTitle')}</h1>
-          <p className="text-muted-foreground mb-8 max-w-3xl">
-            {t('pages.newsDescription')}
+    <PublicLayout>
+      <PublicPageHeader eyebrow={p('resources')} title={p('newsTitle')} description={p('newsIntro')} />
+      <section className="public-section !pt-0">
+        <label className="public-surface mb-6 flex items-center gap-3 px-5 py-4">
+          <Search className="h-5 w-5 shrink-0 text-neutral-400" />
+          <span className="sr-only">{p('resources')}</span>
+          <input
+            value={search}
+            onChange={(event) => setSearch(event.target.value)}
+            placeholder={p('resources')}
+            className="w-full bg-transparent text-sm outline-none"
+          />
+        </label>
+        <Accordion type="single" collapsible className="space-y-4">
+          {filtered.map((guide) => (
+            <AccordionItem key={guide.title} value={guide.title} className="public-surface px-5 sm:px-7">
+              <AccordionTrigger className="gap-4 py-6 text-left hover:no-underline">
+                <span className="flex items-start gap-4">
+                  <FileText className="mt-1 h-5 w-5 shrink-0 text-[#a5cbb4]" />
+                  <span>
+                    <span className="block text-xl font-medium">{p(guide.title)}</span>
+                    <span className="mt-3 block text-sm font-normal leading-relaxed text-neutral-400">
+                      {p(guide.description)}
+                    </span>
+                  </span>
+                </span>
+              </AccordionTrigger>
+              <AccordionContent className="border-t border-white/10 py-5 text-base leading-relaxed text-neutral-300">
+                {p(guide.body)}
+                <div className="mt-5">
+                  <PublicTextLink to="/faq">{p('readMore')}</PublicTextLink>
+                </div>
+              </AccordionContent>
+            </AccordionItem>
+          ))}
+        </Accordion>
+        {filtered.length === 0 && (
+          <p role="status" className="public-description py-8">
+            {p('emptySearch')}
           </p>
-          
-          <div className="bg-primary/10 border border-primary/30 rounded-lg p-4 mb-8">
-            <p className="text-sm text-foreground">
-              ℹ️ {t('pages.newsSource')}{" "}
-              <a href="#" className="text-primary hover:underline">{t('pages.here')}</a>.
-            </p>
-          </div>
-          
-          <div className="relative max-w-2xl mx-auto mb-12">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-muted-foreground" />
-            <Input 
-              placeholder={t('pages.searchCoin')} 
-              className="pl-10 pr-10 bg-card border-border h-12"
-            />
-            <X className="absolute right-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-muted-foreground cursor-pointer" />
-          </div>
-          
-          <div className="flex flex-col items-center justify-center py-20">
-            <div className="w-32 h-32 bg-muted/20 rounded-full flex items-center justify-center mb-4">
-              <svg className="w-16 h-16 text-muted-foreground" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-              </svg>
-            </div>
-            <p className="text-muted-foreground">{t('pages.noDataDisplay')}</p>
-          </div>
-        </div>
-      </main>
-      <Footer />
-    </div>
+        )}
+      </section>
+    </PublicLayout>
   );
 };
-
 export default News;

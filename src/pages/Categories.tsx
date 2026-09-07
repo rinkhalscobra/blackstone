@@ -1,60 +1,43 @@
-import Navigation from "@/components/Navigation";
-import Footer from "@/components/Footer";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { useLanguage } from "@/contexts/LanguageContext";
+import { FileText, Coins, Wallet } from 'lucide-react';
+import { PublicLayout, PublicPageHeader, PublicTextLink } from '@/components/public/PublicLayout';
+import { ContactSection } from '@/components/public/PublicSections';
+import { usePublicContent } from '@/i18n/publicSite';
+import { useLanguage } from '@/contexts/LanguageContext';
 
 const Categories = () => {
+  const p = usePublicContent();
   const { t } = useLanguage();
-
-  const categories = [
-    { name: "Binance Ecosystem", change: "+1.04%", tokens: 732, marketCap: "€3,529,411,687,247", volume: "€400,976,705,432" },
-    { name: "Layer 1", change: "-2.84%", tokens: 132, marketCap: "€2,947,764,148,397", volume: "€155,190,365,438" },
-    { name: "FTX Bankruptcy Estate", change: "+2.91%", tokens: 26, marketCap: "€2,883,274,596,137", volume: "€151,438,287,240" },
-    { name: "US Strategic Crypto Reserve", change: "-2.94%", tokens: 5, marketCap: "€2,851,574,494,197", volume: "€148,912,791,876" },
-    { name: "Alameda Research Portfolio", change: "-2.89%", tokens: 61, marketCap: "€2,788,333,608,840", volume: "€144,542,783,295" },
-  ];
-
+  const entries = [
+    { title: 'native', description: 'nativeDesc', icon: Coins },
+    { title: 'tokens', description: 'tokensDesc', icon: FileText },
+    { title: 'balances', description: 'balancesDesc', icon: Wallet },
+  ] as const;
   return (
-    <div className="min-h-screen bg-background pt-16">
-      <Navigation />
-      <main className="pt-8 pb-12">
-        <div className="container mx-auto px-4">
-          <h1 className="text-4xl font-bold mb-4">{t('pages.categoriesTitle')}</h1>
-          <p className="text-muted-foreground mb-8 max-w-3xl">
-            {t('pages.categoriesDescription')}
-          </p>
-          
-          <div className="bg-card border border-border rounded-lg overflow-hidden">
-            <Table>
-              <TableHeader>
-                <TableRow className="hover:bg-transparent border-border">
-                  <TableHead className="text-muted-foreground">{t('crypto.name')}</TableHead>
-                  <TableHead className="text-muted-foreground">{t('pages.avgPriceChange')}</TableHead>
-                  <TableHead className="text-muted-foreground">{t('pages.nrTokens')}</TableHead>
-                  <TableHead className="text-muted-foreground">{t('crypto.marketCap')}</TableHead>
-                  <TableHead className="text-muted-foreground">{t('pages.volume24h')}</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {categories.map((category, index) => (
-                  <TableRow key={index} className="border-border hover:bg-secondary/50">
-                    <TableCell className="font-medium">{category.name}</TableCell>
-                    <TableCell className={category.change.startsWith('+') ? 'text-success' : 'text-destructive'}>
-                      {category.change}
-                    </TableCell>
-                    <TableCell>{category.tokens}</TableCell>
-                    <TableCell>{category.marketCap}</TableCell>
-                    <TableCell>{category.volume}</TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </div>
+    <PublicLayout>
+      <PublicPageHeader
+        eyebrow={t('nav.categories')}
+        title={p('categoriesTitle')}
+        description={p('categoriesIntro')}
+      />
+      <section className="public-section !pt-0">
+        <div className="public-grid grid gap-5 md:grid-cols-3">
+          {entries.map((item, index) => (
+            <article key={item.title} className="public-surface p-6 sm:p-8">
+              <div className="flex justify-between text-[#abcbb8]">
+                <item.icon className="h-7 w-7" strokeWidth={1.4} />
+                <span className="text-xs">0{index + 1}</span>
+              </div>
+              <h2 className="mt-7 text-2xl font-medium">{p(item.title)}</h2>
+              <p className="public-description mt-4">{p(item.description)}</p>
+            </article>
+          ))}
         </div>
-      </main>
-      <Footer />
-    </div>
+        <div className="mt-6">
+          <PublicTextLink to="/cryptocurrencies">{p('marketLink')}</PublicTextLink>
+        </div>
+      </section>
+      <ContactSection />
+    </PublicLayout>
   );
 };
-
 export default Categories;
