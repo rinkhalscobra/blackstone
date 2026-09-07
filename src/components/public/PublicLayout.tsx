@@ -51,7 +51,7 @@ const PublicNavigation = () => {
 
   return (
     <header className="fixed inset-x-0 top-0 z-50 border-b border-white/10 bg-[#080b09]/95 backdrop-blur-xl">
-      <div className="public-gutter flex h-28 items-center justify-between gap-3">
+      <div className="public-gutter flex h-16 items-center justify-between gap-3 sm:h-28">
         <PublicBrand />
         <nav aria-label={p('explore')} className="hidden items-center gap-5 xl:flex">
           {sections.map((item) => (
@@ -217,7 +217,7 @@ export const PublicPageHeader = ({
   title: string;
   description?: string;
 }) => (
-  <div className="public-gutter pb-7 pt-40">
+  <div className="public-gutter pb-7 pt-28 sm:pt-40">
     <p className="public-eyebrow flex items-center gap-2">
       <span className="h-1.5 w-1.5 rounded-full bg-emerald-200" />
       {eyebrow}

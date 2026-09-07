@@ -49,7 +49,7 @@ const RecoveryHero = () => {
   };
 
   return (
-    <section id="recovery" aria-labelledby="recovery-title" className="showcase-anchor recovery-hero w-full px-4 pb-4 pt-36 sm:px-6 lg:px-8 lg:pt-40">
+    <section id="recovery" aria-labelledby="recovery-title" className="showcase-anchor recovery-hero w-full px-4 pb-4 pt-24 sm:px-6 sm:pt-36 lg:px-8 lg:pt-40">
       <div className="flex flex-wrap items-center justify-between gap-x-6 gap-y-3 border-b border-white/10 pb-5 text-xs font-medium uppercase tracking-[0.16em] text-neutral-400">
         <span className="inline-flex items-center gap-2.5 text-neutral-200">
           <span className="h-1.5 w-1.5 rounded-full bg-emerald-200" aria-hidden="true" />

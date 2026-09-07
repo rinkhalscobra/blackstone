@@ -94,7 +94,7 @@ const WatchlistNew = () => {
 
   if (!user) {
     return (
-      <div className="min-h-screen bg-background pt-28">
+      <div className="min-h-screen bg-background pt-16 sm:pt-28">
         <Navigation />
         <main className="pt-8 pb-12">
           <div className="container mx-auto px-4 text-center">
@@ -112,7 +112,7 @@ const WatchlistNew = () => {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-background pt-28">
+      <div className="min-h-screen bg-background pt-16 sm:pt-28">
         <Navigation />
         <main className="pt-8 pb-12">
           <div className="container mx-auto px-4 text-center">
@@ -125,7 +125,7 @@ const WatchlistNew = () => {
   }
 
   return (
-    <div className="min-h-screen bg-background pt-28">
+    <div className="min-h-screen bg-background pt-16 sm:pt-28">
       <Navigation />
       <main className="pt-8 pb-12">
         <div className="container mx-auto px-4">

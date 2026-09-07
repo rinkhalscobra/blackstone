@@ -141,13 +141,13 @@ export const StaffDashboardLayout = ({
   );
 
   return (
-    <div className="min-h-screen bg-transparent pt-28">
+    <div className="min-h-screen bg-transparent pt-16 sm:pt-28">
       <Backdrop />
       <Navigation />
 
       
       {onRefresh ? (
-        <PullToRefresh onRefresh={handleRefresh} className="min-h-[calc(100vh-7rem)]">
+        <PullToRefresh onRefresh={handleRefresh} className="min-h-[calc(100vh-4rem)] sm:min-h-[calc(100vh-7rem)]">
           {content}
         </PullToRefresh>
       ) : (
