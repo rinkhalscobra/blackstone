@@ -56,8 +56,8 @@ const Index = () => {
       </div>
 
       {/* Guide lines */}
-      <div className="hidden md:block fixed inset-y-0 left-1/2 -translate-x-[36rem] w-px bg-white/5 z-0 pointer-events-none" />
-      <div className="hidden md:block fixed inset-y-0 left-1/2 translate-x-[36rem] w-px bg-white/5 z-0 pointer-events-none" />
+      <div className="hidden md:block fixed inset-y-0 left-8 w-px bg-white/5 z-0 pointer-events-none" />
+      <div className="hidden md:block fixed inset-y-0 right-8 w-px bg-white/5 z-0 pointer-events-none" />
 
       {/* Content */}
       <div className="relative z-10">
@@ -66,7 +66,7 @@ const Index = () => {
         {/* Split hero */}
         <section
           id="recovery"
-          className="showcase-anchor max-w-6xl mx-auto px-6 pt-28 pb-14 md:pt-36 md:pb-20 grid lg:grid-cols-[1.08fr_0.92fr] gap-12 lg:gap-16 items-center"
+          className="showcase-anchor grid w-full items-center gap-10 px-4 pb-10 pt-24 sm:px-6 md:pb-12 md:pt-28 lg:grid-cols-[minmax(0,0.8fr)_minmax(0,1.2fr)] lg:gap-8 lg:px-8 xl:gap-10"
         >
           <motion.div
             initial={{ opacity: 0, x: -24 }}
@@ -173,7 +173,7 @@ const Index = () => {
           initial={{ opacity: 0, y: 16 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.7, duration: 0.7 }}
-          className="max-w-6xl mx-auto px-6 pb-8"
+          className="w-full px-4 sm:px-6 lg:px-8 pb-8"
           aria-label="Recovery results"
         >
           <div className="grid grid-cols-2 overflow-hidden rounded-2xl border border-white/10 bg-black/20 backdrop-blur-sm md:grid-cols-4">

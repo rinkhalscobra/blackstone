@@ -215,7 +215,7 @@ export const WithdrawForm = () => {
   };
 
   return (
-    <Card className="mx-auto max-w-4xl">
+    <Card className="w-full">
       <CardHeader>
         <div className="flex items-center gap-3">
           <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-destructive/10">

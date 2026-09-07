@@ -12,7 +12,7 @@ const MoneyRetrieved = () => {
   } = useLanguage();
   return <section className="py-20 bg-gradient-to-b from-transparent via-primary/5 to-transparent">
       <div className="container mx-auto px-4">
-        <div className="max-w-4xl mx-auto">
+        <div className="w-full">
           {/* Stats Grid */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-12">
             <div className="text-center">

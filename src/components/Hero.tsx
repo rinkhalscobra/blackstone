@@ -16,7 +16,7 @@ const Hero = () => {
       <div className="absolute bottom-1/4 left-1/4 w-64 h-64 bg-primary/15 rounded-full blur-[100px]" />
       
       <div className="container mx-auto px-4 py-20 relative z-10">
-        <div className="max-w-4xl mx-auto text-center">
+        <div className="w-full text-center">
           {/* Trust Badge */}
           <div className="inline-flex items-center gap-2 bg-primary/10 border border-primary/20 rounded-full px-4 py-2 mb-8">
             <Shield className="h-4 w-4 text-primary" />

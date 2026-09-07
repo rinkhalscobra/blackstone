@@ -19,7 +19,7 @@ const ShowcaseNav = () => (
     className="sticky top-0 z-50 w-full px-3 pt-3"
   >
     <nav
-      className="max-w-6xl mx-auto rounded-2xl border border-white/10 bg-black/90 px-4 py-3 shadow-[0_16px_50px_-28px_rgba(0,0,0,0.9)] backdrop-blur-xl flex items-center justify-between"
+      className="w-full rounded-2xl border border-white/10 bg-black/90 px-4 py-3 shadow-[0_16px_50px_-28px_rgba(0,0,0,0.9)] backdrop-blur-xl flex items-center justify-between"
       aria-label="Main navigation"
     >
       <Logo size="md" />

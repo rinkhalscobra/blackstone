@@ -17,14 +17,14 @@ const Panel = ({ children, className = "" }: { children: React.ReactNode; classN
 
 const MarketBand = () => {
   return (
-    <section className="relative py-24 px-6">
-      <div className="max-w-6xl mx-auto">
+    <section className="relative w-full px-4 py-16 sm:px-6 md:py-20 lg:px-8">
+      <div className="w-full">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true, margin: "-100px" }}
           transition={{ duration: 0.8, ease }}
-          className="flex flex-col items-center text-center mb-14"
+          className="mb-10 flex flex-col items-center text-center"
         >
           <SectionEyebrow label="Live market" tag="Real time" />
           <h2 className="showcase-section-title mt-4">

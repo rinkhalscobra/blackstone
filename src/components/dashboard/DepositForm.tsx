@@ -322,7 +322,7 @@ export const DepositForm = () => {
   };
 
   return (
-    <Card className="mx-auto max-w-3xl">
+    <Card className="w-full">
       <CardHeader>
         <div className="flex items-center gap-3">
           <div className="flex h-12 w-12 items-center justify-center rounded-full bg-success/10">

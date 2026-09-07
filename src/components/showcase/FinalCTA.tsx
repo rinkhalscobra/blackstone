@@ -3,7 +3,7 @@ import { ChevronRight } from "lucide-react";
 import { AppleButton } from "./primitives";
 
 const FinalCTA = () => (
-  <section id="contact" className="showcase-anchor max-w-6xl mx-auto px-6 py-20 md:py-32 relative z-10">
+  <section id="contact" className="showcase-anchor relative z-10 w-full px-4 py-16 sm:px-6 md:py-24 lg:px-8">
     <motion.div
       initial={{ opacity: 0, y: 30 }}
       whileInView={{ opacity: 1, y: 0 }}

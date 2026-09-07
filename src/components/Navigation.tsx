@@ -1,6 +1,6 @@
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { Menu, Search, Bell, ChevronDown, User, LayoutDashboard, Wallet, FileText, HeadphonesIcon, LogOut, Shield, Users, MessageCircle, BadgeDollarSign } from "lucide-react";
+import { Menu, Search, Bell, ChevronDown, User, LayoutDashboard, Wallet, FileText, HeadphonesIcon, LogOut, Shield, Users, MessageCircle, BadgeDollarSign, type LucideIcon } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -65,7 +65,7 @@ const Navigation = ({ landing = false }: NavigationProps) => {
   ];
 
   // Authenticated user links
-  const userLinks = [
+  const userLinks: Array<{ to: string; label: string; icon: LucideIcon; badge?: number }> = [
     { to: "/dashboard", label: t('nav.dashboard'), icon: LayoutDashboard },
     { to: "/dashboard/messages", label: t('nav.messages'), icon: MessageCircle, badge: unreadMessages },
     { to: "/dashboard/funds", label: "Located Funds", icon: BadgeDollarSign },
@@ -93,7 +93,7 @@ const Navigation = ({ landing = false }: NavigationProps) => {
 
   return (
     <nav className="fixed top-0 left-0 right-0 z-50 border-b border-white/5 bg-background/40 backdrop-blur-xl supports-[backdrop-filter]:bg-background/30">
-      <div className="container mx-auto px-4">
+      <div className="container px-4 sm:px-6 lg:px-8">
         <div className="flex h-16 items-center justify-between">
           <Logo size="md" />
 
@@ -142,9 +142,9 @@ const Navigation = ({ landing = false }: NavigationProps) => {
                 <Link key={link.to} to={link.to} className="text-sm text-foreground hover:text-primary transition-colors flex items-center gap-1 relative">
                   <link.icon className="h-4 w-4" />
                   {link.label}
-                  {(link as any).badge > 0 && (
+                  {Boolean(link.badge && link.badge > 0) && (
                     <Badge className="absolute -top-2 -right-4 h-4 min-w-4 p-0 flex items-center justify-center text-[10px] bg-destructive">
-                      {(link as any).badge}
+                      {link.badge}
                     </Badge>
                   )}
                 </Link>

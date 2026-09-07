@@ -139,7 +139,7 @@ html {
 /* Pricing */
 .c3-pricing-section {
   position: relative;
-  padding: 40px 20px 80px;
+  padding: 32px 20px 64px;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -148,9 +148,8 @@ html {
 .c3-watermark-container {
   position: relative;
   width: 100%;
-  max-width: 1100px;
   text-align: center;
-  margin-top: 40px;
+  margin-top: 24px;
   z-index: 2;
 }
 .c3-watermark-main {
@@ -172,9 +171,7 @@ html {
   grid-template-columns: repeat(3, 1fr);
   gap: 24px;
   width: 100%;
-  max-width: 1100px;
-  margin-top: 60px;
-  transform: translateX(20px);
+  margin-top: 40px;
   position: relative;
   z-index: 3;
 }
@@ -268,7 +265,6 @@ html {
   justify-content: flex-end;
   gap: 12px;
   width: 100%;
-  max-width: 1100px;
   margin-top: 32px;
   padding-right: 20px;
   color: rgba(255, 255, 255, 0.7);

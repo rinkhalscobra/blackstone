@@ -3,7 +3,7 @@ import { motion } from "framer-motion";
 const partners = ["Binance", "Coinbase", "Kraken", "Crypto.com", "Chainalysis", "Elliptic", "Interpol", "Europol"];
 
 const LogoCloud = () => (
-  <section className="max-w-6xl mx-auto px-6 py-16 md:py-20 relative z-10">
+  <section className="relative z-10 w-full px-4 py-12 sm:px-6 md:py-16 lg:px-8">
     <div className="text-center text-xs uppercase tracking-widest text-white/40">
       Trusted by partners across the recovery ecosystem
     </div>

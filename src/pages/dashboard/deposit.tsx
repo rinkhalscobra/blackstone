@@ -4,7 +4,7 @@ import { DepositForm } from '@/components/dashboard/DepositForm';
 const DepositPage = () => {
   return (
     <DashboardLayout>
-      <div className="max-w-3xl mx-auto">
+      <div className="w-full">
         <DepositForm />
       </div>
     </DashboardLayout>

@@ -23,7 +23,7 @@ const Contact = () => {
       <Navigation />
       <main className="pt-8 pb-12">
         <div className="container mx-auto px-4">
-          <div className="max-w-2xl mx-auto">
+          <div className="w-full">
             <h1 className="text-4xl font-bold mb-12 text-center">{t('contact.title')}</h1>
 
             <div className="space-y-6">

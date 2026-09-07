@@ -24,7 +24,7 @@ const About = () => {
       <Navigation />
       <main className="pt-8 pb-12">
         <div className="container mx-auto px-4">
-          <div className="max-w-4xl mx-auto">
+          <div className="w-full">
             <div className="flex justify-center mb-12">
               <Logo size="lg" showText={false} linkTo={undefined} />
             </div>

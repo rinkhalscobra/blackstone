@@ -82,7 +82,7 @@ export const DashboardLayout = ({ children }: DashboardLayoutProps) => {
 
       {/* Header */}
       <header className="sticky top-0 z-50 border-b border-white/10 bg-background/50 backdrop-blur-xl">
-        <div className="container mx-auto px-4">
+        <div className="container px-4 sm:px-6 lg:px-8">
           <div className="flex h-16 items-center justify-between">
             <div className="flex items-center gap-4">
               <Button
@@ -117,7 +117,7 @@ export const DashboardLayout = ({ children }: DashboardLayoutProps) => {
       </header>
 
       {/* Windowed shell */}
-      <div className="w-full max-w-[1600px] mx-auto px-3 sm:px-4 py-4 sm:py-6">
+      <div className="w-full px-3 sm:px-4 py-4 sm:py-6">
         <WindowChrome title="BrightFund Recovery — Case Center" className="lg:overflow-clip">
           <div className="flex min-h-[calc(100vh-11rem)] items-stretch">
             {/* Sidebar */}

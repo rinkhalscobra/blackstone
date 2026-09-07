@@ -49,7 +49,7 @@ const AppMockup = () => (
     whileInView={{ opacity: 1, y: 0 }}
     viewport={{ once: true, margin: "-100px" }}
     transition={{ duration: 0.9, ease: [0.22, 1, 0.36, 1], delay: 0.1 }}
-    className="showcase-anchor max-w-6xl mx-auto px-6 py-16 md:py-24 relative z-10"
+    className="showcase-anchor relative z-10 w-full px-4 py-12 sm:px-6 md:py-16 lg:px-8"
   >
     <div className="relative rounded-2xl overflow-hidden border border-white/10 bg-[#090909]/90 backdrop-blur-2xl shadow-[0_40px_120px_-20px_rgba(255,255,255,0.12)]">
       {/* Title bar */}

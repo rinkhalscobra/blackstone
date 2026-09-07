@@ -31,8 +31,8 @@ const buckets = [
 ];
 
 const FraudPanel = () => (
-  <section id="cases" className="showcase-anchor max-w-6xl mx-auto px-6 py-20 md:py-28 relative z-10">
-    <div className="grid md:grid-cols-2 gap-10 md:gap-16 items-start">
+  <section id="cases" className="showcase-anchor relative z-10 w-full px-4 py-16 sm:px-6 md:py-20 lg:px-8">
+    <div className="grid items-start gap-8 md:grid-cols-2 lg:gap-10">
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         whileInView={{ opacity: 1, y: 0 }}

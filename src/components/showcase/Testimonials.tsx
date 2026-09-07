@@ -23,7 +23,7 @@ const items = [
 ];
 
 const Testimonials = () => (
-  <section className="max-w-6xl mx-auto px-6 py-20 md:py-28 border-t border-white/10 relative z-10">
+  <section className="relative z-10 w-full border-t border-white/10 px-4 py-16 sm:px-6 md:py-20 lg:px-8">
     <div className="grid md:grid-cols-3 gap-6">
       {items.map((t) => (
         <figure key={t.name} className="liquid-glass rounded-2xl p-6">

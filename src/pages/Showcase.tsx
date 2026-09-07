@@ -112,7 +112,7 @@ const Showcase = () => {
           transition={{ delay: 0.9, duration: 0.6 }}
           className="w-full h-10 bg-black/40 backdrop-blur-md border-t border-b border-white/10"
         >
-          <div className="max-w-6xl mx-auto px-6 h-full flex items-center justify-between text-xs">
+          <div className="w-full px-4 sm:px-6 lg:px-8 h-full flex items-center justify-between text-xs">
             <div className="flex items-center gap-4">
               <span className="text-white font-bold">BrightFund Recovery</span>
               {menuItems.map((m, i) => (
