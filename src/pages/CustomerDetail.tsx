@@ -17,7 +17,7 @@ import { useToast } from '@/hooks/use-toast';
 import { 
   ArrowLeft, User, FileText, Bell, Key, Plus, Pencil,
   RefreshCw, Loader2, Check, X, ChevronDown, ChevronUp, Clock, MessageCircle, Trash2,
-  AlertCircle, CheckCircle, AlertTriangle, Info, Landmark, BadgeDollarSign, FolderKanban
+  AlertCircle, CheckCircle, AlertTriangle, Info, Landmark, BadgeDollarSign, FolderKanban, Bitcoin, Coins
 } from 'lucide-react';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import AdjustBalanceDialog from '@/components/admin/AdjustBalanceDialog';
@@ -36,6 +36,9 @@ import { TransactionReviewDialog } from '@/components/admin/TransactionReviewDia
 import type { Json } from '@/integrations/supabase/types';
 import { BALANCE_CURRENCIES, balanceForCurrency } from '@/lib/balances';
 import { RecoveryFundsPanel } from '@/components/dashboard/RecoveryFundsPanel';
+import AdjustCryptoBalanceDialog from '@/components/admin/AdjustCryptoBalanceDialog';
+import DeleteCryptoBalanceDialog from '@/components/admin/DeleteCryptoBalanceDialog';
+import { formatCryptoQuantity, type CryptoBalance, type CryptoBalanceAdjustment } from '@/lib/cryptoBalances';
 
 interface CustomerProfile {
   id: string;
@@ -125,6 +128,8 @@ const CustomerDetail = (): JSX.Element => {
   const [transactions, setTransactions] = useState<TransactionRequest[]>([]);
   const [sessions, setSessions] = useState<UserSession[]>([]);
   const [customerBalances, setCustomerBalances] = useState<CustomerBalance[]>([]);
+  const [cryptoBalances, setCryptoBalances] = useState<CryptoBalance[]>([]);
+  const [cryptoAdjustments, setCryptoAdjustments] = useState<CryptoBalanceAdjustment[]>([]);
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [loading, setLoading] = useState(true);
   const [newNote, setNewNote] = useState('');
@@ -210,6 +215,40 @@ const CustomerDetail = (): JSX.Element => {
         )
         .subscribe();
 
+      const cryptoBalanceChannel = supabase
+        .channel(`crypto-balance-${customerId}`)
+        .on(
+          'postgres_changes',
+          { event: '*', schema: 'public', table: 'portfolio_items', filter: `user_id=eq.${customerId}` },
+          (payload) => {
+            if (payload.eventType === 'DELETE') {
+              const removed = payload.old as Pick<CryptoBalance, 'id'>;
+              setCryptoBalances((current) => current.filter((balance) => balance.id !== removed.id));
+              return;
+            }
+
+            const changed = payload.new as CryptoBalance;
+            setCryptoBalances((current) => {
+              const exists = current.some((balance) => balance.id === changed.id);
+              return exists
+                ? current.map((balance) => balance.id === changed.id ? changed : balance)
+                : [...current, changed].sort((a, b) => a.crypto_symbol.localeCompare(b.crypto_symbol));
+            });
+          },
+        )
+        .subscribe();
+
+      const cryptoAdjustmentsChannel = supabase
+        .channel(`crypto-adjustments-${customerId}`)
+        .on(
+          'postgres_changes',
+          { event: 'INSERT', schema: 'public', table: 'crypto_balance_adjustments', filter: `customer_id=eq.${customerId}` },
+          (payload) => {
+            setCryptoAdjustments((current) => [payload.new as CryptoBalanceAdjustment, ...current].slice(0, 5));
+          },
+        )
+        .subscribe();
+
       const notificationsChannel = supabase
         .channel(`notifications-${customerId}`)
         .on(
@@ -263,6 +302,8 @@ const CustomerDetail = (): JSX.Element => {
         supabase.removeChannel(profileChannel);
         supabase.removeChannel(transactionsChannel);
         supabase.removeChannel(balanceChannel);
+        supabase.removeChannel(cryptoBalanceChannel);
+        supabase.removeChannel(cryptoAdjustmentsChannel);
         supabase.removeChannel(notificationsChannel);
         supabase.removeChannel(notesChannel);
         supabase.removeChannel(timelineChannel);
@@ -283,7 +324,7 @@ const CustomerDetail = (): JSX.Element => {
       
       const agentIds = agentRoles?.map(r => r.user_id) || [];
       
-      const [profileRes, notesRes, transactionsRes, sessionsRes, agentsRes, balanceRes, notificationsRes] = await Promise.all([
+      const [profileRes, notesRes, transactionsRes, sessionsRes, agentsRes, balanceRes, cryptoBalanceRes, cryptoAdjustmentsRes, notificationsRes] = await Promise.all([
         supabase.from('profiles').select('*').eq('id', customerId).single(),
         supabase.from('customer_notes').select('*').eq('customer_id', customerId).order('created_at', { ascending: false }),
         supabase.from('transaction_requests').select('*').eq('customer_id', customerId).order('created_at', { ascending: false }),
@@ -292,6 +333,8 @@ const CustomerDetail = (): JSX.Element => {
           ? supabase.from('profiles').select('id, email, first_name, last_name').in('id', agentIds)
           : Promise.resolve({ data: [], error: null }),
         supabase.from('customer_balances').select('*').eq('customer_id', customerId).order('currency'),
+        supabase.from('portfolio_items').select('id, crypto_id, crypto_name, crypto_symbol, quantity, purchase_price').eq('user_id', customerId).order('crypto_symbol'),
+        supabase.from('crypto_balance_adjustments').select('id, adjustment_type, amount, balance_after, crypto_id, crypto_symbol, reason, created_at').eq('customer_id', customerId).order('created_at', { ascending: false }).limit(5),
         supabase.from('notifications').select('*').eq('user_id', customerId).order('created_at', { ascending: false })
       ]);
 
@@ -302,6 +345,8 @@ const CustomerDetail = (): JSX.Element => {
       setSessions(sessionsRes.data || []);
       setAgents(agentsRes.data || []);
       setCustomerBalances(balanceRes.data || []);
+      setCryptoBalances(cryptoBalanceRes.data || []);
+      setCryptoAdjustments((cryptoAdjustmentsRes.data || []) as CryptoBalanceAdjustment[]);
       setNotifications(notificationsRes.data || []);
     } catch (error: any) {
       toast({ title: t('common.error'), description: error.message, variant: "destructive" });
@@ -528,6 +573,73 @@ const CustomerDetail = (): JSX.Element => {
             </div>
             <div><span className="text-muted-foreground">{t('admin.subscription')}:</span> <Badge variant="outline" className="ml-1">{customer.subscription || 'BASIC'}</Badge></div>
           </div>
+
+          {/* Crypto holdings use the same canonical ledger as deposits and withdrawals. */}
+          <Card className="mb-6 bg-card border-border">
+            <CardHeader className="flex flex-row items-center justify-between gap-3 space-y-0 pb-3">
+              <CardTitle className="flex items-center gap-2 text-sm">
+                <Coins className="h-4 w-4 text-primary" /> Crypto balances
+              </CardTitle>
+              <AdjustCryptoBalanceDialog
+                customerId={customerId!}
+                balances={cryptoBalances}
+                onSuccess={fetchCustomerData}
+              >
+                <Button size="sm">
+                  <Bitcoin className="mr-2 h-4 w-4" /> Add or adjust crypto
+                </Button>
+              </AdjustCryptoBalanceDialog>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              {cryptoBalances.length === 0 ? (
+                <p className="rounded-lg border border-dashed border-border p-4 text-center text-sm text-muted-foreground">
+                  No crypto balance has been added for this customer.
+                </p>
+              ) : (
+                <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-4">
+                  {cryptoBalances.map((balance) => (
+                    <div key={balance.id} className="rounded-lg border border-border bg-background/40 p-3">
+                      <div className="mb-1 flex items-center justify-between gap-2">
+                        <span className="truncate text-xs text-muted-foreground">{balance.crypto_name}</span>
+                        <div className="flex items-center gap-1">
+                          <Badge variant="outline">{balance.crypto_symbol.toUpperCase()}</Badge>
+                          <DeleteCryptoBalanceDialog
+                            customerId={customerId!}
+                            balance={balance}
+                            onSuccess={fetchCustomerData}
+                          />
+                        </div>
+                      </div>
+                      <p className="font-bold text-primary">
+                        {formatCryptoQuantity(Number(balance.quantity), balance.crypto_symbol)}
+                      </p>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              {cryptoAdjustments.length > 0 && (
+                <div className="border-t border-border pt-3">
+                  <p className="mb-2 text-xs font-medium uppercase tracking-wide text-muted-foreground">Recent manual adjustments</p>
+                  <div className="space-y-2">
+                    {cryptoAdjustments.map((adjustment) => (
+                      <div key={adjustment.id} className="flex flex-col justify-between gap-1 rounded-md bg-secondary/35 px-3 py-2 text-sm sm:flex-row sm:items-center">
+                        <div>
+                          <span className={adjustment.adjustment_type === 'credit' ? 'font-medium text-success' : 'font-medium text-destructive'}>
+                            {adjustment.adjustment_type === 'credit' ? '+' : '-'}{formatCryptoQuantity(Number(adjustment.amount), adjustment.crypto_symbol)}
+                          </span>
+                          {adjustment.reason && <span className="ml-2 text-muted-foreground">— {adjustment.reason}</span>}
+                        </div>
+                        <span className="shrink-0 text-xs text-muted-foreground">
+                          {formatDistanceToNow(new Date(adjustment.created_at), { addSuffix: true })}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </CardContent>
+          </Card>
 
           {/* Case Management Tab */}
           <TabsContent value="case" className="space-y-6">

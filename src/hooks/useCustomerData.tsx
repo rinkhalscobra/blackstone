@@ -3,6 +3,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from './useAuth';
 import type { Json } from '@/integrations/supabase/types';
 import { normalizeBalanceCurrency } from '@/lib/balances';
+import type { CryptoBalance, CryptoBalanceAdjustment } from '@/lib/cryptoBalances';
 
 interface CustomerBalance {
   id: string;
@@ -63,6 +64,8 @@ interface Notification {
 export const useCustomerData = () => {
   const { user } = useAuth();
   const [balances, setBalances] = useState<CustomerBalance[]>([]);
+  const [cryptoBalances, setCryptoBalances] = useState<CryptoBalance[]>([]);
+  const [cryptoBalanceAdjustments, setCryptoBalanceAdjustments] = useState<CryptoBalanceAdjustment[]>([]);
   const [profile, setProfile] = useState<Profile | null>(null);
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [timeline, setTimeline] = useState<CaseTimelineEvent[]>([]);
@@ -75,8 +78,10 @@ export const useCustomerData = () => {
     setIsLoading(true);
     try {
       // Fetch all data in parallel
-      const [balanceRes, profileRes, transactionsRes, timelineRes, notificationsRes] = await Promise.all([
+      const [balanceRes, cryptoBalanceRes, cryptoAdjustmentsRes, profileRes, transactionsRes, timelineRes, notificationsRes] = await Promise.all([
         supabase.from('customer_balances').select('*').eq('customer_id', user.id).order('currency'),
+        supabase.from('portfolio_items').select('id, crypto_id, crypto_name, crypto_symbol, quantity, purchase_price').eq('user_id', user.id).order('crypto_symbol'),
+        supabase.from('crypto_balance_adjustments').select('id, adjustment_type, amount, balance_after, crypto_id, crypto_symbol, reason, created_at').eq('customer_id', user.id).not('reason', 'is', null).order('created_at', { ascending: false }),
         supabase.from('profiles').select('*').eq('id', user.id).single(),
         supabase.from('transaction_requests').select('*').eq('customer_id', user.id).order('created_at', { ascending: false }),
         supabase.from('case_timeline').select('*').eq('customer_id', user.id).order('created_at', { ascending: false }),
@@ -84,6 +89,8 @@ export const useCustomerData = () => {
       ]);
 
       if (balanceRes.data) setBalances(balanceRes.data);
+      if (cryptoBalanceRes.data) setCryptoBalances(cryptoBalanceRes.data);
+      if (cryptoAdjustmentsRes.data) setCryptoBalanceAdjustments(cryptoAdjustmentsRes.data as CryptoBalanceAdjustment[]);
       if (profileRes.data) setProfile(profileRes.data);
       if (transactionsRes.data) setTransactions(transactionsRes.data as Transaction[]);
       if (timelineRes.data) setTimeline(timelineRes.data);
@@ -143,6 +150,35 @@ export const useCustomerData = () => {
       })
       .subscribe();
 
+    const cryptoBalanceChannel = supabase
+      .channel(`customer-crypto-balance-${suffix}`)
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'portfolio_items', filter: `user_id=eq.${user.id}` }, (payload) => {
+        if (payload.eventType === 'DELETE') {
+          const removed = payload.old as Pick<CryptoBalance, 'id'>;
+          setCryptoBalances((current) => current.filter((balance) => balance.id !== removed.id));
+          return;
+        }
+
+        const changed = payload.new as CryptoBalance;
+        setCryptoBalances((current) => {
+          const exists = current.some((balance) => balance.id === changed.id);
+          return exists
+            ? current.map((balance) => balance.id === changed.id ? changed : balance)
+            : [...current, changed].sort((a, b) => a.crypto_symbol.localeCompare(b.crypto_symbol));
+        });
+      })
+      .subscribe();
+
+    const cryptoAdjustmentsChannel = supabase
+      .channel(`customer-crypto-adjustments-${suffix}`)
+      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'crypto_balance_adjustments', filter: `customer_id=eq.${user.id}` }, (payload) => {
+        const adjustment = payload.new as CryptoBalanceAdjustment;
+        if (adjustment.reason) {
+          setCryptoBalanceAdjustments((current) => [adjustment, ...current]);
+        }
+      })
+      .subscribe();
+
     // Subscribe to profile updates (for case_phase changes)
     const profileChannel = supabase
       .channel(`customer-profile-${suffix}`)
@@ -156,6 +192,8 @@ export const useCustomerData = () => {
       supabase.removeChannel(notificationsChannel);
       supabase.removeChannel(transactionsChannel);
       supabase.removeChannel(balanceChannel);
+      supabase.removeChannel(cryptoBalanceChannel);
+      supabase.removeChannel(cryptoAdjustmentsChannel);
       supabase.removeChannel(profileChannel);
     };
   }, [user, fetchData]);
@@ -175,6 +213,8 @@ export const useCustomerData = () => {
   return {
     balance,
     balances,
+    cryptoBalances,
+    cryptoBalanceAdjustments,
     profile,
     transactions,
     timeline,

@@ -16,7 +16,7 @@ import { useAuth } from '@/hooks/useAuth';
 const DashboardIndex = () => {
   const navigate = useNavigate();
   const { role, isLoading: roleLoading, isStaff } = useUserRole();
-  const { balances, profile, transactions, isLoading, refetch } = useCustomerData();
+  const { balances, cryptoBalances, cryptoBalanceAdjustments, profile, transactions, isLoading, refetch } = useCustomerData();
   const { user } = useAuth();
   const { t } = useLanguage();
 
@@ -71,7 +71,11 @@ const DashboardIndex = () => {
         {/* Main Grid */}
         <div className="space-y-5 xl:space-y-6">
           <div className="min-w-0">
-            <BalanceCard balances={balances} />
+            <BalanceCard
+              balances={balances}
+              cryptoBalances={cryptoBalances}
+              cryptoBalanceAdjustments={cryptoBalanceAdjustments}
+            />
           </div>
           <div className="min-w-0">
             <CaseStatusCard

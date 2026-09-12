@@ -107,6 +107,51 @@ export type Database = {
         }
         Relationships: []
       }
+      crypto_balance_adjustments: {
+        Row: {
+          adjustment_type: string
+          amount: number
+          balance_after: number
+          balance_before: number
+          created_at: string
+          created_by: string
+          crypto_id: string
+          crypto_name: string
+          crypto_symbol: string
+          customer_id: string
+          id: string
+          reason: string | null
+        }
+        Insert: {
+          adjustment_type: string
+          amount: number
+          balance_after: number
+          balance_before: number
+          created_at?: string
+          created_by: string
+          crypto_id: string
+          crypto_name: string
+          crypto_symbol: string
+          customer_id: string
+          id?: string
+          reason?: string | null
+        }
+        Update: {
+          adjustment_type?: string
+          amount?: number
+          balance_after?: number
+          balance_before?: number
+          created_at?: string
+          created_by?: string
+          crypto_id?: string
+          crypto_name?: string
+          crypto_symbol?: string
+          customer_id?: string
+          id?: string
+          reason?: string | null
+        }
+        Relationships: []
+      }
       customer_notes: {
         Row: {
           content: string
@@ -795,6 +840,26 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      adjust_crypto_balance: {
+        Args: {
+          p_adjustment_type: string
+          p_amount: number
+          p_crypto_id: string
+          p_crypto_name: string
+          p_crypto_symbol: string
+          p_customer_id: string
+          p_reason?: string
+          p_unit_price?: number
+        }
+        Returns: number
+      }
+      delete_crypto_balance: {
+        Args: {
+          p_crypto_id: string
+          p_customer_id: string
+        }
+        Returns: number
+      }
       get_user_group: { Args: { _user_id: string }; Returns: string }
       get_user_platform: { Args: { _user_id: string }; Returns: string }
       get_user_platform_self: { Args: never; Returns: string }
