@@ -33,10 +33,26 @@ export const LocatedFundsSection = () => {
   return (
     <section id="located-funds" className="public-section">
       <PublicSectionHeading eyebrow={p('funds')} title={p('fundsTitle')} description={p('fundsIntro')} />
-      <Tabs defaultValue="located" className="public-surface">
+      <div className="public-grid grid gap-5 lg:grid-cols-[minmax(280px,.75fr)_minmax(0,1.25fr)]">
+        <figure className="public-editorial-image min-h-72 lg:min-h-full">
+          <img
+            src="/images/located-funds-tracing.jpg"
+            alt="Transaction routes converging on a verified destination across a world map"
+            width="1774"
+            height="887"
+            className="absolute inset-0 h-full w-full object-cover object-center"
+            loading="lazy"
+          />
+          <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-black/10" />
+          <figcaption className="absolute bottom-5 left-5 right-5">
+            <p className="public-eyebrow text-emerald-100">{p('statusGuide')}</p>
+            <p className="mt-2 max-w-sm text-sm leading-relaxed text-white/75">{p('statusNote')}</p>
+          </figcaption>
+        </figure>
+        <Tabs defaultValue="located" className="public-surface">
         <TabsList
           aria-label={p('statusGuide')}
-          className="grid h-auto auto-rows-fr grid-cols-2 items-stretch gap-0 rounded-none border-b border-white/10 bg-transparent p-0 md:grid-cols-4"
+          className="grid h-auto auto-rows-fr grid-cols-2 items-stretch gap-0 rounded-none border-b border-white/10 bg-transparent p-0 xl:grid-cols-4"
         >
           {fundStages.map((stage, index) => (
             <TabsTrigger
@@ -56,7 +72,7 @@ export const LocatedFundsSection = () => {
           <TabsContent
             key={stage.id}
             value={stage.id}
-            className="m-0 grid items-start gap-4 p-5 data-[state=inactive]:hidden sm:p-6 lg:grid-cols-[minmax(0,1fr)_minmax(0,3fr)] lg:gap-8"
+            className="m-0 grid items-start gap-4 p-5 data-[state=inactive]:hidden sm:p-6 xl:grid-cols-[minmax(0,1fr)_minmax(0,3fr)] xl:gap-8"
           >
             <h3 className="text-lg font-medium leading-relaxed">{p(stage.id)}</h3>
             <div>
@@ -65,7 +81,8 @@ export const LocatedFundsSection = () => {
             </div>
           </TabsContent>
         ))}
-      </Tabs>
+        </Tabs>
+      </div>
     </section>
   );
 };
@@ -108,20 +125,30 @@ export const CaseTypesSection = () => {
           <TabsContent
             key={item.id}
             value={item.id}
-            className="public-paper m-0 flex flex-col justify-between gap-6 p-6 data-[state=inactive]:hidden sm:p-8"
+            className="public-paper m-0 overflow-hidden p-0 data-[state=inactive]:hidden"
           >
-            <div>
-              <item.icon className="mb-6 h-8 w-8" strokeWidth={1.4} />
-              <h3 className="text-2xl font-medium tracking-tight">{p(item.id)}</h3>
-              <p className="mt-4 text-base leading-relaxed text-[#384e40]">{p(item.description)}</p>
-            </div>
-            <div className="border-t border-black/15 pt-5">
-              <p className="text-xs font-semibold uppercase tracking-wider">{p('evidenceLabel')}</p>
-              <p className="mt-2 text-sm leading-relaxed text-[#384e40]">{p('evidenceList')}</p>
-              <Link to="/contact" className="mt-5 inline-flex items-center gap-2 text-sm font-semibold">
-                {p('review')}
-                <ArrowRight className="h-4 w-4" />
-              </Link>
+            <img
+              src="/images/case-types-evidence.jpg"
+              alt="Digital communication, wallet, and transaction evidence arranged for review"
+              width="1536"
+              height="1024"
+              className="h-52 w-full object-cover object-center sm:h-60"
+              loading="lazy"
+            />
+            <div className="flex flex-col justify-between gap-6 p-6 sm:p-8">
+              <div>
+                <item.icon className="mb-6 h-8 w-8" strokeWidth={1.4} />
+                <h3 className="text-2xl font-medium tracking-tight">{p(item.id)}</h3>
+                <p className="mt-4 text-base leading-relaxed text-[#384e40]">{p(item.description)}</p>
+              </div>
+              <div className="border-t border-black/15 pt-5">
+                <p className="text-xs font-semibold uppercase tracking-wider">{p('evidenceLabel')}</p>
+                <p className="mt-2 text-sm leading-relaxed text-[#384e40]">{p('evidenceList')}</p>
+                <Link to="/contact" className="mt-5 inline-flex items-center gap-2 text-sm font-semibold">
+                  {p('review')}
+                  <ArrowRight className="h-4 w-4" />
+                </Link>
+              </div>
             </div>
           </TabsContent>
         ))}
@@ -273,27 +300,42 @@ export const PricingSection = () => {
   });
   return (
     <section id="pricing" className="public-section">
-      <PublicSectionHeading
-        eyebrow={p('pricing')}
-        title={p('pricingTitle')}
-        description={p('pricingIntro')}
-      />
-      <div
-        role="group"
-        aria-label={p('pricing')}
-        className="mb-5 inline-flex gap-1 rounded-lg border border-white/15 p-1"
-      >
-        {(['monthly', 'yearly'] as const).map((period) => (
-          <button
-            key={period}
-            type="button"
-            aria-pressed={billing === period}
-            onClick={() => setBilling(period)}
-            className={`rounded-md px-5 py-2 text-sm font-medium ${billing === period ? 'bg-[#e5ebe7] text-[#18251e]' : 'text-neutral-400 hover:text-white'}`}
+      <div className="mb-7 grid items-stretch gap-5 lg:grid-cols-[minmax(0,.82fr)_minmax(480px,1.18fr)]">
+        <div className="flex flex-col justify-between rounded-2xl border border-white/10 bg-[#0d110e] p-6 sm:p-8">
+          <div>
+            <p className="public-eyebrow">{p('pricing')}</p>
+            <h2 className="public-section-title mt-3">{p('pricingTitle')}</h2>
+            <p className="public-description mt-5">{p('pricingIntro')}</p>
+          </div>
+          <div
+            role="group"
+            aria-label={p('pricing')}
+            className="mt-8 inline-flex w-fit gap-1 rounded-lg border border-white/15 p-1"
           >
-            {p(period)}
-          </button>
-        ))}
+            {(['monthly', 'yearly'] as const).map((period) => (
+              <button
+                key={period}
+                type="button"
+                aria-pressed={billing === period}
+                onClick={() => setBilling(period)}
+                className={`rounded-md px-5 py-2 text-sm font-medium ${billing === period ? 'bg-[#e5ebe7] text-[#18251e]' : 'text-neutral-400 hover:text-white'}`}
+              >
+                {p(period)}
+              </button>
+            ))}
+          </div>
+        </div>
+        <figure className="public-editorial-image aspect-[16/9] min-h-72">
+          <img
+            src="/images/client-consultation.jpg"
+            alt="A private consultation reviewing an organized financial case file"
+            width="1774"
+            height="887"
+            className="absolute inset-0 h-full w-full object-cover object-center"
+            loading="lazy"
+          />
+          <div className="pointer-events-none absolute inset-0 bg-gradient-to-r from-black/35 via-transparent to-black/10" />
+        </figure>
       </div>
       <div className="public-grid grid gap-4 md:grid-cols-3">
         {PUBLIC_PLANS.map((plan, index) => (
@@ -346,15 +388,24 @@ export const ContactSection = () => {
   const { user } = useAuth();
   return (
     <section id="contact" className="public-section">
-      <div className="public-paper public-grid grid gap-6 p-6 sm:p-9 lg:grid-cols-[1.15fr_1fr] lg:items-center">
-        <div>
+      <div className="public-paper public-grid grid overflow-hidden lg:grid-cols-[minmax(300px,.85fr)_minmax(0,1.15fr)] lg:items-stretch">
+        <figure className="relative min-h-64 overflow-hidden lg:min-h-96">
+          <img
+            src="/images/private-contact-office.jpg"
+            alt="A quiet private office prepared for a confidential first conversation"
+            width="1672"
+            height="941"
+            className="absolute inset-0 h-full w-full object-cover object-center"
+            loading="lazy"
+          />
+          <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/35 via-transparent to-transparent" />
+        </figure>
+        <div className="flex flex-col justify-center p-6 sm:p-9 lg:p-12">
           <p className="text-xs font-semibold uppercase tracking-[.15em] text-[#4b6757]">
             {t('nav.contact')}
           </p>
           <h2 className="public-section-title mt-4">{p('contactTitle')}</h2>
-        </div>
-        <div>
-          <p className="text-base leading-relaxed text-[#3b5345]">{p('contactIntro')}</p>
+          <p className="mt-5 text-base leading-relaxed text-[#3b5345]">{p('contactIntro')}</p>
           <div className="mt-6 flex flex-wrap items-center gap-3">
             <Link to="/contact" className="public-button !bg-[#182d20] !text-white hover:!bg-[#294433]">
               {p('review')}

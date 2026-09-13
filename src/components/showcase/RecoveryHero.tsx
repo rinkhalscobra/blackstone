@@ -61,13 +61,13 @@ const RecoveryHero = () => {
         </span>
       </div>
 
-      <div className="grid items-center gap-7 py-8 sm:py-10 lg:grid-cols-[minmax(0,1.15fr)_minmax(0,1fr)] lg:gap-10 xl:py-12">
-        <h1 id="recovery-title" className="showcase-display-title recovery-hero-title min-w-0">
-          <span className="block text-white">{copy.title[0]}</span>
-          <span className="recovery-hero-accent block">{copy.title[1]}</span>
-        </h1>
+      <div className="grid items-stretch gap-8 py-8 sm:py-10 lg:grid-cols-[minmax(0,.82fr)_minmax(520px,1.18fr)] lg:gap-10 xl:py-12">
+        <div className="flex min-w-0 flex-col justify-center">
+          <h1 id="recovery-title" className="showcase-display-title recovery-hero-title min-w-0">
+            <span className="block text-white">{copy.title[0]}</span>
+            <span className="recovery-hero-accent block">{copy.title[1]}</span>
+          </h1>
 
-        <div className="min-w-0">
           <p className="text-base leading-relaxed text-neutral-300 lg:text-lg">{copy.description}</p>
           <div className="mt-6 flex flex-wrap items-center gap-3">
             <Link
@@ -87,6 +87,22 @@ const RecoveryHero = () => {
           </div>
           <p className="mt-4 text-xs leading-relaxed text-neutral-400">{copy.note}</p>
         </div>
+
+        <figure className="public-editorial-image aspect-[16/10] min-h-72 lg:min-h-[440px]">
+          <img
+            src="/images/approach-investigation.jpg"
+            alt="Organized financial investigation records beside a transaction analysis workspace"
+            width="1672"
+            height="941"
+            className="absolute inset-0 h-full w-full object-cover object-center"
+            fetchPriority="high"
+          />
+          <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/65 via-transparent to-black/10" />
+          <figcaption className="absolute bottom-4 left-4 flex items-center gap-2 text-xs font-medium uppercase tracking-[0.14em] text-white/80 sm:bottom-6 sm:left-6">
+            <Fingerprint className="h-4 w-4 text-emerald-200" aria-hidden="true" />
+            {copy.service}
+          </figcaption>
+        </figure>
       </div>
 
       <div id="recovery-process" className="showcase-anchor overflow-hidden rounded-2xl border border-white/15 bg-[#0d0f0e]">

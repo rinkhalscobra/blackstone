@@ -4,6 +4,9 @@
 .public-gutter,
 .public-section {
   width: 100%;
+  max-width: 100rem;
+  margin-left: auto;
+  margin-right: auto;
   padding-left: 1rem;
   padding-right: 1rem;
 }
@@ -52,6 +55,18 @@
   color: #1b2b22;
   background: #e5ebe7;
   border-radius: 0.875rem;
+}
+.public-editorial-image {
+  position: relative;
+  overflow: hidden;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 1rem;
+  background: #0e120f;
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.02);
+}
+.public-editorial-image img {
+  display: block;
+  image-rendering: auto;
 }
 .public-button {
   display: inline-flex;
@@ -145,6 +160,9 @@
   margin-top: 0.5rem;
 }
 .public-site .recovery-hero {
+  max-width: 100rem;
+  margin-left: auto;
+  margin-right: auto;
   padding-bottom: 1rem;
 }
 @media (min-width: 640px) {
