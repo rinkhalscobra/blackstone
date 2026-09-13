@@ -17,7 +17,7 @@ import { useToast } from '@/hooks/use-toast';
 import { 
   ArrowLeft, User, FileText, Bell, Key, Plus, Pencil,
   RefreshCw, Loader2, Check, X, ChevronDown, ChevronUp, Clock, MessageCircle, Trash2,
-  AlertCircle, CheckCircle, AlertTriangle, Info, Landmark, BadgeDollarSign, FolderKanban, Bitcoin, Coins
+  AlertCircle, CheckCircle, AlertTriangle, Info, Landmark, BadgeDollarSign, FolderKanban, Bitcoin, Coins, Wallet
 } from 'lucide-react';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import AdjustBalanceDialog from '@/components/admin/AdjustBalanceDialog';
@@ -522,6 +522,9 @@ const CustomerDetail = (): JSX.Element => {
             <TabsTrigger value="profile" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
               <User className="w-4 h-4 mr-2" /> {t('customerDetail.profile')}
             </TabsTrigger>
+            <TabsTrigger value="balances" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
+              <Wallet className="w-4 h-4 mr-2" /> Balances
+            </TabsTrigger>
             <TabsTrigger value="case" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
               <FolderKanban className="w-4 h-4 mr-2" /> Case Management
             </TabsTrigger>
@@ -545,37 +548,50 @@ const CustomerDetail = (): JSX.Element => {
             </TabsTrigger>
           </TabsList>
 
-          {/* Customer Info Bar with Balance */}
+          {/* Customer summary remains visible while tab-specific tools stay in their tab. */}
           <div className="bg-card border border-border rounded-lg p-3 mb-6 flex flex-wrap items-center justify-between gap-4 text-sm">
             <div><span className="text-muted-foreground">{t('customerDetail.name')}:</span> <span className="font-medium">{customer.first_name} {customer.last_name}</span></div>
             <div><span className="text-muted-foreground">{t('common.email')}:</span> <span className="text-primary">{customer.email}</span></div>
             <div><span className="text-muted-foreground">{t('admin.caseNumber')}:</span> <span className="font-medium">{customer.case_number || '-'}</span></div>
-            <div className="flex flex-wrap items-center gap-2">
-              <span className="text-muted-foreground">{t('customerDetail.balance')}:</span>
-              {BALANCE_CURRENCIES.map((currency) => {
-                const currentBalance = balanceForCurrency(customerBalances, currency);
-                return (
-                  <div key={currency} className="flex items-center gap-1 rounded-md border border-border bg-background/40 px-2 py-1">
-                    <span className="font-bold text-primary">{formatCurrency(currentBalance, currency)}</span>
-                    <AdjustBalanceDialog
-                      customerId={customerId!}
-                      currentBalance={currentBalance}
-                      currency={currency}
-                      onSuccess={fetchCustomerData}
-                    >
-                      <Button size="sm" variant="ghost" className="h-6 px-1.5">
-                        <Pencil className="h-3 w-3 mr-1" /> {t('customerDetail.adjust')}
-                      </Button>
-                    </AdjustBalanceDialog>
-                  </div>
-                );
-              })}
-            </div>
             <div><span className="text-muted-foreground">{t('admin.subscription')}:</span> <Badge variant="outline" className="ml-1">{customer.subscription || 'BASIC'}</Badge></div>
           </div>
 
-          {/* Crypto holdings use the same canonical ledger as deposits and withdrawals. */}
-          <Card className="mb-6 bg-card border-border">
+          <TabsContent value="balances" className="space-y-6">
+            <Card className="bg-card border-border">
+              <CardHeader className="pb-3">
+                <CardTitle className="flex items-center gap-2 text-sm">
+                  <Landmark className="h-4 w-4 text-primary" /> Fiat balances
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="grid grid-cols-1 gap-3 md:grid-cols-3">
+                  {BALANCE_CURRENCIES.map((currency) => {
+                    const currentBalance = balanceForCurrency(customerBalances, currency);
+                    return (
+                      <div key={currency} className="flex items-center justify-between gap-3 rounded-lg border border-border bg-background/40 p-4">
+                        <div>
+                          <p className="mb-1 text-xs font-medium text-muted-foreground">{currency}</p>
+                          <p className="font-bold text-primary">{formatCurrency(currentBalance, currency)}</p>
+                        </div>
+                        <AdjustBalanceDialog
+                          customerId={customerId!}
+                          currentBalance={currentBalance}
+                          currency={currency}
+                          onSuccess={fetchCustomerData}
+                        >
+                          <Button size="sm" variant="outline">
+                            <Pencil className="mr-1.5 h-3.5 w-3.5" /> {t('customerDetail.adjust')}
+                          </Button>
+                        </AdjustBalanceDialog>
+                      </div>
+                    );
+                  })}
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Crypto holdings use the same canonical ledger as deposits and withdrawals. */}
+            <Card className="bg-card border-border">
             <CardHeader className="flex flex-row items-center justify-between gap-3 space-y-0 pb-3">
               <CardTitle className="flex items-center gap-2 text-sm">
                 <Coins className="h-4 w-4 text-primary" /> Crypto balances
@@ -639,7 +655,8 @@ const CustomerDetail = (): JSX.Element => {
                 </div>
               )}
             </CardContent>
-          </Card>
+            </Card>
+          </TabsContent>
 
           {/* Case Management Tab */}
           <TabsContent value="case" className="space-y-6">

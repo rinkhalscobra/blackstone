@@ -147,7 +147,7 @@ const formatRemaining = (remainingMs: number) => {
 };
 
 const GlobeScanner = ({ scope, activeIndex, running }: { scope: string; activeIndex: number; running: boolean }) => (
-  <div className="relative mx-auto flex h-52 w-52 shrink-0 items-center justify-center sm:h-60 sm:w-60">
+  <div className="relative mx-auto flex h-56 w-56 shrink-0 items-center justify-center sm:h-64 sm:w-64">
     <div className={cn('absolute inset-0 rounded-full border border-primary/15', running && 'animate-pulse')} />
     <div className="absolute inset-5 rounded-full border border-primary/20" />
     <div className={cn('absolute inset-0 rounded-full border border-dashed border-primary/30', running && 'animate-[spin_12s_linear_infinite]')}>
@@ -156,7 +156,7 @@ const GlobeScanner = ({ scope, activeIndex, running }: { scope: string; activeIn
     <div className={cn('absolute inset-3 rounded-full border border-dashed border-emerald-500/25', running && 'animate-[spin_18s_linear_infinite_reverse]')}>
       <span className="absolute bottom-3 right-3 h-2 w-2 rounded-full bg-emerald-400 shadow-[0_0_12px_rgb(52_211_153)]" />
     </div>
-    <div className="relative h-36 w-36 overflow-hidden rounded-full border border-primary/50 bg-[radial-gradient(circle_at_35%_30%,hsl(var(--primary)/0.28),hsl(var(--card))_55%,hsl(var(--background)))] shadow-[0_0_45px_hsl(var(--primary)/0.18)] sm:h-40 sm:w-40">
+    <div className="relative h-40 w-40 overflow-hidden rounded-full border border-primary/50 bg-[radial-gradient(circle_at_35%_30%,hsl(var(--primary)/0.28),hsl(var(--card))_55%,hsl(var(--background)))] shadow-[0_0_45px_hsl(var(--primary)/0.18)] sm:h-44 sm:w-44">
       <div className={cn('absolute inset-[-25%] bg-[conic-gradient(from_0deg,transparent_0deg,transparent_300deg,hsl(var(--primary)/0.4)_350deg,transparent_360deg)]', running && 'animate-[spin_5s_linear_infinite]')} />
       <div className="absolute left-1/2 top-0 h-full w-px -translate-x-1/2 bg-primary/20" />
       <div className="absolute left-[25%] top-0 h-full w-[50%] rounded-[50%] border-x border-primary/20" />
