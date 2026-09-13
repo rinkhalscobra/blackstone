@@ -840,6 +840,16 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      adjust_fiat_balance: {
+        Args: {
+          p_adjustment_type: string
+          p_amount: number
+          p_currency: string
+          p_customer_id: string
+          p_reason?: string
+        }
+        Returns: number
+      }
       adjust_crypto_balance: {
         Args: {
           p_adjustment_type: string

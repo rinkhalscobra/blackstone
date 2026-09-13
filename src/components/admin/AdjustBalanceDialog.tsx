@@ -45,25 +45,15 @@ const AdjustBalanceDialog = ({
     setLoading(true);
     
     try {
-      const adjustedAmount = adjustmentType === 'debit' ? -numAmount : numAmount;
-      const newBalance = currentBalance + adjustedAmount;
-
-      if (newBalance < 0) {
-        throw new Error(`Insufficient ${currency.toUpperCase()} balance.`);
-      }
-
-      // Upsert balance - creates row if missing, updates if exists
-      const { error: balanceError } = await supabase
-        .from('customer_balances')
-        .upsert({
-          customer_id: customerId,
-          balance: newBalance,
-          currency: currency,
-          updated_at: new Date().toISOString()
-        }, { onConflict: 'customer_id,currency' });
+      const { error: balanceError } = await supabase.rpc('adjust_fiat_balance', {
+        p_customer_id: customerId,
+        p_currency: currency,
+        p_amount: numAmount,
+        p_adjustment_type: adjustmentType,
+        p_reason: reason.trim() || undefined,
+      });
 
       if (balanceError) throw balanceError;
-
 
       toast({ 
         title: t('dialogs.balanceUpdated'), 
