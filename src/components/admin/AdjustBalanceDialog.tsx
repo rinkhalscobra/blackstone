@@ -136,6 +136,7 @@ const AdjustBalanceDialog = ({
               value={reason}
               onChange={(e) => setReason(e.target.value)}
               placeholder={t('dialogs.enterReason')}
+              maxLength={500}
               className="mt-1 min-h-[80px]"
             />
           </div>
