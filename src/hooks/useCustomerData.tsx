@@ -61,6 +61,53 @@ interface Notification {
   created_at: string;
 }
 
+type CustomerDataSnapshot = {
+  balances: CustomerBalance[];
+  cryptoBalances: CryptoBalance[];
+  cryptoBalanceAdjustments: CryptoBalanceAdjustment[];
+  profile: Profile | null;
+  transactions: Transaction[];
+  timeline: CaseTimelineEvent[];
+  notifications: Notification[];
+};
+
+// The layout and the active dashboard page both use this hook. Share an in-flight
+// load so mounting them together only issues one set of customer queries.
+const customerDataRequests = new Map<string, Promise<CustomerDataSnapshot>>();
+
+const loadCustomerData = (userId: string): Promise<CustomerDataSnapshot> => {
+  const existingRequest = customerDataRequests.get(userId);
+  if (existingRequest) return existingRequest;
+
+  const request = (async (): Promise<CustomerDataSnapshot> => {
+    const [balanceRes, cryptoBalanceRes, cryptoAdjustmentsRes, profileRes, transactionsRes, timelineRes, notificationsRes] = await Promise.all([
+      supabase.from('customer_balances').select('id, currency, balance').eq('customer_id', userId).order('currency'),
+      supabase.from('portfolio_items').select('id, crypto_id, crypto_name, crypto_symbol, quantity, purchase_price').eq('user_id', userId).order('crypto_symbol'),
+      supabase.from('crypto_balance_adjustments').select('id, adjustment_type, amount, balance_after, crypto_id, crypto_symbol, reason, created_at').eq('customer_id', userId).not('reason', 'is', null).order('created_at', { ascending: false }),
+      supabase.from('profiles').select('id, first_name, last_name, email, phone, preferred_currency, display_currency, case_number, status, case_phase, recovery_search_started_at, recovery_search_duration_minutes, recovery_search_scope, recovery_result_type, recovery_result_details, recovery_completed_at, assigned_to, created_at').eq('id', userId).single(),
+      supabase.from('transaction_requests').select('id, type, amount, currency, method, status, created_at, notes, review_message').eq('customer_id', userId).order('created_at', { ascending: false }),
+      supabase.from('case_timeline').select('id, event_type, title, description, created_at').eq('customer_id', userId).order('created_at', { ascending: false }),
+      supabase.from('notifications').select('id, type, title, message, is_read, created_at').eq('user_id', userId).order('created_at', { ascending: false }),
+    ]);
+
+    return {
+      balances: balanceRes.data || [],
+      cryptoBalances: cryptoBalanceRes.data || [],
+      cryptoBalanceAdjustments: (cryptoAdjustmentsRes.data || []) as CryptoBalanceAdjustment[],
+      profile: profileRes.data,
+      transactions: (transactionsRes.data || []) as Transaction[],
+      timeline: timelineRes.data || [],
+      notifications: notificationsRes.data || [],
+    };
+  })();
+
+  customerDataRequests.set(userId, request);
+  void request.finally(() => {
+    if (customerDataRequests.get(userId) === request) customerDataRequests.delete(userId);
+  }).catch(() => undefined);
+  return request;
+};
+
 export const useCustomerData = () => {
   const { user } = useAuth();
   const [balances, setBalances] = useState<CustomerBalance[]>([]);
@@ -77,24 +124,14 @@ export const useCustomerData = () => {
     
     setIsLoading(true);
     try {
-      // Fetch all data in parallel
-      const [balanceRes, cryptoBalanceRes, cryptoAdjustmentsRes, profileRes, transactionsRes, timelineRes, notificationsRes] = await Promise.all([
-        supabase.from('customer_balances').select('*').eq('customer_id', user.id).order('currency'),
-        supabase.from('portfolio_items').select('id, crypto_id, crypto_name, crypto_symbol, quantity, purchase_price').eq('user_id', user.id).order('crypto_symbol'),
-        supabase.from('crypto_balance_adjustments').select('id, adjustment_type, amount, balance_after, crypto_id, crypto_symbol, reason, created_at').eq('customer_id', user.id).not('reason', 'is', null).order('created_at', { ascending: false }),
-        supabase.from('profiles').select('*').eq('id', user.id).single(),
-        supabase.from('transaction_requests').select('*').eq('customer_id', user.id).order('created_at', { ascending: false }),
-        supabase.from('case_timeline').select('*').eq('customer_id', user.id).order('created_at', { ascending: false }),
-        supabase.from('notifications').select('*').eq('user_id', user.id).order('created_at', { ascending: false }),
-      ]);
-
-      if (balanceRes.data) setBalances(balanceRes.data);
-      if (cryptoBalanceRes.data) setCryptoBalances(cryptoBalanceRes.data);
-      if (cryptoAdjustmentsRes.data) setCryptoBalanceAdjustments(cryptoAdjustmentsRes.data as CryptoBalanceAdjustment[]);
-      if (profileRes.data) setProfile(profileRes.data);
-      if (transactionsRes.data) setTransactions(transactionsRes.data as Transaction[]);
-      if (timelineRes.data) setTimeline(timelineRes.data);
-      if (notificationsRes.data) setNotifications(notificationsRes.data);
+      const snapshot = await loadCustomerData(user.id);
+      setBalances(snapshot.balances);
+      setCryptoBalances(snapshot.cryptoBalances);
+      setCryptoBalanceAdjustments(snapshot.cryptoBalanceAdjustments);
+      setProfile(snapshot.profile);
+      setTransactions(snapshot.transactions);
+      setTimeline(snapshot.timeline);
+      setNotifications(snapshot.notifications);
     } catch (error) {
       console.error('Error fetching customer data:', error);
     } finally {

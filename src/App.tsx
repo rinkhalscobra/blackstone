@@ -1,40 +1,41 @@
+import { lazy, Suspense } from "react";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "@/hooks/useAuth";
 import { LanguageProvider } from "@/contexts/LanguageContext";
-import Index from "./pages/Index";
-import Auth from "./pages/Auth";
-import Cryptocurrencies from "./pages/Cryptocurrencies";
-import Categories from "./pages/Categories";
-import Exchanges from "./pages/Exchanges";
-import News from "./pages/News";
-import About from "./pages/About";
-import Legal from "./pages/Legal";
-import FAQ from "./pages/FAQ";
-import Contact from "./pages/Contact";
-import RecoveryFundsPage from "./pages/dashboard/funds";
-import WatchlistNew from "./pages/WatchlistNew";
-import Disclaimer from "./pages/Disclaimer";
-import Privacy from "./pages/Privacy";
-import Admin from "./pages/Admin";
-import GroupAdmin from "./pages/GroupAdmin";
-import Supervisor from "./pages/Supervisor";
-import Agent from "./pages/Agent";
-import CustomerDetail from "./pages/CustomerDetail";
-import NotFound from "./pages/NotFound";
-import Showcase from "./pages/Showcase";
+const Index = lazy(() => import("./pages/Index"));
+const Auth = lazy(() => import("./pages/Auth"));
+const Cryptocurrencies = lazy(() => import("./pages/Cryptocurrencies"));
+const Categories = lazy(() => import("./pages/Categories"));
+const Exchanges = lazy(() => import("./pages/Exchanges"));
+const News = lazy(() => import("./pages/News"));
+const About = lazy(() => import("./pages/About"));
+const Legal = lazy(() => import("./pages/Legal"));
+const FAQ = lazy(() => import("./pages/FAQ"));
+const Contact = lazy(() => import("./pages/Contact"));
+const RecoveryFundsPage = lazy(() => import("./pages/dashboard/funds"));
+const WatchlistNew = lazy(() => import("./pages/WatchlistNew"));
+const Disclaimer = lazy(() => import("./pages/Disclaimer"));
+const Privacy = lazy(() => import("./pages/Privacy"));
+const Admin = lazy(() => import("./pages/Admin"));
+const GroupAdmin = lazy(() => import("./pages/GroupAdmin"));
+const Supervisor = lazy(() => import("./pages/Supervisor"));
+const Agent = lazy(() => import("./pages/Agent"));
+const CustomerDetail = lazy(() => import("./pages/CustomerDetail"));
+const NotFound = lazy(() => import("./pages/NotFound"));
+const Showcase = lazy(() => import("./pages/Showcase"));
 
 // Dashboard pages
-import DashboardIndex from "./pages/dashboard/index";
-import WalletPage from "./pages/dashboard/wallet";
-import TransactionsPage from "./pages/dashboard/transactions";
-import CasePage from "./pages/dashboard/case";
-import DepositPage from "./pages/dashboard/deposit";
-import WithdrawPage from "./pages/dashboard/withdraw";
-import NotificationsPage from "./pages/dashboard/notifications";
-import MessagesPage from "./pages/dashboard/messages";
+const DashboardIndex = lazy(() => import("./pages/dashboard/index"));
+const WalletPage = lazy(() => import("./pages/dashboard/wallet"));
+const TransactionsPage = lazy(() => import("./pages/dashboard/transactions"));
+const CasePage = lazy(() => import("./pages/dashboard/case"));
+const DepositPage = lazy(() => import("./pages/dashboard/deposit"));
+const WithdrawPage = lazy(() => import("./pages/dashboard/withdraw"));
+const NotificationsPage = lazy(() => import("./pages/dashboard/notifications"));
+const MessagesPage = lazy(() => import("./pages/dashboard/messages"));
 
 const App = () => (
   <LanguageProvider>
@@ -43,6 +44,7 @@ const App = () => (
         <Toaster />
         <Sonner />
         <BrowserRouter>
+          <Suspense fallback={<div className="min-h-screen bg-background" aria-busy="true" />}>
           <Routes>
             <Route path="/" element={<Index />} />
             <Route path="/auth" element={<Auth />} />
@@ -78,6 +80,7 @@ const App = () => (
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
           </Routes>
+          </Suspense>
         </BrowserRouter>
       </TooltipProvider>
     </AuthProvider>

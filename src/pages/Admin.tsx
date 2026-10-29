@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useMemo, useDeferredValue } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
 import { useAdmin } from '@/hooks/useAdmin';
@@ -112,6 +112,9 @@ const Admin = () => {
   const [loadingData, setLoadingData] = useState(true);
   const [updatingRole, setUpdatingRole] = useState<string | null>(null);
   const [customerSearch, setCustomerSearch] = useState('');
+  const deferredCustomerSearch = useDeferredValue(customerSearch);
+  const [customerPage, setCustomerPage] = useState(0);
+  const customerPageSize = 50;
 
   useEffect(() => {
     if (isAdmin) {
@@ -123,12 +126,12 @@ const Admin = () => {
     setLoadingData(true);
     try {
       const [profilesRes, rolesRes, groupsRes, promocodesRes, ipRes, ipLogsRes] = await Promise.all([
-        supabase.from('profiles').select('*').eq('is_archived', false).neq('platform', 'chargeback').order('created_at', { ascending: false }),
-        supabase.from('user_roles').select('*'),
-        supabase.from('groups').select('*').neq('platform', 'chargeback').order('name'),
-        supabase.from('promocodes').select('*').order('created_at', { ascending: false }),
-        supabase.from('ip_whitelist').select('*').order('created_at', { ascending: false }),
-        supabase.from('ip_validation_logs').select('*').order('created_at', { ascending: false }).limit(100)
+        supabase.from('profiles').select('id, email, first_name, last_name, username, phone, birthdate, status, group_id, created_by, last_login, is_super, created_at').eq('is_archived', false).neq('platform', 'chargeback').order('created_at', { ascending: false }),
+        supabase.from('user_roles').select('id, user_id, role, created_at'),
+        supabase.from('groups').select('id, name, description, created_by, created_at, updated_at').neq('platform', 'chargeback').order('name'),
+        supabase.from('promocodes').select('id, code, group_id, role_type, is_active, usage_limit, times_used, expires_at, created_at').order('created_at', { ascending: false }),
+        supabase.from('ip_whitelist').select('id, ip_address, ip_version, action, subject, group_id, created_at').order('created_at', { ascending: false }),
+        supabase.from('ip_validation_logs').select('id, user_id, email, ipv4_address, ipv6_address, user_agent, action, reason, matched_rule_id, created_at').order('created_at', { ascending: false }).limit(100)
       ]);
 
       if (profilesRes.error) throw profilesRes.error;
@@ -159,20 +162,29 @@ const Admin = () => {
     await fetchData();
   }, []);
 
-  const getUserRole = (userId: string): string => {
-    const role = userRoles.find(r => r.user_id === userId);
-    return role?.role || 'user';
-  };
+  const roleByUserId = useMemo(() => new Map(userRoles.map((role) => [role.user_id, role.role])), [userRoles]);
+  const groupNameById = useMemo(() => new Map(groups.map((group) => [group.id, group.name])), [groups]);
+  const userById = useMemo(() => new Map(users.map((profile) => [profile.id, profile])), [users]);
+  const agentCountByGroupId = useMemo(() => {
+    const counts = new Map<string, number>();
+    users.forEach((profile) => {
+      if (profile.group_id && roleByUserId.get(profile.id) === 'agent') {
+        counts.set(profile.group_id, (counts.get(profile.group_id) || 0) + 1);
+      }
+    });
+    return counts;
+  }, [users, roleByUserId]);
+
+  const getUserRole = (userId: string): string => roleByUserId.get(userId) || 'user';
 
   const getGroupName = (groupId: string | null): string => {
     if (!groupId) return '-';
-    const group = groups.find(g => g.id === groupId);
-    return group?.name || '-';
+    return groupNameById.get(groupId) || '-';
   };
 
   const getCreatorName = (creatorId: string | null): string => {
     if (!creatorId) return '-';
-    const creator = users.find(u => u.id === creatorId);
+    const creator = userById.get(creatorId);
     return creator ? `${creator.first_name || ''} ${creator.last_name || ''}`.trim() || creator.email || '-' : '-';
   };
 
@@ -272,23 +284,24 @@ const Admin = () => {
     toast({ title: t('common.copied'), description: `${text} ${t('common.copiedToClipboard')}` });
   };
 
-  const filterUsersByRole = (role: string, search?: string) => {
-    let filtered = role === 'all' ? users : users.filter(u => getUserRole(u.id) === role);
-    if (search) {
-      const term = search.toLowerCase();
-      filtered = filtered.filter(u => 
-        (u.first_name?.toLowerCase().includes(term)) ||
-        (u.last_name?.toLowerCase().includes(term)) ||
-        (u.email?.toLowerCase().includes(term)) ||
-        (`${u.first_name || ''} ${u.last_name || ''}`.toLowerCase().includes(term))
-      );
-    }
-    return filtered;
-  };
-
-  const getAgentCount = (groupId: string) => {
-    return users.filter(u => u.group_id === groupId && getUserRole(u.id) === 'agent').length;
-  };
+  const visibleCustomers = useMemo(() => {
+    const term = deferredCustomerSearch.toLowerCase();
+    return users.filter((u) => {
+      if (roleByUserId.get(u.id) && roleByUserId.get(u.id) !== 'user') return false;
+      return !term || u.first_name?.toLowerCase().includes(term) || u.last_name?.toLowerCase().includes(term) ||
+        u.email?.toLowerCase().includes(term) || `${u.first_name || ''} ${u.last_name || ''}`.toLowerCase().includes(term);
+    });
+  }, [users, roleByUserId, deferredCustomerSearch]);
+  const customerPageCount = Math.ceil(visibleCustomers.length / customerPageSize);
+  const currentCustomerPage = Math.min(customerPage, Math.max(0, customerPageCount - 1));
+  const paginatedCustomers = useMemo(
+    () => visibleCustomers.slice(currentCustomerPage * customerPageSize, (currentCustomerPage + 1) * customerPageSize),
+    [visibleCustomers, currentCustomerPage],
+  );
+  const visibleAgents = useMemo(() => users.filter((u) => roleByUserId.get(u.id) === 'agent'), [users, roleByUserId]);
+  const visibleSupervisors = useMemo(() => users.filter((u) => roleByUserId.get(u.id) === 'supervisor'), [users, roleByUserId]);
+  const visibleAdmins = useMemo(() => users.filter((u) => roleByUserId.get(u.id) === 'admin'), [users, roleByUserId]);
+  const getAgentCount = (groupId: string) => agentCountByGroupId.get(groupId) || 0;
 
   if (!isAdmin) return null;
 
@@ -353,7 +366,7 @@ const Admin = () => {
           <Card className="bg-card border-border">
             <CardHeader className="border-b border-border flex-row items-center justify-between flex-wrap gap-3">
               <CardTitle className="text-foreground flex items-center gap-2">
-                {t('admin.customers')} <Badge variant="secondary">{filterUsersByRole('user', customerSearch).length}</Badge>
+                {t('admin.customers')} <Badge variant="secondary">{visibleCustomers.length}</Badge>
               </CardTitle>
               <div className="flex gap-2 items-center">
                 <div className="relative w-full sm:w-64">
@@ -361,7 +374,10 @@ const Admin = () => {
                   <Input
                     placeholder={t('common.search') || 'Search clients...'}
                     value={customerSearch}
-                    onChange={(e) => setCustomerSearch(e.target.value)}
+                    onChange={(e) => {
+                      setCustomerSearch(e.target.value);
+                      setCustomerPage(0);
+                    }}
                     className="pl-9 h-9"
                   />
                 </div>
@@ -382,7 +398,7 @@ const Admin = () => {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {filterUsersByRole('user', customerSearch).map((u) => (
+                  {paginatedCustomers.map((u) => (
                     <TableRow key={u.id} className="border-border">
                       <TableCell className="font-medium">{u.first_name || u.last_name ? `${u.first_name || ''} ${u.last_name || ''}`.trim() : 'N/A'}</TableCell>
                       <TableCell className="text-muted-foreground">{u.email || 'N/A'}</TableCell>
@@ -410,12 +426,23 @@ const Admin = () => {
                       </TableCell>
                     </TableRow>
                   ))}
-                  {filterUsersByRole('user', customerSearch).length === 0 && (
+                  {visibleCustomers.length === 0 && (
                     <TableRow><TableCell colSpan={6} className="text-center py-8 text-muted-foreground">{t('admin.noCustomers')}</TableCell></TableRow>
                   )}
                 </TableBody>
               </Table>
             </CardContent>
+            {customerPageCount > 1 && (
+              <div className="flex items-center justify-between border-t border-border px-4 py-3 text-sm text-muted-foreground">
+                <span>
+                  {currentCustomerPage * customerPageSize + 1}-{Math.min((currentCustomerPage + 1) * customerPageSize, visibleCustomers.length)} / {visibleCustomers.length}
+                </span>
+                <div className="flex gap-2">
+                  <Button size="sm" variant="outline" disabled={currentCustomerPage === 0} onClick={() => setCustomerPage((page) => Math.max(0, page - 1))}>{t('common.previous')}</Button>
+                  <Button size="sm" variant="outline" disabled={currentCustomerPage >= customerPageCount - 1} onClick={() => setCustomerPage((page) => Math.min(customerPageCount - 1, page + 1))}>{t('common.next')}</Button>
+                </div>
+              </div>
+            )}
           </Card>
         </TabsContent>
 
@@ -424,7 +451,7 @@ const Admin = () => {
           <Card className="bg-card border-border">
             <CardHeader className="border-b border-border flex-row items-center justify-between">
               <CardTitle className="text-foreground flex items-center gap-2">
-                {t('admin.agents')} <Badge variant="secondary">{filterUsersByRole('agent').length}</Badge>
+                {t('admin.agents')} <Badge variant="secondary">{visibleAgents.length}</Badge>
               </CardTitle>
               <div className="flex gap-2">
                 <BulkCreateUsersDialog groups={groups} onSuccess={fetchData} />
@@ -446,7 +473,7 @@ const Admin = () => {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {filterUsersByRole('agent').map((u) => (
+                  {visibleAgents.map((u) => (
                     <TableRow key={u.id} className="border-border">
                       <TableCell className="font-medium">{u.first_name || u.last_name ? `${u.first_name || ''} ${u.last_name || ''}`.trim() : 'N/A'}</TableCell>
                       <TableCell className="text-muted-foreground">{u.username || '-'}</TableCell>
@@ -475,7 +502,7 @@ const Admin = () => {
                       </TableCell>
                     </TableRow>
                   ))}
-                  {filterUsersByRole('agent').length === 0 && (
+                  {visibleAgents.length === 0 && (
                     <TableRow><TableCell colSpan={8} className="text-center py-8 text-muted-foreground">{t('admin.noAgents')}</TableCell></TableRow>
                   )}
                 </TableBody>
@@ -489,7 +516,7 @@ const Admin = () => {
           <Card className="bg-card border-border">
             <CardHeader className="border-b border-border flex-row items-center justify-between">
               <CardTitle className="text-foreground flex items-center gap-2">
-                {t('admin.supervisors')} <Badge variant="secondary">{filterUsersByRole('supervisor').length}</Badge>
+                {t('admin.supervisors')} <Badge variant="secondary">{visibleSupervisors.length}</Badge>
               </CardTitle>
               <div className="flex gap-2">
                 <BulkCreateUsersDialog groups={groups} onSuccess={fetchData} />
@@ -511,7 +538,7 @@ const Admin = () => {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {filterUsersByRole('supervisor').map((u) => (
+                  {visibleSupervisors.map((u) => (
                     <TableRow key={u.id} className="border-border">
                       <TableCell className="font-medium">{u.first_name || u.last_name ? `${u.first_name || ''} ${u.last_name || ''}`.trim() : 'N/A'}</TableCell>
                       <TableCell className="text-muted-foreground">{u.username || '-'}</TableCell>
@@ -536,7 +563,7 @@ const Admin = () => {
                       </TableCell>
                     </TableRow>
                   ))}
-                  {filterUsersByRole('supervisor').length === 0 && (
+                  {visibleSupervisors.length === 0 && (
                     <TableRow><TableCell colSpan={8} className="text-center py-8 text-muted-foreground">{t('admin.noSupervisors')}</TableCell></TableRow>
                   )}
                 </TableBody>
@@ -550,7 +577,7 @@ const Admin = () => {
           <Card className="bg-card border-border">
             <CardHeader className="border-b border-border">
               <CardTitle className="text-foreground flex items-center gap-2">
-                {t('admin.admins')} <Badge variant="secondary">{filterUsersByRole('admin').length}</Badge>
+                {t('admin.admins')} <Badge variant="secondary">{visibleAdmins.length}</Badge>
               </CardTitle>
             </CardHeader>
             <CardContent className="p-0">
@@ -564,7 +591,7 @@ const Admin = () => {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {filterUsersByRole('admin').map((u) => (
+                  {visibleAdmins.map((u) => (
                     <TableRow key={u.id} className="border-border">
                       <TableCell className="font-medium">{u.first_name || u.last_name ? `${u.first_name || ''} ${u.last_name || ''}`.trim() : 'N/A'}</TableCell>
                       <TableCell className="text-muted-foreground">{u.email || 'N/A'}</TableCell>
@@ -574,7 +601,7 @@ const Admin = () => {
                       </TableCell>
                     </TableRow>
                   ))}
-                  {filterUsersByRole('admin').length === 0 && (
+                  {visibleAdmins.length === 0 && (
                     <TableRow><TableCell colSpan={4} className="text-center py-8 text-muted-foreground">{t('admin.noAdmins')}</TableCell></TableRow>
                   )}
                 </TableBody>
