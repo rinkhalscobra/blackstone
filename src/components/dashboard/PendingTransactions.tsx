@@ -52,12 +52,13 @@ export const PendingTransactions = ({
 }: PendingTransactionsProps) => {
   const navigate = useNavigate();
   const { user } = useAuth();
+  const userId = user?.id;
   const { t } = useLanguage();
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [loading, setLoading] = useState(true);
 
   const fetchTransactions = useCallback(async () => {
-    if (!user) return;
+    if (!userId) return;
     
     try {
       const query = supabase
@@ -79,8 +80,9 @@ export const PendingTransactions = ({
           .in('id', customerIds);
 
         // Filter based on access and map customer data
+        const customerById = new Map((customers || []).map(customer => [customer.id, customer]));
         let filteredTransactions: EnrichedTransaction[] = data.map(t => {
-          const customer = customers?.find(c => c.id === t.customer_id);
+          const customer = customerById.get(t.customer_id);
           return {
             ...t,
             customer: customer ? {
@@ -99,7 +101,7 @@ export const PendingTransactions = ({
         // Apply filtering based on role
         if (assignedOnly) {
           filteredTransactions = filteredTransactions.filter(t => 
-            t._assignedTo === user.id
+            t._assignedTo === userId
           );
         } else if (groupId) {
           filteredTransactions = filteredTransactions.filter(t => 
@@ -116,7 +118,7 @@ export const PendingTransactions = ({
     } finally {
       setLoading(false);
     }
-  }, [user, groupId, assignedOnly]);
+  }, [userId, groupId, assignedOnly]);
 
   useEffect(() => {
     fetchTransactions();

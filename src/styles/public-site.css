@@ -1,6 +1,13 @@
 .public-site {
   background-image: radial-gradient(ellipse at 80% 0%, rgba(150, 190, 165, 0.045), transparent 30%);
 }
+@keyframes recovery-panel-enter {
+  from { opacity: 0; transform: translateY(5px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+@media (prefers-reduced-motion: no-preference) {
+  .recovery-panel-enter { animation: recovery-panel-enter 0.2s ease-out; }
+}
 .public-gutter,
 .public-section {
   width: 100%;

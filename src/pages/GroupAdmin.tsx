@@ -1,5 +1,8 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useMemo, useDeferredValue } from 'react';
+import { CustomerPagination } from '@/components/CustomerPagination';
+import { useClientPagination } from '@/hooks/useClientPagination';
 import { useNavigate } from 'react-router-dom';
+import { useRoleQuery } from '@/hooks/useRoleQuery';
 import { useAuth } from '@/hooks/useAuth';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { supabase } from '@/integrations/supabase/client';
@@ -41,6 +44,7 @@ import { DeleteUserDialog } from '@/components/admin/DeleteUserDialog';
 
 interface UserProfile {
   id: string;
+  assigned_to: string | null;
   email: string | null;
   first_name: string | null;
   last_name: string | null;
@@ -106,11 +110,12 @@ interface StaffSession {
 const GroupAdmin = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
+  const userId = user?.id;
   const { toast } = useToast();
   const { t } = useLanguage();
   
-  const [isGroupAdmin, setIsGroupAdmin] = useState(false);
-  const [loading, setLoading] = useState(true);
+  const { role, loading } = useRoleQuery();
+  const isGroupAdmin = role === 'group_admin';
   const [users, setUsers] = useState<UserProfile[]>([]);
   const [userRoles, setUserRoles] = useState<UserRole[]>([]);
   const [myGroup, setMyGroup] = useState<Group | null>(null);
@@ -119,57 +124,26 @@ const GroupAdmin = () => {
   const [staffSessions, setStaffSessions] = useState<StaffSession[]>([]);
   const [loadingData, setLoadingData] = useState(true);
   const [loadingSessions, setLoadingSessions] = useState(false);
+  const [activeTab, setActiveTab] = useState('customers');
   const [updatingRole, setUpdatingRole] = useState<string | null>(null);
   const [customerSearch, setCustomerSearch] = useState('');
+  const deferredCustomerSearch = useDeferredValue(customerSearch);
+  const roleByUserId = useMemo(() => new Map(userRoles.map(r => [r.user_id, r.role])), [userRoles]);
+  const assignedCountByAgent = useMemo(() => {
+    const counts = new Map<string, number>();
+    users.forEach(u => { if (u.assigned_to) counts.set(u.assigned_to, (counts.get(u.assigned_to) || 0) + 1); });
+    return counts;
+  }, [users]);
 
   useEffect(() => {
-    const checkGroupAdminStatus = async () => {
-      if (!user) {
-        setLoading(false);
-        return;
-      }
-
-      try {
-        const { data: roleData, error: roleError } = await supabase
-          .from('user_roles')
-          .select('role')
-          .eq('user_id', user.id)
-          .maybeSingle();
-
-        if (roleError) throw roleError;
-
-        const isGA = roleData?.role === 'group_admin';
-        setIsGroupAdmin(isGA);
-
-        if (!isGA) {
-          toast({
-            title: t('admin.accessDenied'),
-            description: t('admin.noPermission'),
-            variant: "destructive"
-          });
-          navigate('/');
-        }
-      } catch (error: any) {
-        toast({ title: t('common.error'), description: error.message, variant: "destructive" });
-        navigate('/');
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    if (user) {
-      checkGroupAdminStatus();
+    if (!loading && userId && !isGroupAdmin) {
+      toast({ title: t('admin.accessDenied'), description: t('admin.noPermission'), variant: 'destructive' });
+      navigate('/');
     }
-  }, [user, navigate, toast, t]);
+  }, [loading, userId, isGroupAdmin, navigate, toast, t]);
 
-  useEffect(() => {
-    if (isGroupAdmin && user) {
-      fetchData();
-    }
-  }, [isGroupAdmin, user]);
-
-  const fetchData = async () => {
-    if (!user) return;
+  const fetchData = useCallback(async () => {
+    if (!userId) return;
     setLoadingData(true);
     
     try {
@@ -177,7 +151,7 @@ const GroupAdmin = () => {
       const { data: myProfile, error: profileError } = await supabase
         .from('profiles')
         .select('group_id')
-        .eq('id', user.id)
+        .eq('id', userId)
         .single();
 
       if (profileError) throw profileError;
@@ -192,68 +166,47 @@ const GroupAdmin = () => {
         return;
       }
 
-      // Get group info
-      const { data: groupData, error: groupError } = await supabase
-        .from('groups')
-        .select('id, name, description, created_by, created_at')
-        .eq('id', myProfile.group_id)
-        .single();
-
-      if (groupError) throw groupError;
-      setMyGroup(groupData);
-
-      // Get all users in my group
-      const { data: groupUsers, error: usersError } = await supabase
-        .from('profiles')
-        .select('*')
-        .eq('group_id', myProfile.group_id)
-        .eq('is_archived', false)
-        .order('created_at', { ascending: false });
-
-      if (usersError) throw usersError;
-
-      // Get roles for these users
-      const userIds = groupUsers?.map(u => u.id) || [];
-      const { data: rolesData, error: rolesError } = await supabase
-        .from('user_roles')
-        .select('*')
-        .in('user_id', userIds);
-
+      // These reads only depend on the current group, so start them together.
+      const [groupRes, usersRes, promocodesRes, ipRes] = await Promise.all([
+        supabase.from('groups').select('id, name, description, created_by, created_at').eq('id', myProfile.group_id).single(),
+        supabase.from('profiles').select('id, email, first_name, last_name, username, phone, birthdate, status, group_id, assigned_to, created_by, last_login, is_super, created_at')
+          .eq('group_id', myProfile.group_id).eq('is_archived', false).order('created_at', { ascending: false }),
+        supabase.from('promocodes').select('*').eq('group_id', myProfile.group_id).order('created_at', { ascending: false }),
+        supabase.from('ip_whitelist').select('*').eq('group_id', myProfile.group_id).order('created_at', { ascending: false })
+      ]);
+      if (groupRes.error) throw groupRes.error;
+      if (usersRes.error) throw usersRes.error;
+      setMyGroup(groupRes.data);
+      const groupUsers = usersRes.data || [];
+      const userIds = groupUsers.map(u => u.id);
+      const { data: rolesData, error: rolesError } = userIds.length
+        ? await supabase.from('user_roles').select('id, user_id, role, created_at').in('user_id', userIds)
+        : { data: [], error: null };
       if (rolesError) throw rolesError;
 
-      // Get promocodes for this group
-      const { data: promocodesData, error: promocodesError } = await supabase
-        .from('promocodes')
-        .select('*')
-        .eq('group_id', myProfile.group_id)
-        .order('created_at', { ascending: false });
-
-      if (promocodesError) throw promocodesError;
-
-      // Get IP whitelist for this group
-      const { data: ipData, error: ipError } = await supabase
-        .from('ip_whitelist')
-        .select('*')
-        .eq('group_id', myProfile.group_id)
-        .order('created_at', { ascending: false });
-
-      if (ipError) throw ipError;
+      if (promocodesRes.error) throw promocodesRes.error;
+      if (ipRes.error) throw ipRes.error;
+      const promocodesData = promocodesRes.data;
+      const ipData = ipRes.data;
 
       setUsers(groupUsers || []);
       setUserRoles(rolesData || []);
       setPromocodes(promocodesData || []);
       setIpWhitelist(ipData || []);
       
-      // Fetch sessions for staff members
-      await fetchStaffSessions(groupUsers || [], rolesData || []);
+      // Session history loads independently when its tab is opened.
     } catch (error: any) {
       toast({ title: t('common.error'), description: error.message, variant: "destructive" });
     } finally {
       setLoadingData(false);
     }
-  };
+  }, [userId, toast, t]);
 
-  const fetchStaffSessions = async (groupUsers: UserProfile[], roles: UserRole[]) => {
+  useEffect(() => {
+    if (userId && isGroupAdmin) void fetchData();
+  }, [userId, isGroupAdmin, fetchData]);
+
+  const fetchStaffSessions = useCallback(async (groupUsers: UserProfile[], roles: UserRole[]) => {
     setLoadingSessions(true);
     try {
       const staffRoles = ['admin', 'group_admin', 'supervisor', 'agent'];
@@ -269,28 +222,37 @@ const GroupAdmin = () => {
       // Fetch sessions for all staff members
       const allSessions: StaffSession[] = [];
       
-      for (const staffUserId of staffUserIds) {
-        const { data: sessions, error } = await supabase
-          .rpc('get_user_sessions_for_staff', { target_user_id: staffUserId });
+      const userById = new Map(groupUsers.map(profile => [profile.id, profile]));
+      const roleById = new Map(roles.map(role => [role.user_id, role]));
+      // Bound concurrency while preserving each RPC's existing access checks.
+      let nextIndex = 0;
+      const worker = async () => {
+        while (nextIndex < staffUserIds.length) {
+          const staffUserId = staffUserIds[nextIndex++];
+          const { data: sessions, error } = await supabase
+            .rpc('get_user_sessions_for_staff', { target_user_id: staffUserId });
 
-        if (error) {
-          console.error('Error fetching sessions for user:', staffUserId, error);
-          continue;
+          if (error) {
+            console.error('Error fetching sessions for user:', staffUserId, error);
+            continue;
+          }
+
+          if (sessions) {
+            const staffUser = userById.get(staffUserId);
+            const staffRole = roleById.get(staffUserId);
+
+            const enrichedSessions = sessions.map((s) => ({
+              ...s,
+              user_name: staffUser ? `${staffUser.first_name || ''} ${staffUser.last_name || ''}`.trim() || staffUser.email || 'Unknown' : 'Unknown',
+              user_role: staffRole?.role || 'user'
+            }));
+
+            allSessions.push(...enrichedSessions);
+          }
         }
 
-        if (sessions) {
-          const staffUser = groupUsers.find(u => u.id === staffUserId);
-          const staffRole = roles.find(r => r.user_id === staffUserId);
-          
-          const enrichedSessions = sessions.map((s: any) => ({
-            ...s,
-            user_name: staffUser ? `${staffUser.first_name || ''} ${staffUser.last_name || ''}`.trim() || staffUser.email || 'Unknown' : 'Unknown',
-            user_role: staffRole?.role || 'user'
-          }));
-          
-          allSessions.push(...enrichedSessions);
-        }
-      }
+      };
+      await Promise.all(Array.from({ length: Math.min(4, staffUserIds.length) }, () => worker()));
 
       // Sort by login_time desc
       allSessions.sort((a, b) => {
@@ -305,15 +267,18 @@ const GroupAdmin = () => {
     } finally {
       setLoadingSessions(false);
     }
-  };
-
-  const handleRefresh = useCallback(async () => {
-    await fetchData();
   }, []);
 
+  useEffect(() => {
+    if (activeTab === 'sessions' && !loadingData) void fetchStaffSessions(users, userRoles);
+  }, [activeTab, loadingData, users, userRoles, fetchStaffSessions]);
+
+  const handleRefresh = async () => {
+    await fetchData();
+  };
+
   const getUserRole = (userId: string): string => {
-    const role = userRoles.find(r => r.user_id === userId);
-    return role?.role || 'user';
+    return roleByUserId.get(userId) || 'user';
   };
 
   const handleRoleChange = async (userId: string, newRole: string) => {
@@ -440,21 +405,25 @@ const GroupAdmin = () => {
     toast({ title: t('common.copied'), description: `${text} ${t('common.copiedToClipboard')}` });
   };
 
-  const filterUsersByRole = (role: string, search?: string) => {
-    let filtered = role === 'all' 
-      ? users.filter(u => u.id !== user?.id) 
-      : users.filter(u => getUserRole(u.id) === role && u.id !== user?.id);
-    if (search) {
-      const term = search.toLowerCase();
-      filtered = filtered.filter(u => 
-        (u.first_name?.toLowerCase().includes(term)) ||
-        (u.last_name?.toLowerCase().includes(term)) ||
-        (u.email?.toLowerCase().includes(term)) ||
-        (`${u.first_name || ''} ${u.last_name || ''}`.toLowerCase().includes(term))
-      );
-    }
-    return filtered;
-  };
+  const usersByRole = useMemo(() => {
+    const grouped = new Map<string, UserProfile[]>();
+    users.forEach(profile => {
+      if (profile.id === user?.id) return;
+      const role = roleByUserId.get(profile.id) || 'user';
+      const list = grouped.get(role) || [];
+      list.push(profile);
+      grouped.set(role, list);
+    });
+    return grouped;
+  }, [users, roleByUserId, user?.id]);
+  const filterUsersByRole = (role: string) => usersByRole.get(role) || [];
+  const visibleCustomers = useMemo(() => {
+    const term = deferredCustomerSearch.toLowerCase();
+    return (usersByRole.get('user') || []).filter(u => !term ||
+      u.first_name?.toLowerCase().includes(term) || u.last_name?.toLowerCase().includes(term) ||
+      u.email?.toLowerCase().includes(term) || `${u.first_name || ''} ${u.last_name || ''}`.toLowerCase().includes(term));
+  }, [usersByRole, deferredCustomerSearch]);
+  const customerPagination = useClientPagination(visibleCustomers, deferredCustomerSearch);
 
   if (loading) return null;
   if (!isGroupAdmin) return null;
@@ -510,7 +479,7 @@ const GroupAdmin = () => {
           </CardContent>
         </Card>
       ) : (
-        <Tabs defaultValue="customers" className="w-full">
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
           <TabsList className="w-full justify-start bg-card border border-border rounded-lg p-1 mb-6 flex-wrap h-auto gap-1">
             <TabsTrigger value="customers" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
               <Users className="w-4 h-4 mr-2" /> {t('admin.customers')}
@@ -540,7 +509,7 @@ const GroupAdmin = () => {
             <Card className="bg-card border-border">
               <CardHeader className="border-b border-border flex-row items-center justify-between">
                 <CardTitle className="text-foreground flex items-center gap-2">
-                  {t('admin.customers')} <Badge variant="secondary">{filterUsersByRole('user', customerSearch).length}</Badge>
+                  {t('admin.customers')} <Badge variant="secondary">{visibleCustomers.length}</Badge>
                 </CardTitle>
                 <div className="relative w-full sm:w-64">
                   <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
@@ -565,7 +534,7 @@ const GroupAdmin = () => {
                       </TableRow>
                     </TableHeader>
                     <TableBody>
-                      {filterUsersByRole('user', customerSearch).map((u) => (
+                      {customerPagination.items.map((u) => (
                         <TableRow key={u.id} className="border-border">
                           <TableCell className="font-medium">
                             {u.first_name || u.last_name ? `${u.first_name || ''} ${u.last_name || ''}`.trim() : 'N/A'}
@@ -609,13 +578,14 @@ const GroupAdmin = () => {
                           </TableCell>
                         </TableRow>
                       ))}
-                      {filterUsersByRole('user', customerSearch).length === 0 && (
+                      {visibleCustomers.length === 0 && (
                         <TableRow><TableCell colSpan={5} className="text-center py-8 text-muted-foreground">{t('admin.noCustomers')}</TableCell></TableRow>
                       )}
                     </TableBody>
                   </Table>
                 </div>
               </CardContent>
+              <CustomerPagination {...customerPagination} />
             </Card>
           </TabsContent>
 
@@ -670,7 +640,7 @@ const GroupAdmin = () => {
                             <AgentClientsDialog
                               agentId={u.id}
                               agentName={`${u.first_name || ''} ${u.last_name || ''}`.trim() || u.email || 'Agent'}
-                              count={users.filter((c: any) => c.assigned_to === u.id).length}
+                              count={assignedCountByAgent.get(u.id) || 0}
                             />
                           </TableCell>
                           <TableCell className="text-right">

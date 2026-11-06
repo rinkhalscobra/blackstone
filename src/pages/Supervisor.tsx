@@ -1,5 +1,8 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useMemo, useDeferredValue } from 'react';
+import { CustomerPagination } from '@/components/CustomerPagination';
+import { useClientPagination } from '@/hooks/useClientPagination';
 import { useNavigate } from 'react-router-dom';
+import { useRoleQuery } from '@/hooks/useRoleQuery';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
 import { StaffDashboardLayout } from '@/components/dashboard/StaffDashboardLayout';
@@ -22,6 +25,7 @@ import { DeleteUserDialog } from '@/components/admin/DeleteUserDialog';
 
 interface UserProfile {
   id: string;
+  assigned_to: string | null;
   email: string | null;
   first_name: string | null;
   last_name: string | null;
@@ -50,65 +54,34 @@ interface Group {
 const Supervisor = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
+  const userId = user?.id;
   const { toast } = useToast();
   const { t } = useLanguage();
   
-  const [isSupervisor, setIsSupervisor] = useState(false);
-  const [loading, setLoading] = useState(true);
+  const { role, loading } = useRoleQuery();
+  const isSupervisor = role === 'supervisor';
   const [users, setUsers] = useState<UserProfile[]>([]);
   const [userRoles, setUserRoles] = useState<UserRole[]>([]);
   const [myGroup, setMyGroup] = useState<Group | null>(null);
   const [loadingData, setLoadingData] = useState(true);
   const [customerSearch, setCustomerSearch] = useState('');
+  const deferredCustomerSearch = useDeferredValue(customerSearch);
+  const roleByUserId = useMemo(() => new Map(userRoles.map(r => [r.user_id, r.role])), [userRoles]);
+  const assignedCountByAgent = useMemo(() => {
+    const counts = new Map<string, number>();
+    users.forEach(u => { if (u.assigned_to) counts.set(u.assigned_to, (counts.get(u.assigned_to) || 0) + 1); });
+    return counts;
+  }, [users]);
 
   useEffect(() => {
-    const checkSupervisorStatus = async () => {
-      if (!user) {
-        setLoading(false);
-        return;
-      }
-
-      try {
-        const { data: roleData, error: roleError } = await supabase
-          .from('user_roles')
-          .select('role')
-          .eq('user_id', user.id)
-          .maybeSingle();
-
-        if (roleError) throw roleError;
-
-        const isSup = roleData?.role === 'supervisor';
-        setIsSupervisor(isSup);
-
-        if (!isSup) {
-          toast({
-            title: t('admin.accessDenied'),
-            description: t('admin.noPermission'),
-            variant: "destructive"
-          });
-          navigate('/');
-        }
-      } catch (error: any) {
-        toast({ title: t('deposit.error'), description: error.message, variant: "destructive" });
-        navigate('/');
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    if (user) {
-      checkSupervisorStatus();
+    if (!loading && userId && !isSupervisor) {
+      toast({ title: t('admin.accessDenied'), description: t('admin.noPermission'), variant: 'destructive' });
+      navigate('/');
     }
-  }, [user, navigate, toast]);
+  }, [loading, userId, isSupervisor, navigate, toast, t]);
 
-  useEffect(() => {
-    if (isSupervisor && user) {
-      fetchData();
-    }
-  }, [isSupervisor, user]);
-
-  const fetchData = async () => {
-    if (!user) return;
+  const fetchData = useCallback(async () => {
+    if (!userId) return;
     setLoadingData(true);
     
     try {
@@ -116,7 +89,7 @@ const Supervisor = () => {
       const { data: myProfile, error: profileError } = await supabase
         .from('profiles')
         .select('group_id')
-        .eq('id', user.id)
+        .eq('id', userId)
         .single();
 
       if (profileError) throw profileError;
@@ -131,37 +104,21 @@ const Supervisor = () => {
         return;
       }
 
-      // Get group info
-      const { data: groupData, error: groupError } = await supabase
-        .from('groups')
-        .select('id, name')
-        .eq('id', myProfile.group_id)
-        .single();
-
-      if (groupError) throw groupError;
-      setMyGroup(groupData);
-
-      // Get all users in my group
-      const { data: groupUsers, error: usersError } = await supabase
-        .from('profiles')
-        .select('*')
-        .eq('group_id', myProfile.group_id)
-        .eq('is_archived', false)
-        .order('created_at', { ascending: false });
-
-      if (usersError) throw usersError;
-
-      // Get roles for these users
-      const userIds = groupUsers?.map(u => u.id) || [];
-      const { data: rolesData, error: rolesError } = await supabase
-        .from('user_roles')
-        .select('*')
-        .in('user_id', userIds);
-
+      // These reads only depend on the current group, so start them together.
+      const [groupRes, usersRes] = await Promise.all([
+        supabase.from('groups').select('id, name').eq('id', myProfile.group_id).single(),
+        supabase.from('profiles').select('id, email, first_name, last_name, username, phone, birthdate, status, group_id, assigned_to, created_by, last_login, is_super, created_at')
+          .eq('group_id', myProfile.group_id).eq('is_archived', false).order('created_at', { ascending: false })
+      ]);
+      if (groupRes.error) throw groupRes.error;
+      if (usersRes.error) throw usersRes.error;
+      setMyGroup(groupRes.data);
+      const groupUsers = usersRes.data || [];
+      const userIds = groupUsers.map(u => u.id);
+      const { data: rolesData, error: rolesError } = userIds.length
+        ? await supabase.from('user_roles').select('id, user_id, role, created_at').in('user_id', userIds)
+        : { data: [], error: null };
       if (rolesError) throw rolesError;
-
-      console.log('Fetched users:', groupUsers);
-      console.log('Fetched roles:', rolesData);
 
       setUsers(groupUsers || []);
       setUserRoles(rolesData || []);
@@ -170,11 +127,14 @@ const Supervisor = () => {
     } finally {
       setLoadingData(false);
     }
-  };
+  }, [userId, toast, t]);
+
+  useEffect(() => {
+    if (userId && isSupervisor) void fetchData();
+  }, [userId, isSupervisor, fetchData]);
 
   const getUserRole = (userId: string): string => {
-    const role = userRoles.find(r => r.user_id === userId);
-    return role?.role || 'user';
+    return roleByUserId.get(userId) || 'user';
   };
 
   const handleStatusChange = async (userId: string, newStatus: string) => {
@@ -231,25 +191,29 @@ const Supervisor = () => {
     }
   };
 
-  const filterUsersByRole = (role: string, search?: string) => {
-    let filtered = role === 'all' 
-      ? users.filter(u => u.id !== user?.id) 
-      : users.filter(u => getUserRole(u.id) === role && u.id !== user?.id);
-    if (search) {
-      const term = search.toLowerCase();
-      filtered = filtered.filter(u => 
-        (u.first_name?.toLowerCase().includes(term)) ||
-        (u.last_name?.toLowerCase().includes(term)) ||
-        (u.email?.toLowerCase().includes(term)) ||
-        (`${u.first_name || ''} ${u.last_name || ''}`.toLowerCase().includes(term))
-      );
-    }
-    return filtered;
-  };
+  const usersByRole = useMemo(() => {
+    const grouped = new Map<string, UserProfile[]>();
+    users.forEach(profile => {
+      if (profile.id === user?.id) return;
+      const role = roleByUserId.get(profile.id) || 'user';
+      const list = grouped.get(role) || [];
+      list.push(profile);
+      grouped.set(role, list);
+    });
+    return grouped;
+  }, [users, roleByUserId, user?.id]);
+  const filterUsersByRole = (role: string) => usersByRole.get(role) || [];
+  const visibleCustomers = useMemo(() => {
+    const term = deferredCustomerSearch.toLowerCase();
+    return (usersByRole.get('user') || []).filter(u => !term ||
+      u.first_name?.toLowerCase().includes(term) || u.last_name?.toLowerCase().includes(term) ||
+      u.email?.toLowerCase().includes(term) || `${u.first_name || ''} ${u.last_name || ''}`.toLowerCase().includes(term));
+  }, [usersByRole, deferredCustomerSearch]);
+  const customerPagination = useClientPagination(visibleCustomers, deferredCustomerSearch);
 
-  const handleRefresh = useCallback(async () => {
+  const handleRefresh = async () => {
     await fetchData();
-  }, []);
+  };
 
   if (loading) return null;
   if (!isSupervisor) return null;
@@ -311,7 +275,7 @@ const Supervisor = () => {
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                   <CardTitle className="text-foreground flex items-center gap-2">
                     {t('supervisor.customersInGroup')} {myGroup.name}
-                    <Badge variant="secondary">{filterUsersByRole('user', customerSearch).length}</Badge>
+                    <Badge variant="secondary">{visibleCustomers.length}</Badge>
                   </CardTitle>
                   <div className="relative w-full sm:w-64">
                     <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
@@ -337,7 +301,7 @@ const Supervisor = () => {
                       </TableRow>
                     </TableHeader>
                     <TableBody>
-                      {filterUsersByRole('user', customerSearch).map((u) => (
+                      {customerPagination.items.map((u) => (
                         <TableRow key={u.id} className="border-border">
                           <TableCell className="font-medium">
                             <div>
@@ -394,7 +358,7 @@ const Supervisor = () => {
                           </TableCell>
                         </TableRow>
                       ))}
-                      {filterUsersByRole('user', customerSearch).length === 0 && (
+                      {visibleCustomers.length === 0 && (
                         <TableRow>
                           <TableCell colSpan={5} className="text-center py-8 text-muted-foreground">
                             {t('supervisor.noCustomersInGroup')}
@@ -405,6 +369,7 @@ const Supervisor = () => {
                   </Table>
                 </div>
               </CardContent>
+              <CustomerPagination {...customerPagination} />
             </Card>
           </TabsContent>
 
@@ -454,7 +419,7 @@ const Supervisor = () => {
                             <AgentClientsDialog
                               agentId={u.id}
                               agentName={`${u.first_name || ''} ${u.last_name || ''}`.trim() || u.email || 'Agent'}
-                              count={users.filter((c: any) => c.assigned_to === u.id).length}
+                              count={assignedCountByAgent.get(u.id) || 0}
                             />
                           </TableCell>
                           <TableCell className="text-right">

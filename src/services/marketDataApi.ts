@@ -112,23 +112,14 @@ const callCryptoApi = async (endpoint: string, params?: Record<string, string>) 
     try {
       await acquireSlot();
       try {
-        let lastError: any = null;
+        let lastError: unknown = null;
         for (let attempt = 0; attempt < 3; attempt++) {
           try {
             const { data, error } = await supabase.functions.invoke('crypto-data', {
               body: { endpoint, params },
             });
 
-            if (error) {
-              const msg = String(error?.message || error);
-              // Retry on transient degraded / 503 responses
-              if (msg.includes('503') || msg.includes('DEGRADED') || msg.includes('non-2xx')) {
-                lastError = error;
-                await sleep(500 * Math.pow(2, attempt));
-                continue;
-              }
-              throw error;
-            }
+            if (error) throw error;
 
             // The edge function deliberately returns an empty successful payload
             // when Coinbase is rate limited so the UI can keep rendering.
@@ -159,25 +150,71 @@ const callCryptoApi = async (endpoint: string, params?: Record<string, string>) 
 };
 
 
-// Get real-time quotes for cryptocurrencies
-export const getCryptoQuotes = async (symbols: string[]): Promise<Record<string, CryptoQuote>> => {
-  try {
-    // Sort symbols to ensure consistent cache key
-    const sortedSymbols = [...symbols].sort();
-    const symbolString = sortedSymbols.join(',');
-    const data = await callCryptoApi('quote', { symbol: symbolString });
-    
-    // If single symbol, wrap in object
-    if (!Array.isArray(data) && data.symbol) {
-      return { [data.symbol]: data };
-    }
-    
-    // Multiple symbols return as object with symbol keys
-    return data;
-  } catch (error) {
-    console.error('Error fetching crypto quotes:', error);
-    return {};
+// Cache and deduplicate individual symbols, since widgets request overlapping batches.
+interface PendingQuote {
+  promise: Promise<CryptoQuote | undefined>;
+  resolve: (quote: CryptoQuote | undefined) => void;
+}
+const quoteCache = new Map<string, CacheEntry<CryptoQuote>>();
+const pendingQuotes = new Map<string, PendingQuote>();
+const queuedQuotes = new Map<string, PendingQuote>();
+let quoteBatchScheduled = false;
+const MAX_QUOTE_BATCH = 16; // Matches the edge function's symbol limit.
+
+const flushQuoteBatch = () => {
+  quoteBatchScheduled = false;
+  const entries = [...queuedQuotes.entries()].sort(([a], [b]) => a.localeCompare(b));
+  queuedQuotes.clear();
+  for (let offset = 0; offset < entries.length; offset += MAX_QUOTE_BATCH) {
+    const batch = entries.slice(offset, offset + MAX_QUOTE_BATCH);
+    void (async () => {
+      const quotes = new Map<string, CryptoQuote>();
+      try {
+        const data = await callCryptoApi('quote', { symbol: batch.map(([symbol]) => symbol).join(',') });
+        const values: unknown[] = data?.symbol ? [data] : Object.values(data || {});
+        for (const value of values) {
+          if (!value || typeof value !== 'object') continue;
+          const quote = value as CryptoQuote;
+          if (typeof quote.symbol !== 'string' || !Number.isFinite(Number(quote.close)) || Number(quote.close) <= 0) continue;
+          quotes.set(quote.symbol, quote);
+        }
+      } catch (error) {
+        console.error('Error fetching crypto quotes:', error);
+      } finally {
+        for (const [symbol, pending] of batch) {
+          const quote = quotes.get(symbol);
+          if (quote) quoteCache.set(symbol, { data: quote, timestamp: Date.now() });
+          pendingQuotes.delete(symbol);
+          pending.resolve(quote);
+        }
+      }
+    })();
   }
+};
+
+const requestQuote = (symbol: string): Promise<CryptoQuote | undefined> => {
+  const cached = quoteCache.get(symbol);
+  if (cached && Date.now() - cached.timestamp < CACHE_TTL) return Promise.resolve(cached.data);
+  quoteCache.delete(symbol);
+  const existing = pendingQuotes.get(symbol);
+  if (existing) return existing.promise;
+
+  let resolve: PendingQuote['resolve'];
+  const promise = new Promise<CryptoQuote | undefined>(complete => { resolve = complete; });
+  const pending = { promise, resolve };
+  pendingQuotes.set(symbol, pending);
+  queuedQuotes.set(symbol, pending);
+  if (!quoteBatchScheduled) {
+    quoteBatchScheduled = true;
+    queueMicrotask(flushQuoteBatch);
+  }
+  return promise;
+};
+
+export const getCryptoQuotes = async (symbols: string[]): Promise<Record<string, CryptoQuote>> => {
+  const normalized = [...new Set(symbols.map(symbol => symbol.trim().toUpperCase().replace('-', '/')).filter(Boolean))];
+  const quotes = await Promise.all(normalized.map(async symbol => [symbol, await requestQuote(symbol)] as const));
+  return Object.fromEntries(quotes.filter(([, quote]) => quote !== undefined));
 };
 
 // Get single crypto price

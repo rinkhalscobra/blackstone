@@ -32,8 +32,8 @@ interface DashboardLayoutProps {
 
 export const DashboardLayout = ({ children }: DashboardLayoutProps) => {
   const { user, signOut } = useAuth();
-  const { profile } = useCustomerData();
-  const { messages: unreadMessages, notifications: unreadNotifications } = useUnreadCounts();
+  const { profile, unreadCount: unreadNotifications } = useCustomerData();
+  const { messages: unreadMessages } = useUnreadCounts({ includeNotifications: false });
   const { t } = useLanguage();
   const location = useLocation();
   const navigate = useNavigate();

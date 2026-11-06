@@ -1,4 +1,6 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useMemo, useDeferredValue } from 'react';
+import { CustomerPagination } from '@/components/CustomerPagination';
+import { useClientPagination } from '@/hooks/useClientPagination';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
 import { useAdmin } from '@/hooks/useAdmin';
@@ -32,6 +34,7 @@ interface CustomerProfile {
 const Agent = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
+  const userId = user?.id;
   const { userRole } = useAdmin();
   const { toast } = useToast();
   const { t } = useLanguage();
@@ -39,23 +42,18 @@ const Agent = () => {
   const [customers, setCustomers] = useState<CustomerProfile[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
+  const deferredSearchTerm = useDeferredValue(searchTerm);
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [myGroupId, setMyGroupId] = useState<string | null>(null);
 
-  useEffect(() => {
-    if (user && userRole === 'agent') {
-      fetchAgentData();
-    }
-  }, [user, userRole]);
-
-  const fetchAgentData = async () => {
+  const fetchAgentData = useCallback(async () => {
     setLoading(true);
     try {
       // Get agent's group
       const { data: agentProfile } = await supabase
         .from('profiles')
         .select('group_id')
-        .eq('id', user?.id)
+        .eq('id', userId)
         .single();
       
       setMyGroupId(agentProfile?.group_id || null);
@@ -63,8 +61,8 @@ const Agent = () => {
       // Get assigned customers
       const { data, error } = await supabase
         .from('profiles')
-        .select('*')
-        .eq('assigned_to', user?.id)
+        .select('id, email, first_name, last_name, status, case_number, subscription, created_at, group_id')
+        .eq('assigned_to', userId)
         .eq('is_archived', false)
         .order('created_at', { ascending: false });
 
@@ -75,7 +73,11 @@ const Agent = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [userId, toast]);
+
+  useEffect(() => {
+    if (userId && userRole === 'agent') void fetchAgentData();
+  }, [userId, userRole, fetchAgentData]);
 
   const handleStatusChange = async (customerId: string, newStatus: string) => {
     try {
@@ -92,15 +94,16 @@ const Agent = () => {
     }
   };
 
-  const filteredCustomers = customers.filter(c => {
+  const filteredCustomers = useMemo(() => customers.filter(c => {
     const matchesSearch = 
-      (c.first_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-       c.last_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-       c.email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-       c.case_number?.toLowerCase().includes(searchTerm.toLowerCase()));
+      (c.first_name?.toLowerCase().includes(deferredSearchTerm.toLowerCase()) ||
+       c.last_name?.toLowerCase().includes(deferredSearchTerm.toLowerCase()) ||
+       c.email?.toLowerCase().includes(deferredSearchTerm.toLowerCase()) ||
+       c.case_number?.toLowerCase().includes(deferredSearchTerm.toLowerCase()));
     const matchesStatus = statusFilter === 'all' || c.status === statusFilter;
     return matchesSearch && matchesStatus;
-  });
+  }), [customers, deferredSearchTerm, statusFilter]);
+  const customerPagination = useClientPagination(filteredCustomers, `${deferredSearchTerm}:${statusFilter}`);
 
   const statusColors: Record<string, string> = {
     active: 'bg-green-500/20 text-green-400',
@@ -109,9 +112,9 @@ const Agent = () => {
     suspended: 'bg-red-500/20 text-red-400'
   };
 
-  const handleRefresh = useCallback(async () => {
+  const handleRefresh = async () => {
     await fetchAgentData();
-  }, []);
+  };
 
   if (userRole !== 'agent') return null;
 
@@ -230,7 +233,7 @@ const Agent = () => {
                     </TableCell>
                   </TableRow>
                 ) : (
-                  filteredCustomers.map((customer) => (
+                  customerPagination.items.map((customer) => (
                     <TableRow key={customer.id} className="border-border">
                       <TableCell className="font-medium">
                         <div>
@@ -278,6 +281,7 @@ const Agent = () => {
             </Table>
           </div>
         </CardContent>
+        <CustomerPagination {...customerPagination} />
       </Card>
     </StaffDashboardLayout>
   );

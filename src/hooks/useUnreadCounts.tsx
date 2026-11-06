@@ -7,13 +7,14 @@ interface UnreadCounts {
   notifications: number;
 }
 
-export const useUnreadCounts = () => {
+export const useUnreadCounts = ({ includeNotifications = true }: { includeNotifications?: boolean } = {}) => {
   const { user } = useAuth();
+  const userId = user?.id;
   const [counts, setCounts] = useState<UnreadCounts>({ messages: 0, notifications: 0 });
   const [isLoading, setIsLoading] = useState(true);
 
   const fetchCounts = useCallback(async () => {
-    if (!user) {
+    if (!userId) {
       setCounts({ messages: 0, notifications: 0 });
       setIsLoading(false);
       return;
@@ -24,13 +25,13 @@ export const useUnreadCounts = () => {
         supabase
           .from('messages')
           .select('id', { count: 'exact', head: true })
-          .eq('recipient_id', user.id)
+          .eq('recipient_id', userId)
           .eq('is_read', false),
-        supabase
+        includeNotifications ? supabase
           .from('notifications')
           .select('id', { count: 'exact', head: true })
-          .eq('user_id', user.id)
-          .eq('is_read', false),
+          .eq('user_id', userId)
+          .eq('is_read', false) : Promise.resolve({ count: 0 }),
       ]);
 
       setCounts({
@@ -42,12 +43,18 @@ export const useUnreadCounts = () => {
     } finally {
       setIsLoading(false);
     }
-  }, [user]);
+  }, [userId, includeNotifications]);
 
   useEffect(() => {
     fetchCounts();
 
-    if (!user) return;
+    if (!userId) return;
+
+    let refreshTimer: ReturnType<typeof setTimeout>;
+    const scheduleRefresh = () => {
+      clearTimeout(refreshTimer);
+      refreshTimer = setTimeout(() => { void fetchCounts(); }, 100);
+    };
 
     // Subscribe to new messages
     const messagesChannel = supabase
@@ -58,16 +65,14 @@ export const useUnreadCounts = () => {
           event: '*',
           schema: 'public',
           table: 'messages',
-          filter: `recipient_id=eq.${user.id}`,
+          filter: `recipient_id=eq.${userId}`,
         },
-        () => {
-          fetchCounts();
-        }
+        scheduleRefresh
       )
       .subscribe();
 
     // Subscribe to new notifications
-    const notificationsChannel = supabase
+    const notificationsChannel = includeNotifications ? supabase
       .channel('unread-notifications')
       .on(
         'postgres_changes',
@@ -75,19 +80,18 @@ export const useUnreadCounts = () => {
           event: '*',
           schema: 'public',
           table: 'notifications',
-          filter: `user_id=eq.${user.id}`,
+          filter: `user_id=eq.${userId}`,
         },
-        () => {
-          fetchCounts();
-        }
+        scheduleRefresh
       )
-      .subscribe();
+      .subscribe() : null;
 
     return () => {
+      clearTimeout(refreshTimer);
       supabase.removeChannel(messagesChannel);
-      supabase.removeChannel(notificationsChannel);
+      if (notificationsChannel) supabase.removeChannel(notificationsChannel);
     };
-  }, [user, fetchCounts]);
+  }, [userId, fetchCounts, includeNotifications]);
 
   return { ...counts, isLoading, refetch: fetchCounts };
 };

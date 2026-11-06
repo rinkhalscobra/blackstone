@@ -27,6 +27,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
   useEffect(() => {
     let isMounted = true;
+    let lastSignedInUserId: string | undefined;
 
     // Set up auth state listener FIRST (for ongoing changes)
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
@@ -36,7 +37,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         setUser(session?.user ?? null);
 
         // Update last_login on sign in (defer to avoid deadlocks)
-        if (event === 'SIGNED_IN' && session?.user) {
+        if (event === 'SIGNED_IN' && session?.user && session.user.id !== lastSignedInUserId) {
           setTimeout(() => {
             supabase.from('profiles')
               .update({ last_login: new Date().toISOString() })
@@ -44,6 +45,9 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
               .then();
           }, 0);
         }
+        // Supabase also emits SIGNED_IN on tab focus. Avoid a profile write and
+        // realtime broadcast for every focus or token refresh.
+        lastSignedInUserId = session?.user.id;
       }
     );
 

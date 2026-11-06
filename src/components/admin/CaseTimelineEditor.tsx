@@ -106,7 +106,14 @@ const CaseTimelineEditor = ({ customerId, caseNumber }: CaseTimelineEditorProps)
 
   useEffect(() => {
     fetchEvents();
-  }, [fetchEvents]);
+    const channel = supabase
+      .channel(`staff-timeline-${customerId}-${Math.random().toString(36).slice(2, 10)}`)
+      .on('postgres_changes', {
+        event: '*', schema: 'public', table: 'case_timeline', filter: `customer_id=eq.${customerId}`,
+      }, () => { void fetchEvents(); })
+      .subscribe();
+    return () => { void supabase.removeChannel(channel); };
+  }, [customerId, fetchEvents]);
 
   const handleDelete = async (eventId: string) => {
     try {

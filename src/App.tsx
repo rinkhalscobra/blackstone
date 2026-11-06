@@ -28,6 +28,7 @@ const NotFound = lazy(() => import("./pages/NotFound"));
 const Showcase = lazy(() => import("./pages/Showcase"));
 
 // Dashboard pages
+const CustomerDataOutlet = lazy(() => import('./components/dashboard/CustomerDataOutlet'));
 const DashboardIndex = lazy(() => import("./pages/dashboard/index"));
 const WalletPage = lazy(() => import("./pages/dashboard/wallet"));
 const TransactionsPage = lazy(() => import("./pages/dashboard/transactions"));
@@ -56,7 +57,6 @@ const App = () => (
             <Route path="/legal" element={<Legal />} />
             <Route path="/faq" element={<FAQ />} />
             <Route path="/contact" element={<Contact />} />
-            <Route path="/dashboard/funds" element={<RecoveryFundsPage />} />
             <Route path="/watchlist" element={<WatchlistNew />} />
             <Route path="/disclaimer" element={<Disclaimer />} />
             <Route path="/privacy" element={<Privacy />} />
@@ -67,14 +67,17 @@ const App = () => (
             <Route path="/customer/:customerId" element={<CustomerDetail />} />
             
             {/* Dashboard Routes */}
-            <Route path="/dashboard" element={<DashboardIndex />} />
-            <Route path="/dashboard/wallet" element={<WalletPage />} />
-            <Route path="/dashboard/transactions" element={<TransactionsPage />} />
-            <Route path="/dashboard/case" element={<CasePage />} />
-            <Route path="/dashboard/deposit" element={<DepositPage />} />
-            <Route path="/dashboard/withdraw" element={<WithdrawPage />} />
-            <Route path="/dashboard/notifications" element={<NotificationsPage />} />
-            <Route path="/dashboard/messages" element={<MessagesPage />} />
+            <Route element={<CustomerDataOutlet />}>
+              <Route path="/dashboard" element={<DashboardIndex />} />
+              <Route path="/dashboard/funds" element={<RecoveryFundsPage />} />
+              <Route path="/dashboard/wallet" element={<WalletPage />} />
+              <Route path="/dashboard/transactions" element={<TransactionsPage />} />
+              <Route path="/dashboard/case" element={<CasePage />} />
+              <Route path="/dashboard/deposit" element={<DepositPage />} />
+              <Route path="/dashboard/withdraw" element={<WithdrawPage />} />
+              <Route path="/dashboard/notifications" element={<NotificationsPage />} />
+              <Route path="/dashboard/messages" element={<MessagesPage />} />
+            </Route>
             
             <Route path="/showcase" element={<Showcase />} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}

@@ -56,6 +56,7 @@ export const parseAttachments = (message: Message): Attachment[] => {
 
 export const useMessages = (conversationId: string | null, recipientId: string | null) => {
   const { user } = useAuth();
+  const userId = user?.id;
   const { toast } = useToast();
   const [messages, setMessages] = useState<Message[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -93,11 +94,12 @@ export const useMessages = (conversationId: string | null, recipientId: string |
       
       oscillator.start(audioContext.currentTime);
       oscillator.stop(audioContext.currentTime + 0.3);
+      oscillator.onended = () => { void audioContext.close(); };
     }
   }, []);
 
   useEffect(() => {
-    if (!user || !conversationId) {
+    if (!userId || !conversationId) {
       setIsLoading(false);
       return;
     }
@@ -122,18 +124,18 @@ export const useMessages = (conversationId: string | null, recipientId: string |
     fetchMessages();
 
     // Mark messages as read
-    if (recipientId !== user.id) {
+    if (recipientId !== userId) {
       supabase
         .from('messages')
         .update({ is_read: true })
         .eq('conversation_id', conversationId)
-        .eq('recipient_id', user.id)
+        .eq('recipient_id', userId)
         .eq('is_read', false)
         .then(() => {});
     }
 
     // Set up realtime subscription with unique channel name
-    const channelName = `messages-realtime-${conversationId}-${user.id}-${Date.now()}`;
+    const channelName = `messages-realtime-${conversationId}-${userId}-${Date.now()}`;
     const channel = supabase
       .channel(channelName)
       .on(
@@ -142,9 +144,9 @@ export const useMessages = (conversationId: string | null, recipientId: string |
           event: 'INSERT',
           schema: 'public',
           table: 'messages',
+          filter: `conversation_id=eq.${conversationId}`,
         },
         (payload) => {
-          console.log('Realtime message received:', payload);
           const newMessage = payload.new as Message;
           // Only add if it's for this conversation
           if (newMessage.conversation_id !== conversationId) return;
@@ -156,7 +158,7 @@ export const useMessages = (conversationId: string | null, recipientId: string |
           });
           
           // Play notification sound and show toast for messages from others
-          if (newMessage.sender_id !== user.id && !isInitialLoad.current) {
+          if (newMessage.sender_id !== userId && !isInitialLoad.current) {
             playNotificationSound();
             toast({
               title: 'New Message',
@@ -165,7 +167,7 @@ export const useMessages = (conversationId: string | null, recipientId: string |
           }
           
           // Mark as read if we're the recipient
-          if (newMessage.recipient_id === user.id) {
+          if (newMessage.recipient_id === userId) {
             supabase
               .from('messages')
               .update({ is_read: true })
@@ -174,22 +176,20 @@ export const useMessages = (conversationId: string | null, recipientId: string |
           }
         }
       )
-      .subscribe((status) => {
-        console.log('Realtime subscription status:', status);
-      });
+      .subscribe();
 
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [user, conversationId, recipientId, playNotificationSound, toast]);
+  }, [userId, conversationId, recipientId, playNotificationSound, toast]);
 
   // Upload a single file with progress tracking
   const uploadSingleFile = useCallback(
     async (file: File, index: number, totalFiles: number): Promise<Attachment | null> => {
-      if (!user) return null;
+      if (!userId) return null;
 
       const fileExt = file.name.split('.').pop();
-      const fileName = `${user.id}/${Date.now()}-${Math.random().toString(36).substring(7)}.${fileExt}`;
+      const fileName = `${userId}/${Date.now()}-${Math.random().toString(36).substring(7)}.${fileExt}`;
       
       const { data: sessionData } = await supabase.auth.getSession();
       const accessToken = sessionData.session?.access_token;
@@ -252,13 +252,13 @@ export const useMessages = (conversationId: string | null, recipientId: string |
         xhr.send(file);
       });
     },
-    [user]
+    [userId]
   );
 
   // Upload multiple files
   const uploadAttachments = useCallback(
     async (files: File[]): Promise<Attachment[]> => {
-      if (!user || files.length === 0) return [];
+      if (!userId || files.length === 0) return [];
       
       setIsUploading(true);
       setOverallProgress(0);
@@ -289,7 +289,7 @@ export const useMessages = (conversationId: string | null, recipientId: string |
         setUploadProgress([]);
       }
     },
-    [user, uploadSingleFile]
+    [userId, uploadSingleFile]
   );
 
   // Legacy single file upload (for backwards compatibility)
@@ -323,7 +323,7 @@ export const useMessages = (conversationId: string | null, recipientId: string |
 
   const sendMessage = useCallback(
     async (content: string, attachments?: Attachment[]) => {
-      if (!user || !conversationId || !recipientId) return;
+      if (!userId || !conversationId || !recipientId) return;
       if (!content.trim() && (!attachments || attachments.length === 0)) return;
 
       let attachmentUrl: string | null = null;
@@ -351,7 +351,7 @@ export const useMessages = (conversationId: string | null, recipientId: string |
 
       const { error } = await supabase.from('messages').insert({
         conversation_id: conversationId,
-        sender_id: user.id,
+        sender_id: userId,
         recipient_id: recipientId,
         content: messageContent,
         attachment_url: attachmentUrl,
@@ -364,7 +364,7 @@ export const useMessages = (conversationId: string | null, recipientId: string |
         throw error;
       }
     },
-    [user, conversationId, recipientId]
+    [userId, conversationId, recipientId]
   );
 
   return {

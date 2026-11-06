@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
 import { useLanguage } from '@/contexts/LanguageContext';
@@ -115,10 +115,12 @@ interface Notification {
   created_at: string | null;
 }
 
-const CustomerDetail = (): JSX.Element => {
+const CustomerDetailContent = (): JSX.Element => {
   const { customerId } = useParams();
   const navigate = useNavigate();
   const { user, loading: authLoading } = useAuth();
+  const userId = user?.id;
+  const loadSequence = useRef(0);
   const { toast } = useToast();
   const { t } = useLanguage();
   const { isAdmin, isGroupAdmin, isSupervisor } = useUserRole();
@@ -155,13 +157,59 @@ const CustomerDetail = (): JSX.Element => {
     }
   }, [authLoading, user, navigate]);
 
+  const fetchCustomerData = useCallback(async () => {
+    if (!customerId) return;
+    const sequence = ++loadSequence.current;
+
+    try {
+      // Agent IDs are only needed for the agent picker, not the other reads.
+      const agentsRequest = (async () => {
+        const { data: agentRoles } = await supabase.from('user_roles').select('user_id').eq('role', 'agent');
+        const agentIds = agentRoles?.map(role => role.user_id) || [];
+        return agentIds.length
+          ? await supabase.from('profiles').select('id, email, first_name, last_name').in('id', agentIds)
+          : { data: [], error: null };
+      })();
+      void agentsRequest.then(({ data }) => {
+        if (sequence === loadSequence.current) setAgents(data || []);
+      }).catch(error => { console.error('Error fetching agents:', error); });
+
+      const [profileRes, notesRes, transactionsRes, sessionsRes, balanceRes, cryptoBalanceRes, cryptoAdjustmentsRes, notificationsRes] = await Promise.all([
+        supabase.from('profiles').select('*').eq('id', customerId).single(),
+        supabase.from('customer_notes').select('*').eq('customer_id', customerId).order('created_at', { ascending: false }),
+        supabase.from('transaction_requests').select('*').eq('customer_id', customerId).order('created_at', { ascending: false }),
+        supabase.from('user_sessions').select('*').eq('user_id', customerId).order('login_time', { ascending: false }),
+        supabase.from('customer_balances').select('*').eq('customer_id', customerId).order('currency'),
+        supabase.from('portfolio_items').select('id, crypto_id, crypto_name, crypto_symbol, quantity, purchase_price').eq('user_id', customerId).order('crypto_symbol'),
+        supabase.from('crypto_balance_adjustments').select('id, adjustment_type, amount, balance_after, crypto_id, crypto_symbol, reason, created_at').eq('customer_id', customerId).order('created_at', { ascending: false }).limit(5),
+        supabase.from('notifications').select('*').eq('user_id', customerId).order('created_at', { ascending: false })
+      ]);
+
+      if (sequence !== loadSequence.current) return;
+      if (profileRes.error) throw profileRes.error;
+      setCustomer(profileRes.data);
+      setNotes(notesRes.data || []);
+      setTransactions(transactionsRes.data || []);
+      setSessions(sessionsRes.data || []);
+      setCustomerBalances(balanceRes.data || []);
+      setCryptoBalances(cryptoBalanceRes.data || []);
+      setCryptoAdjustments((cryptoAdjustmentsRes.data || []) as CryptoBalanceAdjustment[]);
+      setNotifications(notificationsRes.data || []);
+    } catch (error: any) {
+      if (sequence === loadSequence.current) toast({ title: t('common.error'), description: error.message, variant: "destructive" });
+    } finally {
+      if (sequence === loadSequence.current) setLoading(false);
+    }
+  }, [customerId, toast, t]);
+
   useEffect(() => {
-    if (customerId && user) {
+    if (customerId && userId) {
       fetchCustomerData();
 
       // Set up real-time subscriptions
-      const profileChannel = supabase
-        .channel(`profile-${customerId}`)
+      let subscribed = false;
+      const channel = supabase
+        .channel(`customer-detail-${customerId}`)
         .on(
           'postgres_changes',
           { event: '*', schema: 'public', table: 'profiles', filter: `id=eq.${customerId}` },
@@ -171,29 +219,19 @@ const CustomerDetail = (): JSX.Element => {
             }
           }
         )
-        .subscribe();
-
-      const transactionsChannel = supabase
-        .channel(`transactions-${customerId}`)
         .on(
           'postgres_changes',
           { event: '*', schema: 'public', table: 'transaction_requests', filter: `customer_id=eq.${customerId}` },
-          () => {
-            // Refetch transactions on any change
-            supabase
-              .from('transaction_requests')
-              .select('*')
-              .eq('customer_id', customerId)
-              .order('created_at', { ascending: false })
-              .then(({ data }) => {
-                if (data) setTransactions(data);
-              });
+          (payload) => {
+            if (payload.eventType === 'DELETE') {
+              setTransactions(current => current.filter(item => item.id !== payload.old.id));
+            } else {
+              const changed = payload.new as TransactionRequest;
+              setTransactions(current => [changed, ...current.filter(item => item.id !== changed.id)]
+                .sort((a, b) => (b.created_at || '').localeCompare(a.created_at || '')));
+            }
           }
         )
-        .subscribe();
-
-      const balanceChannel = supabase
-        .channel(`balance-${customerId}`)
         .on(
           'postgres_changes',
           { event: '*', schema: 'public', table: 'customer_balances', filter: `customer_id=eq.${customerId}` },
@@ -213,10 +251,6 @@ const CustomerDetail = (): JSX.Element => {
             });
           }
         )
-        .subscribe();
-
-      const cryptoBalanceChannel = supabase
-        .channel(`crypto-balance-${customerId}`)
         .on(
           'postgres_changes',
           { event: '*', schema: 'public', table: 'portfolio_items', filter: `user_id=eq.${customerId}` },
@@ -236,10 +270,6 @@ const CustomerDetail = (): JSX.Element => {
             });
           },
         )
-        .subscribe();
-
-      const cryptoAdjustmentsChannel = supabase
-        .channel(`crypto-adjustments-${customerId}`)
         .on(
           'postgres_changes',
           { event: 'INSERT', schema: 'public', table: 'crypto_balance_adjustments', filter: `customer_id=eq.${customerId}` },
@@ -247,128 +277,70 @@ const CustomerDetail = (): JSX.Element => {
             setCryptoAdjustments((current) => [payload.new as CryptoBalanceAdjustment, ...current].slice(0, 5));
           },
         )
-        .subscribe();
-
-      const notificationsChannel = supabase
-        .channel(`notifications-${customerId}`)
         .on(
           'postgres_changes',
           { event: '*', schema: 'public', table: 'notifications', filter: `user_id=eq.${customerId}` },
-          () => {
-            supabase
-              .from('notifications')
-              .select('*')
-              .eq('user_id', customerId)
-              .order('created_at', { ascending: false })
-              .then(({ data }) => {
-                if (data) setNotifications(data);
-              });
+          (payload) => {
+            if (payload.eventType === 'DELETE') {
+              setNotifications(current => current.filter(item => item.id !== payload.old.id));
+            } else {
+              const changed = payload.new as Notification;
+              setNotifications(current => [changed, ...current.filter(item => item.id !== changed.id)]
+                .sort((a, b) => (b.created_at || '').localeCompare(a.created_at || '')));
+            }
           }
         )
-        .subscribe();
-
-      const notesChannel = supabase
-        .channel(`notes-${customerId}`)
         .on(
           'postgres_changes',
           { event: '*', schema: 'public', table: 'customer_notes', filter: `customer_id=eq.${customerId}` },
-          () => {
-            supabase
-              .from('customer_notes')
-              .select('*')
-              .eq('customer_id', customerId)
-              .order('created_at', { ascending: false })
-              .then(({ data }) => {
-                if (data) setNotes(data);
-              });
+          (payload) => {
+            if (payload.eventType === 'DELETE') {
+              setNotes(current => current.filter(item => item.id !== payload.old.id));
+            } else {
+              const changed = payload.new as Note;
+              setNotes(current => [changed, ...current.filter(item => item.id !== changed.id)]
+                .sort((a, b) => (b.created_at || '').localeCompare(a.created_at || '')));
+            }
           }
         )
-        .subscribe();
+        .subscribe(status => {
+          if (status === 'SUBSCRIBED') {
+            if (subscribed) void fetchCustomerData();
+            subscribed = true;
+          }
+        });
 
-      const timelineChannel = supabase
-        .channel(`timeline-${customerId}`)
-        .on(
-          'postgres_changes',
-          { event: '*', schema: 'public', table: 'case_timeline', filter: `customer_id=eq.${customerId}` },
-          () => {
-            // Timeline updates are handled by CaseTimelineEditor component
-            // But we trigger a refetch for any dependent data
-            fetchCustomerData();
-          }
-        )
-        .subscribe();
+      const refreshVisibleData = () => {
+        if (document.visibilityState === 'visible') void fetchCustomerData();
+      };
+      document.addEventListener('visibilitychange', refreshVisibleData);
+      window.addEventListener('online', refreshVisibleData);
+      const invalidatePendingLoads = () => { ++loadSequence.current; };
 
       return () => {
-        supabase.removeChannel(profileChannel);
-        supabase.removeChannel(transactionsChannel);
-        supabase.removeChannel(balanceChannel);
-        supabase.removeChannel(cryptoBalanceChannel);
-        supabase.removeChannel(cryptoAdjustmentsChannel);
-        supabase.removeChannel(notificationsChannel);
-        supabase.removeChannel(notesChannel);
-        supabase.removeChannel(timelineChannel);
+        invalidatePendingLoads();
+        document.removeEventListener('visibilitychange', refreshVisibleData);
+        window.removeEventListener('online', refreshVisibleData);
+        void supabase.removeChannel(channel);
       };
     }
-  }, [customerId, user]);
+  }, [customerId, userId, fetchCustomerData]);
 
-  const fetchCustomerData = async () => {
-    if (!customerId) return;
-    setLoading(true);
-
-    try {
-      // Fetch agents (users with agent role)
-      const { data: agentRoles } = await supabase
-        .from('user_roles')
-        .select('user_id')
-        .eq('role', 'agent');
-      
-      const agentIds = agentRoles?.map(r => r.user_id) || [];
-      
-      const [profileRes, notesRes, transactionsRes, sessionsRes, agentsRes, balanceRes, cryptoBalanceRes, cryptoAdjustmentsRes, notificationsRes] = await Promise.all([
-        supabase.from('profiles').select('*').eq('id', customerId).single(),
-        supabase.from('customer_notes').select('*').eq('customer_id', customerId).order('created_at', { ascending: false }),
-        supabase.from('transaction_requests').select('*').eq('customer_id', customerId).order('created_at', { ascending: false }),
-        supabase.from('user_sessions').select('*').eq('user_id', customerId).order('login_time', { ascending: false }),
-        agentIds.length > 0 
-          ? supabase.from('profiles').select('id, email, first_name, last_name').in('id', agentIds)
-          : Promise.resolve({ data: [], error: null }),
-        supabase.from('customer_balances').select('*').eq('customer_id', customerId).order('currency'),
-        supabase.from('portfolio_items').select('id, crypto_id, crypto_name, crypto_symbol, quantity, purchase_price').eq('user_id', customerId).order('crypto_symbol'),
-        supabase.from('crypto_balance_adjustments').select('id, adjustment_type, amount, balance_after, crypto_id, crypto_symbol, reason, created_at').eq('customer_id', customerId).order('created_at', { ascending: false }).limit(5),
-        supabase.from('notifications').select('*').eq('user_id', customerId).order('created_at', { ascending: false })
-      ]);
-
-      if (profileRes.error) throw profileRes.error;
-      setCustomer(profileRes.data);
-      setNotes(notesRes.data || []);
-      setTransactions(transactionsRes.data || []);
-      setSessions(sessionsRes.data || []);
-      setAgents(agentsRes.data || []);
-      setCustomerBalances(balanceRes.data || []);
-      setCryptoBalances(cryptoBalanceRes.data || []);
-      setCryptoAdjustments((cryptoAdjustmentsRes.data || []) as CryptoBalanceAdjustment[]);
-      setNotifications(notificationsRes.data || []);
-    } catch (error: any) {
-      toast({ title: t('common.error'), description: error.message, variant: "destructive" });
-    } finally {
-      setLoading(false);
-    }
-  };
 
   const handleAddNote = async () => {
     if (!newNote.trim() || !customerId) return;
     setAddingNote(true);
 
     try {
-      const { error } = await supabase.from('customer_notes').insert({
+      const { data: note, error } = await supabase.from('customer_notes').insert({
         customer_id: customerId,
         content: newNote.trim(),
-        created_by: user?.id
-      });
+        created_by: userId
+      }).select('id, content, created_by, created_at').single();
       if (error) throw error;
       toast({ title: t('customerDetail.noteAdded') });
       setNewNote('');
-      fetchCustomerData();
+      if (note) setNotes(current => [note, ...current.filter(item => item.id !== note.id)]);
     } catch (error: any) {
       toast({ title: t('common.error'), description: error.message, variant: "destructive" });
     } finally {
@@ -379,13 +351,13 @@ const CustomerDetail = (): JSX.Element => {
   const handleStatusChange = async (newStatus: string) => {
     if (!customerId) return;
     try {
-      const { error } = await supabase
+      const { data: profile, error } = await supabase
         .from('profiles')
         .update({ status: newStatus as any })
-        .eq('id', customerId);
+        .eq('id', customerId).select('*').single();
       if (error) throw error;
       toast({ title: t('admin.statusUpdated') });
-      fetchCustomerData();
+      if (profile) setCustomer(profile);
     } catch (error: any) {
       toast({ title: t('common.error'), description: error.message, variant: "destructive" });
     }
@@ -394,13 +366,13 @@ const CustomerDetail = (): JSX.Element => {
   const handleAgentAssign = async (agentId: string) => {
     if (!customerId) return;
     try {
-      const { error } = await supabase
+      const { data: profile, error } = await supabase
         .from('profiles')
         .update({ assigned_to: agentId === 'unassigned' ? null : agentId })
-        .eq('id', customerId);
+        .eq('id', customerId).select('*').single();
       if (error) throw error;
       toast({ title: t('customerDetail.agentAssigned') });
-      fetchCustomerData();
+      if (profile) setCustomer(profile);
     } catch (error: any) {
       toast({ title: t('common.error'), description: error.message, variant: "destructive" });
     }
@@ -453,7 +425,7 @@ const CustomerDetail = (): JSX.Element => {
         .eq('id', notificationId);
       if (error) throw error;
       toast({ title: t('notification.deleted') });
-      fetchCustomerData();
+      setNotifications(current => current.filter(item => item.id !== notificationId));
     } catch (error: any) {
       toast({ title: t('common.error'), description: error.message, variant: "destructive" });
     }
@@ -1168,6 +1140,12 @@ const CustomerDetail = (): JSX.Element => {
       <Footer />
     </div>
   );
+};
+
+const CustomerDetail = () => {
+  const { customerId } = useParams();
+  const { user } = useAuth();
+  return <CustomerDetailContent key={`${user?.id ?? 'signed-out'}:${customerId}`} />;
 };
 
 export default CustomerDetail;

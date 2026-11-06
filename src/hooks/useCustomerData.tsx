@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo, useCallback } from 'react';
+import { createContext, useContext, useState, useEffect, useMemo, useCallback, type ReactNode } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from './useAuth';
 import type { Json } from '@/integrations/supabase/types';
@@ -108,8 +108,9 @@ const loadCustomerData = (userId: string): Promise<CustomerDataSnapshot> => {
   return request;
 };
 
-export const useCustomerData = () => {
+const useCustomerDataState = () => {
   const { user } = useAuth();
+  const userId = user?.id;
   const [balances, setBalances] = useState<CustomerBalance[]>([]);
   const [cryptoBalances, setCryptoBalances] = useState<CryptoBalance[]>([]);
   const [cryptoBalanceAdjustments, setCryptoBalanceAdjustments] = useState<CryptoBalanceAdjustment[]>([]);
@@ -120,11 +121,10 @@ export const useCustomerData = () => {
   const [isLoading, setIsLoading] = useState(true);
 
   const fetchData = useCallback(async () => {
-    if (!user) return;
+    if (!userId) return;
     
-    setIsLoading(true);
     try {
-      const snapshot = await loadCustomerData(user.id);
+      const snapshot = await loadCustomerData(userId);
       setBalances(snapshot.balances);
       setCryptoBalances(snapshot.cryptoBalances);
       setCryptoBalanceAdjustments(snapshot.cryptoBalanceAdjustments);
@@ -137,40 +137,41 @@ export const useCustomerData = () => {
     } finally {
       setIsLoading(false);
     }
-  }, [user]);
+  }, [userId]);
 
   useEffect(() => {
-    if (!user) {
+    if (!userId) {
       setIsLoading(false);
       return;
     }
 
     fetchData();
 
-    // Set up realtime subscriptions (unique per hook instance to avoid collisions)
-    const suffix = `${user.id}-${Math.random().toString(36).slice(2, 10)}`;
+    // Share one channel across the layout, pages, and forms.
+    const suffix = `${userId}-${Math.random().toString(36).slice(2, 10)}`;
 
-    const notificationsChannel = supabase
-      .channel(`customer-notifications-${suffix}`)
-      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'notifications', filter: `user_id=eq.${user.id}` }, (payload) => {
-        setNotifications(prev => [payload.new as Notification, ...prev]);
+    let subscribed = false;
+    const channel = supabase
+      .channel(`customer-data-${suffix}`)
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'notifications', filter: `user_id=eq.${userId}` }, (payload) => {
+        if (payload.eventType === 'DELETE') {
+          setNotifications(prev => prev.filter(item => item.id !== payload.old.id));
+        } else {
+          const changed = payload.new as Notification;
+          setNotifications(prev => [changed, ...prev.filter(item => item.id !== changed.id)]
+            .sort((a, b) => b.created_at.localeCompare(a.created_at)));
+        }
       })
-      .subscribe();
-
-    const transactionsChannel = supabase
-      .channel(`customer-transactions-${suffix}`)
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'transaction_requests', filter: `customer_id=eq.${user.id}` }, (payload) => {
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'transaction_requests', filter: `customer_id=eq.${userId}` }, (payload) => {
         if (payload.eventType === 'INSERT') {
           setTransactions(prev => [payload.new as Transaction, ...prev]);
         } else if (payload.eventType === 'UPDATE') {
           setTransactions(prev => prev.map(t => t.id === payload.new.id ? payload.new as Transaction : t));
+        } else if (payload.eventType === 'DELETE') {
+          setTransactions(prev => prev.filter(t => t.id !== payload.old.id));
         }
       })
-      .subscribe();
-
-    const balanceChannel = supabase
-      .channel(`customer-balance-${suffix}`)
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'customer_balances', filter: `customer_id=eq.${user.id}` }, (payload) => {
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'customer_balances', filter: `customer_id=eq.${userId}` }, (payload) => {
         if (payload.eventType === 'DELETE') {
           const removed = payload.old as Pick<CustomerBalance, 'id'>;
           setBalances((current) => current.filter((balance) => balance.id !== removed.id));
@@ -185,11 +186,7 @@ export const useCustomerData = () => {
             : [...current, changed].sort((a, b) => a.currency.localeCompare(b.currency));
         });
       })
-      .subscribe();
-
-    const cryptoBalanceChannel = supabase
-      .channel(`customer-crypto-balance-${suffix}`)
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'portfolio_items', filter: `user_id=eq.${user.id}` }, (payload) => {
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'portfolio_items', filter: `user_id=eq.${userId}` }, (payload) => {
         if (payload.eventType === 'DELETE') {
           const removed = payload.old as Pick<CryptoBalance, 'id'>;
           setCryptoBalances((current) => current.filter((balance) => balance.id !== removed.id));
@@ -204,36 +201,44 @@ export const useCustomerData = () => {
             : [...current, changed].sort((a, b) => a.crypto_symbol.localeCompare(b.crypto_symbol));
         });
       })
-      .subscribe();
-
-    const cryptoAdjustmentsChannel = supabase
-      .channel(`customer-crypto-adjustments-${suffix}`)
-      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'crypto_balance_adjustments', filter: `customer_id=eq.${user.id}` }, (payload) => {
+      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'crypto_balance_adjustments', filter: `customer_id=eq.${userId}` }, (payload) => {
         const adjustment = payload.new as CryptoBalanceAdjustment;
         if (adjustment.reason) {
           setCryptoBalanceAdjustments((current) => [adjustment, ...current]);
         }
       })
-      .subscribe();
-
-    // Subscribe to profile updates (for case_phase changes)
-    const profileChannel = supabase
-      .channel(`customer-profile-${suffix}`)
-      .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'profiles', filter: `id=eq.${user.id}` }, (payload) => {
-        console.log('Profile updated:', payload);
+      .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'profiles', filter: `id=eq.${userId}` }, (payload) => {
         setProfile(payload.new as Profile);
       })
-      .subscribe();
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'case_timeline', filter: `customer_id=eq.${userId}` }, (payload) => {
+        if (payload.eventType === 'DELETE') {
+          setTimeline(prev => prev.filter(item => item.id !== payload.old.id));
+        } else {
+          const changed = payload.new as CaseTimelineEvent;
+          setTimeline(prev => [changed, ...prev.filter(item => item.id !== changed.id)]
+            .sort((a, b) => b.created_at.localeCompare(a.created_at)));
+        }
+      })
+      .subscribe(status => {
+        if (status === 'SUBSCRIBED') {
+          // Recover any changes missed while the connection was interrupted.
+          if (subscribed) void fetchData();
+          subscribed = true;
+        }
+      });
+
+    const refreshVisibleData = () => {
+      if (document.visibilityState === 'visible') void fetchData();
+    };
+    document.addEventListener('visibilitychange', refreshVisibleData);
+    window.addEventListener('online', refreshVisibleData);
 
     return () => {
-      supabase.removeChannel(notificationsChannel);
-      supabase.removeChannel(transactionsChannel);
-      supabase.removeChannel(balanceChannel);
-      supabase.removeChannel(cryptoBalanceChannel);
-      supabase.removeChannel(cryptoAdjustmentsChannel);
-      supabase.removeChannel(profileChannel);
+      document.removeEventListener('visibilitychange', refreshVisibleData);
+      window.removeEventListener('online', refreshVisibleData);
+      void supabase.removeChannel(channel);
     };
-  }, [user, fetchData]);
+  }, [userId, fetchData]);
 
   const markNotificationRead = async (notificationId: string) => {
     await supabase.from('notifications').update({ is_read: true }).eq('id', notificationId);
@@ -261,4 +266,18 @@ export const useCustomerData = () => {
     markNotificationRead,
     refetch: fetchData,
   };
+};
+
+const CustomerDataContext = createContext<ReturnType<typeof useCustomerDataState> | undefined>(undefined);
+
+// One owner for the entire dashboard, including its layout and nested forms.
+export const CustomerDataProvider = ({ children }: { children: ReactNode }) => {
+  const data = useCustomerDataState();
+  return <CustomerDataContext.Provider value={data}>{children}</CustomerDataContext.Provider>;
+};
+
+export const useCustomerData = () => {
+  const data = useContext(CustomerDataContext);
+  if (!data) throw new Error('useCustomerData must be used within a CustomerDataProvider');
+  return data;
 };

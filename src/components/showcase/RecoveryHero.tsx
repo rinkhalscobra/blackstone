@@ -1,6 +1,5 @@
 import { useId, useRef, useState, type KeyboardEvent } from 'react';
 import { Link } from 'react-router-dom';
-import { motion, useReducedMotion } from 'framer-motion';
 import {
   ArrowDown,
   ArrowRight,
@@ -31,7 +30,6 @@ const RecoveryHero = () => {
   const [activeStage, setActiveStage] = useState(0);
   const tabs = useRef<Array<HTMLButtonElement | null>>([]);
   const id = useId();
-  const reduceMotion = useReducedMotion();
   const stage = copy.stages[activeStage];
   const DocumentIcon = documentIcons[activeStage];
 
@@ -161,11 +159,8 @@ const RecoveryHero = () => {
             className="focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-emerald-200"
           >
             {activeStage === index && (
-              <motion.div
-                initial={reduceMotion ? false : { opacity: 0, y: 5 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.2 }}
-                className="grid lg:grid-cols-[minmax(0,1.15fr)_minmax(0,1fr)]"
+              <div
+                className="recovery-panel-enter grid lg:grid-cols-[minmax(0,1.15fr)_minmax(0,1fr)]"
               >
                 <div className="flex min-w-0 flex-col justify-between gap-6 p-5 sm:p-7">
                   <div>
@@ -203,7 +198,7 @@ const RecoveryHero = () => {
                     </ul>
                   </div>
                 </div>
-              </motion.div>
+              </div>
             )}
           </div>
         ))}
