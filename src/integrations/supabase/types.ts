@@ -259,6 +259,24 @@ export type Database = {
           },
         ]
       }
+      ip_whitelist_settings: {
+        Row: {
+          id: string
+          enabled: boolean
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          enabled?: boolean
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          enabled?: boolean
+          updated_at?: string
+        }
+        Relationships: []
+      }
       ip_whitelist: {
         Row: {
           action: Database["public"]["Enums"]["ip_action"]

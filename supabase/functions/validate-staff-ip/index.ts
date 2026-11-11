@@ -98,6 +98,21 @@ Deno.serve(async (req) => {
 
     console.log(`User is staff with role: ${roleData.role}`);
 
+    // The global switch bypasses every global and group ALLOW/DENY rule.
+    const { data: settings, error: settingsError } = await supabase
+      .from('ip_whitelist_settings')
+      .select('enabled')
+      .eq('id', 'global')
+      .single();
+
+    if (settingsError) throw settingsError;
+    if (!settings.enabled) {
+      return new Response(
+        JSON.stringify({ allowed: true, reason: 'IP whitelist is disabled' }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
     // Allow demo accounts to bypass IP validation
     const demoEmails = ['admin@demo.com', 'supervisor@demo.com', 'agent@demo.com', 'office@demo.com'];
     const lowerEmail = (email || '').toLowerCase();

@@ -1,8 +1,9 @@
-import { createContext, useContext, useEffect, useState } from "react";
+import { createContext, useContext, useEffect, useRef, useState } from "react";
 import { User, Session } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
 import type { Database } from "@/integrations/supabase/types";
 import { useToast } from "@/hooks/use-toast";
+import { validateStaffIP } from "@/utils/validateStaffIP";
 
 type AppRole = Database["public"]["Enums"]["app_role"];
 type SignUpResult = { error: Error | null; session: Session | null };
@@ -23,6 +24,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [user, setUser] = useState<User | null>(null);
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
+  const pendingSignIn = useRef(false);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -33,8 +35,11 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       (event, session) => {
         if (!isMounted) return;
-        setSession(session);
-        setUser(session?.user ?? null);
+        // Publish password sign-ins only after the optional IP check finishes.
+        if (!session || !pendingSignIn.current) {
+          setSession(session);
+          setUser(session?.user ?? null);
+        }
 
         // Update last_login on sign in (defer to avoid deadlocks)
         if (event === 'SIGNED_IN' && session?.user && session.user.id !== lastSignedInUserId) {
@@ -55,7 +60,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     const initializeAuth = async () => {
       try {
         const { data: { session } } = await supabase.auth.getSession();
-        if (!isMounted) return;
+        if (!isMounted || pendingSignIn.current) return;
         setSession(session);
         setUser(session?.user ?? null);
       } finally {
@@ -195,8 +200,10 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   };
 
   const signIn = async (email: string, password: string) => {
+    pendingSignIn.current = true;
+    let authenticated = false;
     try {
-      const { error } = await supabase.auth.signInWithPassword({ email, password });
+      const { data, error } = await supabase.auth.signInWithPassword({ email, password });
 
       if (error) {
         toast({
@@ -207,7 +214,10 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         return { error };
       }
 
-      // IP whitelist enforcement disabled - all staff logins are accepted
+      authenticated = true;
+      await validateStaffIP(data.user);
+      setSession(data.session);
+      setUser(data.user);
 
       toast({
         title: "Welcome back!",
@@ -216,7 +226,16 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
       return { error: null };
     } catch (error: unknown) {
-      return { error: error instanceof Error ? error : new Error("An unexpected error occurred") };
+      if (authenticated) {
+        await supabase.auth.signOut();
+        setSession(null);
+        setUser(null);
+      }
+      const normalizedError = error instanceof Error ? error : new Error("An unexpected error occurred");
+      toast({ title: "Sign in failed", description: normalizedError.message, variant: "destructive" });
+      return { error: normalizedError };
+    } finally {
+      pendingSignIn.current = false;
     }
   };
 

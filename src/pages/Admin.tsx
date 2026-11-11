@@ -21,6 +21,7 @@ import { CreateGroupDialog } from '@/components/admin/CreateGroupDialog';
 import { CreatePromocodeDialog } from '@/components/admin/CreatePromocodeDialog';
 import { CreateIPWhitelistDialog } from '@/components/admin/CreateIPWhitelistDialog';
 import { EditIPWhitelistDialog } from '@/components/admin/EditIPWhitelistDialog';
+import { IPWhitelistToggle } from '@/components/admin/IPWhitelistToggle';
 import { CreateUserDialog } from '@/components/admin/CreateUserDialog';
 import { BulkCreateUsersDialog } from '@/components/admin/BulkCreateUsersDialog';
 import ConfiscateStaffDialog from '@/components/admin/ConfiscateStaffDialog';
@@ -717,6 +718,7 @@ const Admin = () => {
               </CardTitle>
               <CreateIPWhitelistDialog onSuccess={fetchData} isAdmin={true} />
             </CardHeader>
+            <IPWhitelistToggle />
             <CardContent className="p-0">
               <Table>
                 <TableHeader>
