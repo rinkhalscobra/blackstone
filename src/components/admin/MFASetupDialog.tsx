@@ -179,14 +179,14 @@ export const MFASetupDialog = ({ onStatusChange }: MFASetupDialogProps) => {
       <DialogTrigger asChild>
         <Button variant="outline" className="gap-2">
           {mfaEnabled ? <ShieldCheck className="h-4 w-4 text-success" /> : <Shield className="h-4 w-4" />}
-          {t('admin.twoFactorAuth') || 'Two-Factor Auth'}
+          {t('auth.twoFactorAuth')}
         </Button>
       </DialogTrigger>
       <DialogContent className="max-w-md">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <Key className="h-5 w-5" />
-            {t('admin.twoFactorAuth') || 'Two-Factor Authentication'}
+            {t('auth.twoFactorAuth')}
           </DialogTitle>
           <DialogDescription>
             {t('admin.mfaDescription') || 'Secure your account with Google Authenticator'}

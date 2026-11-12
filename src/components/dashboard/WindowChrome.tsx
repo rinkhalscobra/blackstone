@@ -5,18 +5,21 @@ interface WindowChromeProps {
   title?: string;
   children: ReactNode;
   className?: string;
+  effects?: boolean;
 }
 
 /**
  * macOS-style window frame used by authenticated app shells.
  * Purely presentational: traffic-light dots on the left, centered title.
  */
-export const WindowChrome = ({ title = 'Crest Financial', children, className }: WindowChromeProps) => {
+export const WindowChrome = ({ title = 'Crest Financial', children, className, effects = true }: WindowChromeProps) => {
   return (
     <div
       className={cn(
-        'relative rounded-2xl border border-white/10 bg-background/60 backdrop-blur-2xl',
-        'shadow-[0_30px_80px_-20px_rgba(0,0,0,0.6),inset_0_1px_0_rgba(255,255,255,0.04)]',
+        'relative rounded-2xl border border-white/10',
+        effects
+          ? 'bg-background/60 backdrop-blur-2xl shadow-[0_30px_80px_-20px_rgba(0,0,0,0.6),inset_0_1px_0_rgba(255,255,255,0.04)]'
+          : 'bg-background',
         'overflow-hidden',
         className,
       )}

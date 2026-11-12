@@ -1,9 +1,13 @@
-import { useState, useEffect, useCallback, useMemo, useDeferredValue } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useState, useMemo, useDeferredValue, type ReactNode } from 'react';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
 import { useAdmin } from '@/hooks/useAdmin';
+import { adminTabs, useAdminData, type AdminTab } from '@/hooks/useAdminData';
+import { useClientPagination } from '@/hooks/useClientPagination';
+import { CustomerPagination } from '@/components/CustomerPagination';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { supabase } from '@/integrations/supabase/client';
+import type { Database } from '@/integrations/supabase/types';
 import { StaffDashboardLayout } from '@/components/dashboard/StaffDashboardLayout';
 import { PendingTransactions } from '@/components/dashboard/PendingTransactions';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -14,7 +18,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Checkbox } from '@/components/ui/checkbox';
 import { useToast } from '@/hooks/use-toast';
-import { Users, Shield, UserCog, Trash2, Building2, Ticket, Globe, Copy, UserPlus, FileText, Search } from 'lucide-react';
+import { Users, Shield, UserCog, Trash2, Building2, Ticket, Globe, Copy, FileText, Search, ArrowLeftRight, Loader2 } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { MFASetupDialog } from '@/components/admin/MFASetupDialog';
 import { CreateGroupDialog } from '@/components/admin/CreateGroupDialog';
@@ -30,71 +34,31 @@ import { EditStaffNameDialog } from '@/components/admin/EditStaffNameDialog';
 import { DeleteUserDialog } from '@/components/admin/DeleteUserDialog';
 import { AgentClientsDialog } from '@/components/admin/AgentClientsDialog';
 
-interface UserProfile {
-  id: string;
-  email: string | null;
-  first_name: string | null;
-  last_name: string | null;
-  username: string | null;
-  phone: string | null;
-  birthdate: string | null;
-  status: 'active' | 'inactive' | 'suspended' | 'invalid_language' | null;
-  group_id: string | null;
-  created_by: string | null;
-  last_login: string | null;
-  is_super: boolean | null;
-  created_at: string | null;
-}
+const errorMessage = (error: unknown) => error && typeof error === 'object' && 'message' in error ? String(error.message) : String(error);
 
-interface UserRole {
-  id: string;
-  user_id: string;
-  role: 'admin' | 'group_admin' | 'supervisor' | 'agent' | 'user';
-  created_at: string | null;
-}
-
-interface Group {
-  id: string;
-  name: string;
-  description: string | null;
-  created_by: string | null;
-  created_at: string | null;
-  updated_at: string | null;
-}
-
-interface Promocode {
-  id: string;
-  code: string;
-  group_id: string;
-  role_type: 'admin' | 'group_admin' | 'supervisor' | 'agent' | 'user';
-  is_active: boolean;
-  usage_limit: number | null;
-  times_used: number;
-  expires_at: string | null;
-  created_at: string | null;
-}
-
-interface IPWhitelistEntry {
-  id: string;
-  ip_address: string;
-  ip_version: string;
-  action: 'ALLOW' | 'DENY';
-  subject: string;
-  group_id: string | null;
-  created_at: string | null;
-}
-
-interface IPValidationLog {
-  id: string;
-  user_id: string | null;
-  email: string | null;
-  ipv4_address: string | null;
-  ipv6_address: string | null;
-  user_agent: string | null;
-  action: string;
-  reason: string | null;
-  matched_rule_id: string | null;
-  created_at: string | null;
+function AdminDataPanel({ value, active, loading, error, onRetry, children }: {
+  value: string;
+  active: boolean;
+  loading: boolean;
+  error: Error | null;
+  onRetry: () => Promise<void>;
+  children: () => ReactNode;
+}) {
+  const { t } = useLanguage();
+  return (
+    <TabsContent value={value} aria-busy={loading}>
+      {!active ? null : loading ? (
+        <div className="flex items-center justify-center gap-2 py-12 text-muted-foreground" role="status">
+          <Loader2 className="h-5 w-5 animate-spin" />{t('common.loading')}
+        </div>
+      ) : error ? (
+        <div className="rounded-lg border border-border p-6 text-center" role="alert">
+          <p className="mb-3 text-muted-foreground">{t('common.error')}: {error.message}</p>
+          <Button variant="outline" onClick={onRetry}>{t('common.retry')}</Button>
+        </div>
+      ) : children()}
+    </TabsContent>
+  );
 }
 
 const Admin = () => {
@@ -104,64 +68,13 @@ const Admin = () => {
   const { toast } = useToast();
   const { t } = useLanguage();
   
-  const [users, setUsers] = useState<UserProfile[]>([]);
-  const [userRoles, setUserRoles] = useState<UserRole[]>([]);
-  const [groups, setGroups] = useState<Group[]>([]);
-  const [promocodes, setPromocodes] = useState<Promocode[]>([]);
-  const [ipWhitelist, setIpWhitelist] = useState<IPWhitelistEntry[]>([]);
-  const [ipLogs, setIpLogs] = useState<IPValidationLog[]>([]);
-  const [loadingData, setLoadingData] = useState(true);
+  const [searchParams, setSearchParams] = useSearchParams();
+  const requestedTab = searchParams.get('tab');
+  const activeTab: AdminTab = adminTabs.includes(requestedTab as AdminTab) ? requestedTab as AdminTab : 'customers';
+  const { users, userRoles, groups, promocodes, ipWhitelist, ipLogs, loading: loadingData, error: dataError, refresh: fetchData } = useAdminData(user?.id, isAdmin, activeTab);
   const [updatingRole, setUpdatingRole] = useState<string | null>(null);
   const [customerSearch, setCustomerSearch] = useState('');
   const deferredCustomerSearch = useDeferredValue(customerSearch);
-  const [customerPage, setCustomerPage] = useState(0);
-  const customerPageSize = 50;
-
-  useEffect(() => {
-    if (isAdmin) {
-      fetchData();
-    }
-  }, [isAdmin]);
-
-  const fetchData = async () => {
-    setLoadingData(true);
-    try {
-      const [profilesRes, rolesRes, groupsRes, promocodesRes, ipRes, ipLogsRes] = await Promise.all([
-        supabase.from('profiles').select('id, email, first_name, last_name, username, phone, birthdate, status, group_id, created_by, last_login, is_super, created_at').eq('is_archived', false).neq('platform', 'chargeback').order('created_at', { ascending: false }),
-        supabase.from('user_roles').select('id, user_id, role, created_at'),
-        supabase.from('groups').select('id, name, description, created_by, created_at, updated_at').neq('platform', 'chargeback').order('name'),
-        supabase.from('promocodes').select('id, code, group_id, role_type, is_active, usage_limit, times_used, expires_at, created_at').order('created_at', { ascending: false }),
-        supabase.from('ip_whitelist').select('id, ip_address, ip_version, action, subject, group_id, created_at').order('created_at', { ascending: false }),
-        supabase.from('ip_validation_logs').select('id, user_id, email, ipv4_address, ipv6_address, user_agent, action, reason, matched_rule_id, created_at').order('created_at', { ascending: false }).limit(100)
-      ]);
-
-      if (profilesRes.error) throw profilesRes.error;
-      if (rolesRes.error) throw rolesRes.error;
-      if (groupsRes.error) throw groupsRes.error;
-      if (promocodesRes.error) throw promocodesRes.error;
-      if (ipRes.error) throw ipRes.error;
-      if (ipLogsRes.error) throw ipLogsRes.error;
-
-      // Hide rows anchored to chargeback groups/users (data kept in DB, just not surfaced here)
-      const visibleGroupIds = new Set((groupsRes.data || []).map((g: any) => g.id));
-      const visibleUserIds = new Set((profilesRes.data || []).map((u: any) => u.id));
-
-      setUsers(profilesRes.data || []);
-      setUserRoles(rolesRes.data || []);
-      setGroups(groupsRes.data || []);
-      setPromocodes((promocodesRes.data || []).filter((r: any) => !r.group_id || visibleGroupIds.has(r.group_id)));
-      setIpWhitelist((ipRes.data || []).filter((r: any) => !r.group_id || visibleGroupIds.has(r.group_id)));
-      setIpLogs((ipLogsRes.data || []).filter((r: any) => !r.user_id || visibleUserIds.has(r.user_id)));
-    } catch (error: any) {
-      toast({ title: t('common.error'), description: error.message, variant: "destructive" });
-    } finally {
-      setLoadingData(false);
-    }
-  };
-
-  const handleRefresh = useCallback(async () => {
-    await fetchData();
-  }, []);
 
   const roleByUserId = useMemo(() => new Map(userRoles.map((role) => [role.user_id, role.role])), [userRoles]);
   const groupNameById = useMemo(() => new Map(groups.map((group) => [group.id, group.name])), [groups]);
@@ -175,6 +88,14 @@ const Admin = () => {
     });
     return counts;
   }, [users, roleByUserId]);
+
+  const clientCountByAgentId = useMemo(() => {
+    const counts = new Map<string, number>();
+    users.forEach(profile => {
+      if (profile.assigned_to) counts.set(profile.assigned_to, (counts.get(profile.assigned_to) || 0) + 1);
+    });
+    return counts;
+  }, [users]);
 
   const getUserRole = (userId: string): string => roleByUserId.get(userId) || 'user';
 
@@ -197,20 +118,20 @@ const Admin = () => {
       if (existingRole) {
         const { error } = await supabase
           .from('user_roles')
-          .update({ role: newRole as any })
+          .update({ role: newRole as Database['public']['Enums']['app_role'] })
           .eq('user_id', userId);
         if (error) throw error;
       } else {
         const { error } = await supabase
           .from('user_roles')
-          .insert({ user_id: userId, role: newRole as any });
+          .insert({ user_id: userId, role: newRole as Database['public']['Enums']['app_role'] });
         if (error) throw error;
       }
 
       toast({ title: t('admin.roleUpdated'), description: `User role has been updated to ${newRole}.` });
       fetchData();
-    } catch (error: any) {
-      toast({ title: t('common.error'), description: error.message, variant: "destructive" });
+    } catch (error: unknown) {
+      toast({ title: t('common.error'), description: errorMessage(error), variant: "destructive" });
     } finally {
       setUpdatingRole(null);
     }
@@ -222,8 +143,8 @@ const Admin = () => {
       if (error) throw error;
       toast({ title: t('admin.roleRemoved') });
       fetchData();
-    } catch (error: any) {
-      toast({ title: t('common.error'), description: error.message, variant: "destructive" });
+    } catch (error: unknown) {
+      toast({ title: t('common.error'), description: errorMessage(error), variant: "destructive" });
     }
   };
 
@@ -233,8 +154,8 @@ const Admin = () => {
       if (error) throw error;
       toast({ title: t('admin.groupDeleted') });
       fetchData();
-    } catch (error: any) {
-      toast({ title: t('common.error'), description: error.message, variant: "destructive" });
+    } catch (error: unknown) {
+      toast({ title: t('common.error'), description: errorMessage(error), variant: "destructive" });
     }
   };
 
@@ -243,8 +164,8 @@ const Admin = () => {
       const { error } = await supabase.from('promocodes').update({ is_active: !isActive }).eq('id', id);
       if (error) throw error;
       fetchData();
-    } catch (error: any) {
-      toast({ title: t('common.error'), description: error.message, variant: "destructive" });
+    } catch (error: unknown) {
+      toast({ title: t('common.error'), description: errorMessage(error), variant: "destructive" });
     }
   };
 
@@ -254,8 +175,8 @@ const Admin = () => {
       if (error) throw error;
       toast({ title: t('admin.promocodeDeleted') });
       fetchData();
-    } catch (error: any) {
-      toast({ title: t('common.error'), description: error.message, variant: "destructive" });
+    } catch (error: unknown) {
+      toast({ title: t('common.error'), description: errorMessage(error), variant: "destructive" });
     }
   };
 
@@ -265,8 +186,8 @@ const Admin = () => {
       if (error) throw error;
       toast({ title: t('admin.ipRuleDeleted') });
       fetchData();
-    } catch (error: any) {
-      toast({ title: t('common.error'), description: error.message, variant: "destructive" });
+    } catch (error: unknown) {
+      toast({ title: t('common.error'), description: errorMessage(error), variant: "destructive" });
     }
   };
 
@@ -275,8 +196,8 @@ const Admin = () => {
       const { error } = await supabase.from('profiles').update({ is_super: !isSuper }).eq('id', userId);
       if (error) throw error;
       fetchData();
-    } catch (error: any) {
-      toast({ title: t('common.error'), description: error.message, variant: "destructive" });
+    } catch (error: unknown) {
+      toast({ title: t('common.error'), description: errorMessage(error), variant: "destructive" });
     }
   };
 
@@ -286,22 +207,24 @@ const Admin = () => {
   };
 
   const visibleCustomers = useMemo(() => {
-    const term = deferredCustomerSearch.toLowerCase();
+    const term = deferredCustomerSearch.trim().toLowerCase();
     return users.filter((u) => {
       if (roleByUserId.get(u.id) && roleByUserId.get(u.id) !== 'user') return false;
       return !term || u.first_name?.toLowerCase().includes(term) || u.last_name?.toLowerCase().includes(term) ||
         u.email?.toLowerCase().includes(term) || `${u.first_name || ''} ${u.last_name || ''}`.toLowerCase().includes(term);
     });
   }, [users, roleByUserId, deferredCustomerSearch]);
-  const customerPageCount = Math.ceil(visibleCustomers.length / customerPageSize);
-  const currentCustomerPage = Math.min(customerPage, Math.max(0, customerPageCount - 1));
-  const paginatedCustomers = useMemo(
-    () => visibleCustomers.slice(currentCustomerPage * customerPageSize, (currentCustomerPage + 1) * customerPageSize),
-    [visibleCustomers, currentCustomerPage],
-  );
+  const customersPagination = useClientPagination(visibleCustomers, deferredCustomerSearch, 25);
   const visibleAgents = useMemo(() => users.filter((u) => roleByUserId.get(u.id) === 'agent'), [users, roleByUserId]);
   const visibleSupervisors = useMemo(() => users.filter((u) => roleByUserId.get(u.id) === 'supervisor'), [users, roleByUserId]);
   const visibleAdmins = useMemo(() => users.filter((u) => roleByUserId.get(u.id) === 'admin'), [users, roleByUserId]);
+  const agentsPagination = useClientPagination(visibleAgents, '', 25);
+  const supervisorsPagination = useClientPagination(visibleSupervisors, '', 25);
+  const adminsPagination = useClientPagination(visibleAdmins, '', 25);
+  const groupsPagination = useClientPagination(groups, '', 25);
+  const promocodesPagination = useClientPagination(promocodes, '', 25);
+  const whitelistPagination = useClientPagination(ipWhitelist, '', 25);
+  const logsPagination = useClientPagination(ipLogs, '', 25);
   const getAgentCount = (groupId: string) => agentCountByGroupId.get(groupId) || 0;
 
   if (!isAdmin) return null;
@@ -325,59 +248,65 @@ const Admin = () => {
       role="admin"
       title={t('admin.title')}
       subtitle={t('admin.subtitle')}
-      onRefresh={handleRefresh}
-      isLoading={loadingData}
-      headerActions={<div className="flex gap-2"><ConfiscateStaffDialog /><MFASetupDialog /></div>}
+      onRefresh={fetchData}
+      headerActions={<div className="flex min-w-0 max-w-full flex-wrap gap-2 [&>button]:h-auto [&>button]:min-h-10 [&>button]:max-w-full [&>button]:whitespace-normal [&>button>svg]:shrink-0"><ConfiscateStaffDialog /><MFASetupDialog /></div>}
     >
-      {/* Pending Transactions Card - at the top */}
-      <div className="mb-6">
-        <PendingTransactions className="bg-card border-border" />
-      </div>
+      <Tabs value={activeTab} onValueChange={(value) => setSearchParams(params => {
+        params.set('tab', value);
+        return params;
+      }, { preventScrollReset: true })} className="w-full min-w-0">
+        <div className="mb-6 max-w-full overflow-x-auto rounded-lg border border-border bg-card">
+          <TabsList aria-label={t('admin.title')} className="w-full min-w-max justify-start bg-transparent rounded-none p-1 h-auto gap-1">
+            <TabsTrigger value="customers" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
+              <Users className="w-4 h-4 mr-2" /> {t('admin.customers')}
+            </TabsTrigger>
+            <TabsTrigger value="transactions" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
+              <ArrowLeftRight className="w-4 h-4 mr-2" /> {t('nav.transactions')}
+            </TabsTrigger>
+            <TabsTrigger value="agents" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
+              <Users className="w-4 h-4 mr-2" /> {t('admin.agents')}
+            </TabsTrigger>
+            <TabsTrigger value="supervisors" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
+              <UserCog className="w-4 h-4 mr-2" /> {t('admin.supervisors')}
+            </TabsTrigger>
+            <TabsTrigger value="admins" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
+              <Shield className="w-4 h-4 mr-2" /> {t('admin.admins')}
+            </TabsTrigger>
+            <TabsTrigger value="groups" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
+              <Building2 className="w-4 h-4 mr-2" /> {t('admin.groups')}
+            </TabsTrigger>
+            <TabsTrigger value="promocodes" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
+              <Ticket className="w-4 h-4 mr-2" /> {t('admin.promocodes')}
+            </TabsTrigger>
+            <TabsTrigger value="ip-whitelist" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
+              <Globe className="w-4 h-4 mr-2" /> {t('admin.ipWhitelist')}
+            </TabsTrigger>
+            <TabsTrigger value="ip-audit" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
+              <FileText className="w-4 h-4 mr-2" /> {t('admin.ipAuditLogs')}
+            </TabsTrigger>
+          </TabsList>
+        </div>
 
-      <Tabs defaultValue="customers" className="w-full">
-        <TabsList className="w-full justify-start bg-card border border-border rounded-lg p-1 mb-6 flex-wrap h-auto gap-1">
-          <TabsTrigger value="customers" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
-            <Users className="w-4 h-4 mr-2" /> {t('admin.customers')}
-          </TabsTrigger>
-          <TabsTrigger value="agents" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
-            <Users className="w-4 h-4 mr-2" /> {t('admin.agents')}
-          </TabsTrigger>
-          <TabsTrigger value="supervisors" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
-            <UserCog className="w-4 h-4 mr-2" /> {t('admin.supervisors')}
-          </TabsTrigger>
-          <TabsTrigger value="admins" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
-            <Shield className="w-4 h-4 mr-2" /> {t('admin.admins')}
-          </TabsTrigger>
-          <TabsTrigger value="groups" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
-            <Building2 className="w-4 h-4 mr-2" /> {t('admin.groups')}
-          </TabsTrigger>
-          <TabsTrigger value="promocodes" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
-            <Ticket className="w-4 h-4 mr-2" /> {t('admin.promocodes')}
-          </TabsTrigger>
-          <TabsTrigger value="ip-whitelist" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
-            <Globe className="w-4 h-4 mr-2" /> {t('admin.ipWhitelist')}
-          </TabsTrigger>
-          <TabsTrigger value="ip-audit" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
-            <FileText className="w-4 h-4 mr-2" /> {t('admin.ipAuditLogs')}
-          </TabsTrigger>
-        </TabsList>
+        <TabsContent value="transactions">
+          <PendingTransactions className="bg-card border-border" />
+        </TabsContent>
 
         {/* Customers Tab */}
-        <TabsContent value="customers">
-          <Card className="bg-card border-border">
+        <AdminDataPanel value="customers" active={activeTab === 'customers'} loading={loadingData} error={dataError} onRetry={fetchData}>
+          {() => <Card className="bg-card border-border">
             <CardHeader className="border-b border-border flex-row items-center justify-between flex-wrap gap-3">
               <CardTitle className="text-foreground flex items-center gap-2">
                 {t('admin.customers')} <Badge variant="secondary">{visibleCustomers.length}</Badge>
               </CardTitle>
-              <div className="flex gap-2 items-center">
+              <div className="flex w-full flex-wrap gap-2 items-center sm:w-auto">
                 <div className="relative w-full sm:w-64">
                   <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                   <Input
+                    aria-label={t('common.search')}
                     placeholder={t('common.search') || 'Search clients...'}
                     value={customerSearch}
                     onChange={(e) => {
                       setCustomerSearch(e.target.value);
-                      setCustomerPage(0);
                     }}
                     className="pl-9 h-9"
                   />
@@ -399,7 +328,7 @@ const Admin = () => {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {paginatedCustomers.map((u) => (
+                  {customersPagination.items.map((u) => (
                     <TableRow key={u.id} className="border-border">
                       <TableCell className="font-medium">{u.first_name || u.last_name ? `${u.first_name || ''} ${u.last_name || ''}`.trim() : 'N/A'}</TableCell>
                       <TableCell className="text-muted-foreground">{u.email || 'N/A'}</TableCell>
@@ -409,7 +338,7 @@ const Admin = () => {
                       <TableCell className="text-right">
                         <div className="flex gap-2 justify-end">
                           <Button size="sm" variant="outline" onClick={() => navigate(`/customer/${u.id}`)}>{t('common.view')}</Button>
-                          <Select value={getUserRole(u.id)} onValueChange={(v) => handleRoleChange(u.id, v)}>
+                          <Select disabled={updatingRole === u.id} value={getUserRole(u.id)} onValueChange={(v) => handleRoleChange(u.id, v)}>
                             <SelectTrigger className="w-28 h-8"><SelectValue /></SelectTrigger>
                             <SelectContent>
                               <SelectItem value="user">User</SelectItem>
@@ -433,24 +362,14 @@ const Admin = () => {
                 </TableBody>
               </Table>
             </CardContent>
-            {customerPageCount > 1 && (
-              <div className="flex items-center justify-between border-t border-border px-4 py-3 text-sm text-muted-foreground">
-                <span>
-                  {currentCustomerPage * customerPageSize + 1}-{Math.min((currentCustomerPage + 1) * customerPageSize, visibleCustomers.length)} / {visibleCustomers.length}
-                </span>
-                <div className="flex gap-2">
-                  <Button size="sm" variant="outline" disabled={currentCustomerPage === 0} onClick={() => setCustomerPage((page) => Math.max(0, page - 1))}>{t('common.previous')}</Button>
-                  <Button size="sm" variant="outline" disabled={currentCustomerPage >= customerPageCount - 1} onClick={() => setCustomerPage((page) => Math.min(customerPageCount - 1, page + 1))}>{t('common.next')}</Button>
-                </div>
-              </div>
-            )}
-          </Card>
-        </TabsContent>
+            <CustomerPagination {...customersPagination} />
+          </Card>}
+        </AdminDataPanel>
 
         {/* Agents Tab */}
-        <TabsContent value="agents">
-          <Card className="bg-card border-border">
-            <CardHeader className="border-b border-border flex-row items-center justify-between">
+        <AdminDataPanel value="agents" active={activeTab === 'agents'} loading={loadingData} error={dataError} onRetry={fetchData}>
+          {() => <Card className="bg-card border-border">
+            <CardHeader className="border-b border-border flex-row flex-wrap gap-3 items-center justify-between">
               <CardTitle className="text-foreground flex items-center gap-2">
                 {t('admin.agents')} <Badge variant="secondary">{visibleAgents.length}</Badge>
               </CardTitle>
@@ -474,7 +393,7 @@ const Admin = () => {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {visibleAgents.map((u) => (
+                  {agentsPagination.items.map((u) => (
                     <TableRow key={u.id} className="border-border">
                       <TableCell className="font-medium">{u.first_name || u.last_name ? `${u.first_name || ''} ${u.last_name || ''}`.trim() : 'N/A'}</TableCell>
                       <TableCell className="text-muted-foreground">{u.username || '-'}</TableCell>
@@ -486,7 +405,7 @@ const Admin = () => {
                         <AgentClientsDialog
                           agentId={u.id}
                           agentName={`${u.first_name || ''} ${u.last_name || ''}`.trim() || u.email || 'Agent'}
-                          count={users.filter((c: any) => c.assigned_to === u.id).length}
+                          count={clientCountByAgentId.get(u.id) || 0}
                         />
                       </TableCell>
                       <TableCell className="text-right">
@@ -509,13 +428,14 @@ const Admin = () => {
                 </TableBody>
               </Table>
             </CardContent>
-          </Card>
-        </TabsContent>
+            <CustomerPagination {...agentsPagination} />
+          </Card>}
+        </AdminDataPanel>
 
         {/* Supervisors Tab */}
-        <TabsContent value="supervisors">
-          <Card className="bg-card border-border">
-            <CardHeader className="border-b border-border flex-row items-center justify-between">
+        <AdminDataPanel value="supervisors" active={activeTab === 'supervisors'} loading={loadingData} error={dataError} onRetry={fetchData}>
+          {() => <Card className="bg-card border-border">
+            <CardHeader className="border-b border-border flex-row flex-wrap gap-3 items-center justify-between">
               <CardTitle className="text-foreground flex items-center gap-2">
                 {t('admin.supervisors')} <Badge variant="secondary">{visibleSupervisors.length}</Badge>
               </CardTitle>
@@ -539,7 +459,7 @@ const Admin = () => {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {visibleSupervisors.map((u) => (
+                  {supervisorsPagination.items.map((u) => (
                     <TableRow key={u.id} className="border-border">
                       <TableCell className="font-medium">{u.first_name || u.last_name ? `${u.first_name || ''} ${u.last_name || ''}`.trim() : 'N/A'}</TableCell>
                       <TableCell className="text-muted-foreground">{u.username || '-'}</TableCell>
@@ -570,12 +490,13 @@ const Admin = () => {
                 </TableBody>
               </Table>
             </CardContent>
-          </Card>
-        </TabsContent>
+            <CustomerPagination {...supervisorsPagination} />
+          </Card>}
+        </AdminDataPanel>
 
         {/* Admins Tab */}
-        <TabsContent value="admins">
-          <Card className="bg-card border-border">
+        <AdminDataPanel value="admins" active={activeTab === 'admins'} loading={loadingData} error={dataError} onRetry={fetchData}>
+          {() => <Card className="bg-card border-border">
             <CardHeader className="border-b border-border">
               <CardTitle className="text-foreground flex items-center gap-2">
                 {t('admin.admins')} <Badge variant="secondary">{visibleAdmins.length}</Badge>
@@ -592,7 +513,7 @@ const Admin = () => {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {visibleAdmins.map((u) => (
+                  {adminsPagination.items.map((u) => (
                     <TableRow key={u.id} className="border-border">
                       <TableCell className="font-medium">{u.first_name || u.last_name ? `${u.first_name || ''} ${u.last_name || ''}`.trim() : 'N/A'}</TableCell>
                       <TableCell className="text-muted-foreground">{u.email || 'N/A'}</TableCell>
@@ -608,13 +529,14 @@ const Admin = () => {
                 </TableBody>
               </Table>
             </CardContent>
-          </Card>
-        </TabsContent>
+            <CustomerPagination {...adminsPagination} />
+          </Card>}
+        </AdminDataPanel>
 
         {/* Groups Tab */}
-        <TabsContent value="groups">
-          <Card className="bg-card border-border">
-            <CardHeader className="border-b border-border flex-row items-center justify-between">
+        <AdminDataPanel value="groups" active={activeTab === 'groups'} loading={loadingData} error={dataError} onRetry={fetchData}>
+          {() => <Card className="bg-card border-border">
+            <CardHeader className="border-b border-border flex-row flex-wrap gap-3 items-center justify-between">
               <CardTitle className="text-foreground flex items-center gap-2">
                 {t('admin.groups')} <Badge variant="secondary">{groups.length}</Badge>
               </CardTitle>
@@ -632,7 +554,7 @@ const Admin = () => {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {groups.map((g) => (
+                  {groupsPagination.items.map((g) => (
                     <TableRow key={g.id} className="border-border">
                       <TableCell className="font-medium">{g.name}</TableCell>
                       <TableCell className="text-muted-foreground">{g.description || '-'}</TableCell>
@@ -649,13 +571,14 @@ const Admin = () => {
                 </TableBody>
               </Table>
             </CardContent>
-          </Card>
-        </TabsContent>
+            <CustomerPagination {...groupsPagination} />
+          </Card>}
+        </AdminDataPanel>
 
         {/* Promocodes Tab */}
-        <TabsContent value="promocodes">
-          <Card className="bg-card border-border">
-            <CardHeader className="border-b border-border flex-row items-center justify-between">
+        <AdminDataPanel value="promocodes" active={activeTab === 'promocodes'} loading={loadingData} error={dataError} onRetry={fetchData}>
+          {() => <Card className="bg-card border-border">
+            <CardHeader className="border-b border-border flex-row flex-wrap gap-3 items-center justify-between">
               <CardTitle className="text-foreground flex items-center gap-2">
                 {t('admin.promocodes')} <Badge variant="secondary">{promocodes.length}</Badge>
               </CardTitle>
@@ -675,7 +598,7 @@ const Admin = () => {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {promocodes.map((p) => (
+                  {promocodesPagination.items.map((p) => (
                     <TableRow key={p.id} className="border-border">
                       <TableCell className="font-mono font-medium flex items-center gap-2">
                         {p.code}
@@ -706,13 +629,14 @@ const Admin = () => {
                 </TableBody>
               </Table>
             </CardContent>
-          </Card>
-        </TabsContent>
+            <CustomerPagination {...promocodesPagination} />
+          </Card>}
+        </AdminDataPanel>
 
         {/* IP Whitelist Tab */}
-        <TabsContent value="ip-whitelist">
-          <Card className="bg-card border-border">
-            <CardHeader className="border-b border-border flex-row items-center justify-between">
+        <AdminDataPanel value="ip-whitelist" active={activeTab === 'ip-whitelist'} loading={loadingData} error={dataError} onRetry={fetchData}>
+          {() => <Card className="bg-card border-border">
+            <CardHeader className="border-b border-border flex-row flex-wrap gap-3 items-center justify-between">
               <CardTitle className="text-foreground flex items-center gap-2">
                 {t('admin.ipWhitelist')} <Badge variant="secondary">{ipWhitelist.length}</Badge>
               </CardTitle>
@@ -732,7 +656,7 @@ const Admin = () => {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {ipWhitelist.map((ip) => (
+                  {whitelistPagination.items.map((ip) => (
                     <TableRow key={ip.id} className="border-border">
                       <TableCell className="font-mono">{ip.ip_address}</TableCell>
                       <TableCell><Badge variant="outline">{ip.ip_version}</Badge></TableCell>
@@ -755,13 +679,14 @@ const Admin = () => {
                 </TableBody>
               </Table>
             </CardContent>
-          </Card>
-        </TabsContent>
+            <CustomerPagination {...whitelistPagination} />
+          </Card>}
+        </AdminDataPanel>
 
         {/* IP Audit Logs Tab */}
-        <TabsContent value="ip-audit">
-          <Card className="bg-card border-border">
-            <CardHeader className="border-b border-border flex-row items-center justify-between">
+        <AdminDataPanel value="ip-audit" active={activeTab === 'ip-audit'} loading={loadingData} error={dataError} onRetry={fetchData}>
+          {() => <Card className="bg-card border-border">
+            <CardHeader className="border-b border-border flex-row flex-wrap gap-3 items-center justify-between">
               <CardTitle className="text-foreground flex items-center gap-2">
                 {t('admin.ipAuditLogs')} <Badge variant="secondary">{ipLogs.length}</Badge>
               </CardTitle>
@@ -779,7 +704,7 @@ const Admin = () => {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {ipLogs.map((log) => (
+                  {logsPagination.items.map((log) => (
                     <TableRow key={log.id} className="border-border">
                       <TableCell className="text-muted-foreground whitespace-nowrap">
                         {log.created_at ? new Date(log.created_at).toLocaleString() : '-'}
@@ -811,8 +736,9 @@ const Admin = () => {
                 </TableBody>
               </Table>
             </CardContent>
-          </Card>
-        </TabsContent>
+            <CustomerPagination {...logsPagination} />
+          </Card>}
+        </AdminDataPanel>
       </Tabs>
     </StaffDashboardLayout>
   );

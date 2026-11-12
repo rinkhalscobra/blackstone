@@ -20,9 +20,10 @@ import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/co
 
 interface NavigationProps {
   landing?: boolean;
+  solid?: boolean;
 }
 
-const Navigation = ({ landing = false }: NavigationProps) => {
+const Navigation = ({ landing = false, solid = false }: NavigationProps) => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const { user, signOut } = useAuth();
   const { userRole, loading: roleLoading } = useAdmin();
@@ -92,7 +93,7 @@ const Navigation = ({ landing = false }: NavigationProps) => {
   };
 
   return (
-    <nav className="fixed top-0 left-0 right-0 z-50 border-b border-white/5 bg-background/40 backdrop-blur-xl supports-[backdrop-filter]:bg-background/30">
+    <nav className={`fixed top-0 left-0 right-0 z-50 border-b border-white/5 ${solid ? 'bg-background' : 'bg-background/40 backdrop-blur-xl supports-[backdrop-filter]:bg-background/30'}`}>
       <div className="container px-4 sm:px-6 lg:px-8">
         <div className="flex h-16 items-center justify-between sm:h-28">
           <Logo size="md" />

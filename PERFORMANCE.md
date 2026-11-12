@@ -63,3 +63,55 @@ and one representative deposit/withdrawal review, notification, message, and upl
 in staging. Confirm balance and notification changes appear in an already-open
 customer dashboard, including after reconnecting. Deploy through the existing
 hosting workflow and retain the previous application deployment for rollback.
+
+
+## Admin tab organization (2026-11-12)
+
+The super-admin page opens on Customers. Pending transactions now have their own
+Transactions tab instead of appearing above every management section. The active
+tab is retained in the URL, and section loading/errors keep navigation available.
+
+- Initial management reads drop from six to three (profiles, roles, and groups).
+  Promocodes, IP rules, and audit logs load when opened; transactions and their
+  realtime subscription mount only in their tab. Fresh section data is reused for
+  30 seconds, and refresh invalidates inactive sections without fetching them.
+- All admin tables render at most 25 rows per page. Pending transactions render
+  10 per page, with customer search and deposit/withdrawal filtering. These are
+  client-side pages; directory reads and the latest-100 audit-log limit remain.
+- Background refresh preserves customer search, pagination, and the active tab.
+  Query keys include the account, and transaction keys also include access scope.
+  Transaction requests refresh on reopening the tab to cover subscription gaps.
+- Agent client counts use one lookup map and now select the assignment field that
+  was missing from the original directory query.
+- Mobile tab navigation scrolls horizontally. Header actions and pagination wrap
+  within small screens; icon actions have accessible labels.
+
+Verification: the automated suite covers navigation, on-demand reads, search,
+cache and access-scope isolation, refresh, retry, realtime removal, and pagination.
+Browser checks with intercepted sample responses pass at 1440, 390, and 320 px,
+including the type filter, approval-dialog opening, and control bounds. Typecheck
+and production build pass. Live data and production timings were not measured;
+the existing Vite shared-chunk size warning remains.
+
+
+## Staff rendering effects (2026-11-12)
+
+Staff dashboard headings now use a static text color. Staff navigation, the window
+frame, cards, and tab bar use opaque backgrounds without backdrop filters or large
+blurred shadows. The shared public/customer components keep their existing defaults.
+Admin tables now create row elements only for the active tab, avoiding hidden-row
+formatting and dialog element creation on every customer-search update.
+
+A local browser audit with sample data and normal motion preferences measured:
+
+| Idle admin page | Before | After |
+| --- | --- | --- |
+| Running animations | 1 infinite heading shimmer | 0 |
+| Elements with backdrop filters | 4 (10?40 px blur) | 0 |
+| Transform on the scrolling content wrapper | Identity matrix | None |
+
+Pull-to-refresh now tracks gestures without updating React state at touch start,
+checks the actual page and nested scroll positions, and ignores horizontal swipes.
+Its content transform exists only during a pull or refresh. Cancelled and short
+pulls reset normally. Tests cover these gestures plus the active-tab rendering
+boundary. These are local rendering checks, not production response-time benchmarks.

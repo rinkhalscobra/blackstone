@@ -11,46 +11,94 @@ interface PullToRefreshProps {
 export function PullToRefresh({ onRefresh, children, className }: PullToRefreshProps) {
   const [pullDistance, setPullDistance] = React.useState(0);
   const [isRefreshing, setIsRefreshing] = React.useState(false);
-  const [startY, setStartY] = React.useState(0);
   const containerRef = React.useRef<HTMLDivElement>(null);
+  const refreshRef = React.useRef(onRefresh);
   
   const threshold = 80;
   const maxPull = 120;
 
-  const handleTouchStart = (e: React.TouchEvent) => {
-    if (containerRef.current?.scrollTop === 0) {
-      setStartY(e.touches[0].clientY);
-    }
-  };
+  React.useEffect(() => { refreshRef.current = onRefresh; }, [onRefresh]);
 
-  const handleTouchMove = (e: React.TouchEvent) => {
-    if (startY === 0 || isRefreshing) return;
-    
-    const currentY = e.touches[0].clientY;
-    const diff = currentY - startY;
-    
-    if (diff > 0 && containerRef.current?.scrollTop === 0) {
-      e.preventDefault();
-      setPullDistance(Math.min(diff * 0.5, maxPull));
-    }
-  };
+  React.useEffect(() => {
+    const container = containerRef.current;
+    if (!container) return;
+    let mounted = true;
+    let start: { x: number; y: number } | null = null;
+    let distance = 0;
+    let refreshing = false;
 
-  const handleTouchEnd = async () => {
-    if (pullDistance >= threshold && !isRefreshing) {
-      setIsRefreshing(true);
-      setPullDistance(60);
-      
-      try {
-        await onRefresh();
-      } finally {
-        setIsRefreshing(false);
-        setPullDistance(0);
+    const updateDistance = (next: number) => {
+      if (next === distance) return;
+      distance = next;
+      setPullDistance(next);
+    };
+    const isAtTop = (target: EventTarget | null) => {
+      if (window.scrollY > 0 || document.documentElement.scrollTop > 0) return false;
+      // The page, or an inner list, may be scrolling rather than this wrapper.
+      for (let element = target instanceof Element ? target : container; element; element = element.parentElement) {
+        if (element.scrollTop > 0) return false;
       }
-    } else {
-      setPullDistance(0);
-    }
-    setStartY(0);
-  };
+      return true;
+    };
+    const handleStart = (event: TouchEvent) => {
+      if (refreshing || event.touches.length !== 1 || !isAtTop(event.target)) return;
+      start = { x: event.touches[0].clientX, y: event.touches[0].clientY };
+    };
+    const handleMove = (event: TouchEvent) => {
+      if (!start || refreshing) return;
+      if (event.touches.length !== 1 || !isAtTop(event.target)) {
+        start = null;
+        updateDistance(0);
+        return;
+      }
+      const dy = event.touches[0].clientY - start.y;
+      const dx = event.touches[0].clientX - start.x;
+      if (dy <= 0 || Math.abs(dx) > dy) {
+        start = null;
+        updateDistance(0);
+        return;
+      }
+      if (event.cancelable) event.preventDefault();
+      updateDistance(Math.min(dy * 0.5, maxPull));
+    };
+    const handleEnd = async () => {
+      start = null;
+      if (refreshing) return;
+      if (distance < threshold) {
+        updateDistance(0);
+        return;
+      }
+      refreshing = true;
+      setIsRefreshing(true);
+      updateDistance(60);
+      try {
+        await refreshRef.current();
+      } finally {
+        refreshing = false;
+        if (mounted) {
+          setIsRefreshing(false);
+          updateDistance(0);
+        }
+      }
+    };
+    const handleCancel = () => {
+      start = null;
+      if (!refreshing) updateDistance(0);
+    };
+
+    container.addEventListener('touchstart', handleStart, { passive: true });
+    // Only an intentional pull at the top should prevent native scrolling.
+    container.addEventListener('touchmove', handleMove, { passive: false });
+    container.addEventListener('touchend', handleEnd);
+    container.addEventListener('touchcancel', handleCancel);
+    return () => {
+      mounted = false;
+      container.removeEventListener('touchstart', handleStart);
+      container.removeEventListener('touchmove', handleMove);
+      container.removeEventListener('touchend', handleEnd);
+      container.removeEventListener('touchcancel', handleCancel);
+    };
+  }, []);
 
   const progress = Math.min(pullDistance / threshold, 1);
   const showIndicator = pullDistance > 10 || isRefreshing;
@@ -59,9 +107,6 @@ export function PullToRefresh({ onRefresh, children, className }: PullToRefreshP
     <div
       ref={containerRef}
       className={cn("relative overflow-x-hidden", className)}
-      onTouchStart={handleTouchStart}
-      onTouchMove={handleTouchMove}
-      onTouchEnd={handleTouchEnd}
     >
       {/* Pull indicator */}
       <div
@@ -94,7 +139,7 @@ export function PullToRefresh({ onRefresh, children, className }: PullToRefreshP
       <div
         className="transition-transform duration-200"
         style={{
-          transform: `translateY(${pullDistance}px)`,
+          transform: pullDistance > 0 ? `translateY(${pullDistance}px)` : undefined,
           transitionDuration: pullDistance === 0 && !isRefreshing ? "200ms" : "0ms",
         }}
       >

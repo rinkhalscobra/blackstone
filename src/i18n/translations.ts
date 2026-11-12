@@ -145,6 +145,8 @@ export const translations = {
     },
     common: {
       loading: "Loading...",
+      retry: "Retry",
+      noResults: "No results found",
       error: "Error",
       success: "Success",
       cancel: "Cancel",
@@ -1135,6 +1137,8 @@ export const translations = {
     },
     common: {
       loading: "Chargement...",
+      retry: "Réessayer",
+      noResults: "Aucun résultat",
       error: "Erreur",
       success: "Succès",
       cancel: "Annuler",
@@ -2115,6 +2119,8 @@ export const translations = {
     },
     common: {
       loading: "Laden...",
+      retry: "Erneut versuchen",
+      noResults: "Keine Ergebnisse gefunden",
       error: "Fehler",
       success: "Erfolg",
       cancel: "Abbrechen",
@@ -3095,6 +3101,8 @@ export const translations = {
     },
     common: {
       loading: "Caricamento...",
+      retry: "Riprova",
+      noResults: "Nessun risultato trovato",
       error: "Errore",
       success: "Successo",
       cancel: "Annulla",

@@ -8,7 +8,6 @@ import Footer from '@/components/Footer';
 import { Badge } from '@/components/ui/badge';
 import { Loader2, Building2 } from 'lucide-react';
 import { PullToRefresh } from '@/components/ui/pull-to-refresh';
-import { Backdrop } from '@/components/design/Backdrop';
 import { WindowChrome } from '@/components/dashboard/WindowChrome';
 
 
@@ -97,14 +96,14 @@ export const StaffDashboardLayout = ({
 
   const content = (
     <main className="container px-4 py-6 sm:px-6 sm:py-8 lg:px-8">
-      <WindowChrome title={`Crest Financial — ${config.label}`}>
+      <WindowChrome title={`Crest Financial — ${config.label}`} effects={false}>
         <div className="p-5 sm:p-8">
           {/* Header */}
           <div className="mb-6 sm:mb-8">
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
               <div>
                 <div className="flex items-center gap-3 mb-2 flex-wrap">
-                  <h1 className="text-3xl sm:text-4xl font-bold tracking-tight text-shiny">{title}</h1>
+                  <h1 className="text-3xl sm:text-4xl font-bold tracking-tight text-foreground">{title}</h1>
                   <Badge className={`${config.color} border`}>{config.label}</Badge>
                 </div>
                 {subtitle && (
@@ -141,9 +140,8 @@ export const StaffDashboardLayout = ({
   );
 
   return (
-    <div className="min-h-screen bg-transparent pt-16 sm:pt-28">
-      <Backdrop />
-      <Navigation />
+    <div className="staff-dashboard min-h-screen bg-background pt-16 sm:pt-28">
+      <Navigation solid />
 
       
       {onRefresh ? (

@@ -104,6 +104,22 @@
     backdrop-filter: blur(14px);
     -webkit-backdrop-filter: blur(14px);
   }
+
+  /* Staff tables use opaque surfaces to avoid filtering the entire scrolling page. */
+  .staff-dashboard .rounded-lg.border.bg-card,
+  .staff-dashboard [data-slot="card"],
+  .staff-dashboard .liquid-glass {
+    background: hsl(var(--card));
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+    border-color: hsl(var(--border));
+    box-shadow: none;
+  }
+
+  .staff-dashboard [role="tab"],
+  .staff-dashboard tbody tr {
+    transition: none;
+  }
 }
 
 @layer utilities {

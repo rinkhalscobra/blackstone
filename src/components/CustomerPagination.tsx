@@ -13,9 +13,9 @@ export function CustomerPagination({ page, pageCount, pageSize, total, setPage }
   const { t } = useLanguage();
   if (pageCount <= 1) return null;
   return (
-    <div className="flex items-center justify-between border-t border-border px-4 py-3 text-sm text-muted-foreground">
+    <div className="flex flex-wrap items-center justify-between gap-3 border-t border-border px-4 py-3 text-sm text-muted-foreground">
       <span>{page * pageSize + 1}-{Math.min((page + 1) * pageSize, total)} / {total}</span>
-      <div className="flex gap-2">
+      <div className="ml-auto flex gap-2">
         <Button size="sm" variant="outline" disabled={page === 0} onClick={() => setPage(page - 1)}>{t('common.previous')}</Button>
         <Button size="sm" variant="outline" disabled={page >= pageCount - 1} onClick={() => setPage(page + 1)}>{t('common.next')}</Button>
       </div>
