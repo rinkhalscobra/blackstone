@@ -15,9 +15,9 @@ export const COMPANY = {
   countryCode: 'CA',
 } as const;
 
-// Keep the existing contact destinations until replacement details are confirmed.
+// Shared contact details for public pages and contact links.
 export const COMPANY_CONTACT = {
-  email: import.meta.env.VITE_SUPPORT_EMAIL || 'support@brightfund.com',
-  phone: '+44 7441 429776',
-  phoneHref: '+447441429776',
+  email: import.meta.env.VITE_SUPPORT_EMAIL || 'support@crestrecovery.io',
+  phone: '+1 647 495 9650',
+  phoneHref: '+16474959650',
 } as const;
